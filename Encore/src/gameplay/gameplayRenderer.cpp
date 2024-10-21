@@ -1492,7 +1492,7 @@ void gameplayRenderer::RenderExpertHighway(Player *player, Song song, double tim
             gprAssets.smasherInnerTex;
         gprAssets.smasherOuter.materials[0].maps[MATERIAL_MAP_ALBEDO].color =
             smasherColor;
-        float RandomRotationToSelect = GetRandomValue(-1, 1) / 10.0f;
+        float RandomRotationToSelect = GetRandomValue(-2, 2) / 10.0f;
         // constexpr float thing[4] {0.15, 0.1, -0.1, -0.15};
         Vector3 RotationAxis { 1, 0, RandomRotationToSelect };
         // if (player->stats->HeldFrets[noteColor]
@@ -2450,9 +2450,9 @@ void gameplayRenderer::nDrawFiveLaneHitEffects(
     Note note, double time, float notePosX, int lane
 ) {
     double PerfectHitAnimDuration = 1.0f;
-    double HitShakerDuration = 0.3f;
+    double HitShakerDuration = 0.25f;
     double HitShakerIntroDuration = 0.05f;
-    double HitShakerOutroDuration = 0.25f;
+    double HitShakerOutroDuration = 0.2f;
     if (note.hit && time < note.hitTime + (HitShakerDuration)) {
         float RotationDirection = note.perfect ? -5 : 5;
         if (time < note.hitTime + HitShakerIntroDuration) {
@@ -2464,7 +2464,7 @@ void gameplayRenderer::nDrawFiveLaneHitEffects(
                 TimeSinceHit / HitShakerIntroDuration, 0, 1.0, 0, RotationDirection
             );
             fiveLaneSmasherHeights.at(lane) = Remap(
-                getEasingFunction(EaseInOutQuart)(TimeSinceHit / HitShakerIntroDuration),
+                getEasingFunction(EaseInOutElastic)(TimeSinceHit / HitShakerIntroDuration),
                 0,
                 1.0,
                 0,
@@ -2473,7 +2473,7 @@ void gameplayRenderer::nDrawFiveLaneHitEffects(
         } else {
             double TimeSinceHit = time - (note.hitTime + HitShakerIntroDuration);
             fiveLaneSmasherRotation.at(lane) = Remap(
-                getEasingFunction(EaseInOutBack)(TimeSinceHit / HitShakerOutroDuration),
+                getEasingFunction(EaseOutBounce)(TimeSinceHit / HitShakerOutroDuration),
                 1.0,
                 0,
                 0,
