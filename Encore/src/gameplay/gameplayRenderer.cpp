@@ -2041,7 +2041,7 @@ void gameplayRenderer::RenderPDrumsNotes(
         Vector3 NoteScale = { 1.0f, 1.0f, 1.0f };
         Vector3 NotePos = { notePosX, notePosY, smasherPos + (length * (float)relTime) };
         if (!curNote.pDrumTom && !curNote.pSnare && !curNote.hit
-            && curNote.lane != KICK) { // render cymbals
+            && curNote.lane != KICK && player->ProDrums) { // render cymbals
             Color OuterColor = ColorBrightness(NoteColor, -0.15);
             Color InnerColor = RAYWHITE;
             Color BottomColor = DARKGRAY;
