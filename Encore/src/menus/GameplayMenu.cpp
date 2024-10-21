@@ -339,6 +339,7 @@ void GameplayMenu::Draw() {
                               0
         )
                               .x;
+        Color headerUsernameColor = ThePlayerManager.GetActivePlayer(pnum)->Bot ? SKYBLUE : WHITE;
         DrawTextEx(
             assets.rubikBold,
             ThePlayerManager.GetActivePlayer(pnum)->Name.c_str(),
@@ -346,7 +347,7 @@ void GameplayMenu::Draw() {
               GetScreenHeight() - u.hinpct(0.03) },
             fontSize,
             0,
-            WHITE
+            headerUsernameColor
         );
     }
 

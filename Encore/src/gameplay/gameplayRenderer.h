@@ -56,7 +56,7 @@ class gameplayRenderer {
     );
 
     void nDrawDrumsHitEffects(Note note, double time, float notePosX);
-    void nDrawFiveLaneHitEffects(Note note, double time, float notePosX);
+    void nDrawFiveLaneHitEffects(Note note, double time, float notePosX, int lane);
     void
     nDrawPlasticNote(Note note, Color noteColor, float notePosX, float noteScrollPos);
     void nDrawPadNote(Note note, Color noteColor, float notePosX, float noteScrollPos);
@@ -129,6 +129,12 @@ public:
     std::vector<Camera3D> camera3pVector;
     std::vector<Camera3D> camera4pVector;
 
+    std::vector<float> drumSmasherRotations = {0,0,0,0};
+    std::vector<float> drumSmasherHeights = {0,0,0,0};
+
+    std::vector<float> fiveLaneSmasherRotation = {0,0,0,0,0};
+    std::vector<float> fiveLaneSmasherHeights = {0,0,0,0,0};
+
     Camera3D camera1p = { 0 };
 
     Camera3D camera2p1 = { 0 };
@@ -179,6 +185,12 @@ public:
     std::vector<Model> TapParts;
     std::vector<Model> DrumParts;
 
+    Model InnerKickSmasher;
+    Model OuterKickSmasher;
+    Model InnerTomSmasher;
+    Model OuterTomSmasher;
+    Texture2D InnerKickSmasherTex;
+    Texture2D OuterKickSmasherTex;
     /*
      *  for (auto model : TapParts) {
      *      DrawModel(model, pos, 1.0, color);

@@ -47,7 +47,7 @@ void DrawBeacon(int slot, float x, float y, float width, float height, bool top)
 }
 
 bool DrawOvershellRectangleHeader(
-    float x, float y, float width, float height, std::string username, Color accentColor
+    float x, float y, float width, float height, std::string username, Color accentColor, Color usernameColor
 ) {
     Assets &assets = Assets::getInstance();
     Units &unit = Units::getInstance();
@@ -69,7 +69,7 @@ bool DrawOvershellRectangleHeader(
         username.c_str(),
         { centerPos, (height / 4) + y },
         (height / 2),
-        WHITE,
+        usernameColor,
         assets.sdfShader,
         CENTER
     );
@@ -267,7 +267,8 @@ void OvershellRenderer::DrawBottomOvershell() {
                 unit.winpct(0.2f),
                 unit.winpct(0.05f),
                 "Select a player",
-                Color { 255, 0, 255, 255 }
+                Color { 255, 0, 255, 255 },
+                WHITE
             );
             if (GuiButton(
                     { OvershellLeftLoc,
@@ -308,13 +309,15 @@ void OvershellRenderer::DrawBottomOvershell() {
             break;
         }
         case OS_OPTIONS: {
+            Color headerUsernameColor = playerManager.GetActivePlayer(i)->Bot ? SKYBLUE : WHITE;
             if (DrawOvershellRectangleHeader(
                     OvershellLeftLoc,
                     OvershellTopLoc - (ButtonHeight * 5),
                     unit.winpct(0.2f),
                     unit.winpct(0.05f),
                     playerManager.GetActivePlayer(i)->Name,
-                    playerManager.GetActivePlayer(i)->AccentColor
+                    playerManager.GetActivePlayer(i)->AccentColor,
+                    headerUsernameColor
                 )) {
                 OvershellState[i] = OS_ATTRACT;
                 CanMouseClick = true;
@@ -372,14 +375,15 @@ void OvershellRenderer::DrawBottomOvershell() {
                     GetScreenHeight(),
                     false
                 );
-
+                Color headerUsernameColor = playerManager.GetActivePlayer(i)->Bot ? SKYBLUE : WHITE;
                 if (DrawOvershellRectangleHeader(
                         OvershellLeftLoc,
                         OvershellTopLoc,
                         unit.winpct(0.2f),
                         unit.winpct(0.05f),
                         playerManager.GetActivePlayer(i)->Name,
-                        playerManager.GetActivePlayer(i)->AccentColor
+                        playerManager.GetActivePlayer(i)->AccentColor,
+                        headerUsernameColor
                     )) {
                     OvershellState[i] = OS_OPTIONS;
                     CanMouseClick = false;
@@ -396,7 +400,8 @@ void OvershellRenderer::DrawBottomOvershell() {
                             unit.winpct(0.2f),
                             unit.winpct(0.04f),
                             "JOIN",
-                            LIGHTGRAY
+                            LIGHTGRAY,
+                            RAYWHITE
                         )) {
                         CanMouseClick = false;
                         OvershellState[i] = OS_PLAYER_SELECTION;
@@ -410,7 +415,8 @@ void OvershellRenderer::DrawBottomOvershell() {
                             unit.winpct(0.2f),
                             unit.winpct(0.04f),
                             "CONNECT CONTROLLER",
-                            { 0 }
+                            { 0 },
+                            LIGHTGRAY
                         )) {
                         CanMouseClick = false;
                         OvershellState[i] = OS_PLAYER_SELECTION;
@@ -425,26 +431,22 @@ void OvershellRenderer::DrawBottomOvershell() {
         }
         case OS_INSTRUMENT_SELECTIONS: {
             int ButtonHeight = unit.winpct(0.03f);
-
+            Color headerUsernameColor = playerManager.GetActivePlayer(i)->Bot ? SKYBLUE : WHITE;
             DrawOvershellRectangleHeader(
                 OvershellLeftLoc,
-                OvershellTopLoc - (ButtonHeight * 5),
+                OvershellTopLoc - (ButtonHeight * 3),
                 unit.winpct(0.2f),
                 unit.winpct(0.05f),
                 playerManager.GetActivePlayer(i)->Name,
-                playerManager.GetActivePlayer(i)->AccentColor
+                playerManager.GetActivePlayer(i)->AccentColor,
+                headerUsernameColor
             );
 
-            if (MenuButton(i, 2, "Classic")) {
-                playerManager.GetActivePlayer(i)->ClassicMode = true;
-                OvershellState[i] = OS_OPTIONS;
-                continue;
-            }
-            if (MenuButton(i, 1, "Pad")) {
-                playerManager.GetActivePlayer(i)->ClassicMode = false;
-                OvershellState[i] = OS_OPTIONS;
-                continue;
-            }
+            playerManager.GetActivePlayer(i)->ClassicMode = OvershellCheckbox(i, 1, "Classic", playerManager.GetActivePlayer(i)->ClassicMode);
+
+            playerManager.GetActivePlayer(i)->ProDrums = OvershellCheckbox(i, 2, "Pro Drums", playerManager.GetActivePlayer(i)->ProDrums);
+
+
             if (MenuButton(i, 0, "Back")) {
                 OvershellState[i] = OS_OPTIONS;
                 continue;
