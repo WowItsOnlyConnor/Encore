@@ -159,7 +159,7 @@ void Assets::LoadAssets() {
     BasicColorLoc = GetShaderLocation(FullComboIndicator, "basicColor");
     MultInnerFrame.materials[0].shader = FullComboIndicator;
 
-    MultiplierFill = LoadShader(0, "Assets/highway/multiplier/MultiplierFill.fsh");
+    MultiplierFill = LoadShader(0, (highwayDir/"multiplier/MultiplierFill.fsh").string().c_str());
 
     MultTextureLoc = GetShaderLocation(MultiplierFill, "BaseTexture"); // sampler
     MultiplierColorLoc = GetShaderLocation(MultiplierFill, "MultiplierColor"); // vec4
