@@ -49,7 +49,7 @@ void Assets::FirstAssets() {
 void Assets::LoadAssets() {
     Color accentColor = { 255, 0, 255, 255 };
     Color overdriveColor = Color { 255, 200, 0, 255 };
-    std::filesystem::path highwayDir = directory / "Assets" / "highway";
+    std::filesystem::path highwayDir = directory / "Assets" / "gameplay" / "highway";
     //smasherReg =
     //    Assets::LoadModel_((highwayDir / "/smasher.obj"), loadedAssets);
     smasherInner =

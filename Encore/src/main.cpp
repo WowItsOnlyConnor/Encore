@@ -14,9 +14,11 @@
 
 #define RAYGUI_IMPLEMENTATION
 
+/*
 #if defined(WIN32) && defined(NDEBUG)
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #endif
+*/
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
 #endif

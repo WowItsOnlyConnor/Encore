@@ -42,10 +42,8 @@ void Encore::EncoreLog(int msgType, const char *text, va_list args) {
         std::cerr << "! " << outputString.str() << std::endl;
         break;
     case LOG_DEBUG:
-#ifndef NDEBUG
         outputString <<"DEBUG] " << outputbuf;
         std::cout << "@ " << outputString.str() << std::endl;
-#endif
         break;
     default: break;
     }
