@@ -346,7 +346,7 @@ void Assets::LoadAssets() {
     josefinSansItalic = Assets::LoadFontFilter(
         (directory / "Assets/fonts/JosefinSans-Italic.ttf"), 256, loadedAssets
     );
-
+    redHatMono = Assets::LoadFontFilter(directory /"Assets/fonts/RedHatMono-Bold.ttf", 256, loadedAssets);
     fxaa = LoadShader(0, (directory / "Assets/ui/fxaa.frag").string().c_str());
     texLoc = GetShaderLocation(fxaa, "texture0");
     resLoc = GetShaderLocation(fxaa, "resolution");

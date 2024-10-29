@@ -11,7 +11,6 @@
 
 #include "song/song.h"
 
-
 #define RAYGUI_IMPLEMENTATION
 
 /* not needed for debug purposes
@@ -64,7 +63,36 @@ PlayerManager ThePlayerManager;
 SettingsOld &settingsMain = SettingsOld::getInstance();
 AudioManager &audioManager = AudioManager::getInstance();
 
+OvershellRenderer overshellRenderer;
+InputHandler inputHandler;
+Keybinds keybinds;
+settingsOptionRenderer sor;
+
+Assets &assets = Assets::getInstance();
+
 vector<std::string> ArgumentList::arguments;
+
+enum OptionsCategories {
+    MAIN,
+    HIGHWAY,
+    VOLUME,
+    KEYBOARD,
+    GAMEPAD
+};
+
+enum KeybindCategories {
+    kbPAD,
+    kbCLASSIC,
+    kbMISC,
+    kbMENUS
+};
+
+enum JoybindCategories {
+    gpPAD,
+    gpCLASSIC,
+    gpMISC,
+    gpMENUS
+};
 
 #ifndef GIT_COMMIT_HASH
 #define GIT_COMMIT_HASH
@@ -73,11 +101,6 @@ vector<std::string> ArgumentList::arguments;
 #ifndef ENCORE_VERSION
 #define ENCORE_VERSION
 #endif
-
-#define SOL_ALL_SAFETIES_ON 1
-#define SOL_USE_LUA_HPP 1
-
-bool albumArtSelectedAndLoaded = false;
 
 bool ShowHighwaySettings = true;
 bool ShowCalibrationSettings = true;
@@ -104,15 +127,10 @@ const double inputFeedbackDuration = 0.6;
 float inputFeedbackAlpha = 1.0f;
 // end calibration
 
-Color AccentColor = { 255, 0, 255, 255 };
-std::string trackSpeedButton;
-
 std::string encoreVersion = ENCORE_VERSION;
 std::string commitHash = GIT_COMMIT_HASH;
 
 bool Menu::onNewMenu = false;
-
-Assets &assets = Assets::getInstance();
 
 SortType currentSortValue = SortType::Title;
 std::vector<std::string> sortTypes { "Title", "Artist", "Source", "Length" };
@@ -151,13 +169,6 @@ std::string scoreCommaFormatter(int value) {
     return ss.str();
 }
 
-double StrumNoFretTime = 0.0;
-
-bool FAS = false;
-int strummedNote = 0;
-int FASNote = 0;
-OvershellRenderer overshellRenderer;
-InputHandler inputHandler;
 // what to check when a key changes states (what was the change? was it pressed? or
 // released? what time? what window? were any modifiers pressed?)
 static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int mods) {
@@ -467,40 +478,12 @@ static void gamepadStateCallbackSetControls(int jid, GLFWgamepadstate state) {
 int minWidth = 640;
 int minHeight = 480;
 
-enum OptionsCategories {
-    MAIN,
-    HIGHWAY,
-    VOLUME,
-    KEYBOARD,
-    GAMEPAD
-};
-
-enum KeybindCategories {
-    kbPAD,
-    kbCLASSIC,
-    kbMISC,
-    kbMENUS
-};
-
-enum JoybindCategories {
-    gpPAD,
-    gpCLASSIC,
-    gpMISC,
-    gpMENUS
-};
-
-Keybinds keybinds;
-
 bool FinishedLoading = false;
 bool firstInit = true;
 int loadedAssets;
 bool albumArtLoaded = false;
 
-settingsOptionRenderer sor;
-
 Menu *ActiveMenu = nullptr;
-
-bool ReloadGameplayTexture = true;
 
 void LoadCharts() {
     smf::MidiFile midiFile;
@@ -510,8 +493,7 @@ void LoadCharts() {
         Player *player = ThePlayerManager.GetActivePlayer(playerNum);
         int diff = player->Difficulty;
         int inst = player->Instrument;
-        int track =
-            TheSongList.curSong->parts[inst]->charts[diff].track;
+        int track = TheSongList.curSong->parts[inst]->charts[diff].track;
         std::string trackName;
 
         Chart &chart = TheSongList.curSong->parts[inst]->charts[diff];
@@ -609,7 +591,6 @@ void IsPartValid(smf::MidiEventList track, SongParts songPart, int trackNumber) 
     }
 }
 
-
 int main(int argc, char *argv[]) {
     SetTraceLogCallback(Encore::EncoreLog);
     Units u = Units::getInstance();
@@ -617,11 +598,6 @@ int main(int argc, char *argv[]) {
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     glfwWindowHint(GLFW_SAMPLES, 4);
-    // SetConfigFlags(FLAG_VSYNC_HINT);
-
-    // SetEncore::EncoreLogLevel(LOG_NONE);
-
-    // 800 , 600
 
     SetWindowState(FLAG_MSAA_4X_HINT);
     bool windowToggle = true;
@@ -639,9 +615,7 @@ int main(int argc, char *argv[]) {
                 LOG_INFO, TextFormat("Argument overridden target FPS: %d", targetFPSArg)
             );
         else
-            Encore::EncoreLog(
-                LOG_INFO, TextFormat("Unlocked framerate. You asked for it.")
-            );
+            Encore::EncoreLog(LOG_INFO, TextFormat("Unlocked framerate."));
     }
 
     if (!vSyncOn.empty()) {
@@ -654,18 +628,6 @@ int main(int argc, char *argv[]) {
         SetConfigFlags(FLAG_VSYNC_HINT);
     }
 
-    InitWindow(1, 1, "Encore");
-    // https://www.raylib.com/examples/core/loader.html?name=core_custom_frame_control
-
-    double previousTime = GetTime();
-    double currentTime = 0.0;
-    double updateDrawTime = 0.0;
-    double waitTime = 0.0;
-    float deltaTime = 0.0f;
-
-    float timeCounter = 0.0f;
-    TheGameRenderer.sustainPlane = GenMeshPlane(0.8f, 1.0f, 1, 1);
-    TheGameRenderer.soloPlane = GenMeshPlane(1.0f, 1.0f, 1, 1);
     std::filesystem::path executablePath(GetApplicationDirectory());
 
     std::filesystem::path directory = executablePath.parent_path();
@@ -686,14 +648,13 @@ int main(int argc, char *argv[]) {
         // do the next step manually (settings/config handling)
         // "directory" is our executable directory here, hop up to the external dir
         if (directory.filename().compare("MacOS") == 0)
-            directory =
-                directory.parent_path().parent_path().parent_path(); // hops
-                                                                     // "MacOS",
-                                                                     // "Contents",
-                                                                     // "Encore.app"
-                                                                     // into
-                                                                     // containing
-                                                                     // folder
+            directory = directory.parent_path().parent_path().parent_path(); // hops
+        // "MacOS",
+        // "Contents",
+        // "Encore.app"
+        // into
+        // containing
+        // folder
 
         CFRelease(bundle);
     }
@@ -707,37 +668,34 @@ int main(int argc, char *argv[]) {
     }
     settingsMain.loadSettings(directory / "settings.json");
     ThePlayerManager.LoadPlayerList();
-    // player.InputOffset = settingsMain.inputOffsetMS / 1000.0f;
-    // player.VideoOffset = settingsMain.avOffsetMS / 1000.0f;
+
     bool removeFPSLimit = 0;
     int targetFPS =
         targetFPSArg == -1 ? GetMonitorRefreshRate(GetCurrentMonitor()) : targetFPSArg;
     removeFPSLimit = targetFPSArg == 0;
-    int menuFPS = 60;
-    /*
-    if (!settingsMain.fullscreen) {
-        if (IsWindowState(FLAG_WINDOW_UNDECORATED)) {
-            ClearWindowState(FLAG_WINDOW_UNDECORATED);
-            SetWindowState(FLAG_MSAA_4X_HINT);
-        }
-        SetWindowSize(GetMonitorWidth(GetCurrentMonitor()) * 0.75f,
-                    GetMonitorHeight(GetCurrentMonitor()) * 0.75f);
-        SetWindowPosition(
-            (GetMonitorWidth(GetCurrentMonitor()) * 0.5f) -
-    (GetMonitorWidth(GetCurrentMonitor()) * 0.375f),
-            (GetMonitorHeight(GetCurrentMonitor()) * 0.5f) -
-            (GetMonitorHeight(GetCurrentMonitor()) * 0.375f));
-    } else {
-        SetWindowState(FLAG_WINDOW_UNDECORATED + FLAG_MSAA_4X_HINT);
-        int CurrentMonitor = GetCurrentMonitor();
-        SetWindowPosition(0, 0);
-        SetWindowSize(GetMonitorWidth(CurrentMonitor), GetMonitorHeight(CurrentMonitor));
-    }
+    int menuFPS = GetMonitorRefreshRate(GetCurrentMonitor()) / 2;
 
-    */
+    // https://www.raylib.com/examples/core/loader.html?name=core_custom_frame_control
+
+    double previousTime = GetTime();
+    double currentTime = 0.0;
+    double updateDrawTime = 0.0;
+    double waitTime = 0.0;
+    float deltaTime = 0.0;
+
     if (!settingsMain.fullscreen) {
+        InitWindow(
+            GetMonitorWidth(GetCurrentMonitor()) * 0.75f,
+            GetMonitorHeight(GetCurrentMonitor()) * 0.75f,
+            "Encore"
+        );
         Windowed();
     } else {
+        InitWindow(
+            GetMonitorWidth(GetCurrentMonitor()),
+            GetMonitorHeight(GetCurrentMonitor()),
+            "Encore"
+        );
         FullscreenBorderless();
     }
 
@@ -747,12 +705,6 @@ int main(int argc, char *argv[]) {
     SetExitKey(0);
     audioManager.loadSample("Assets/combobreak.mp3", "miss");
 
-    char trackSpeedStr[256];
-    snprintf(
-        trackSpeedStr, 255, "%.3f", settingsMain.trackSpeedOptions[settingsMain.trackSpeed]
-    );
-    trackSpeedButton = "Track Speed " + std::string(trackSpeedStr) + "x";
-
     ChangeDirectory(GetApplicationDirectory());
 
     GLFWkeyfun origKeyCallback = glfwSetKeyCallback(glfwGetCurrentContext(), keyCallback);
@@ -760,13 +712,8 @@ int main(int argc, char *argv[]) {
         glfwSetGamepadStateCallback(gamepadStateCallback);
     glfwSetKeyCallback(glfwGetCurrentContext(), origKeyCallback);
     glfwSetGamepadStateCallback(origGamepadCallback);
-    // GuiLoadStyle((directory / "Assets/ui/encore.rgs").string().c_str());
 
     SETDEFAULTSTYLE();
-
-    TheGameRenderer.sustainPlane = GenMeshPlane(0.8f, 1.0f, 1, 1);
-    // bool wideSoloPlane = player.diff == 3;
-    // TheGameRenderer.soloPlane = GenMeshPlane(wideSoloPlane ? 6 : 5, 1.0f, 1, 1);
 
     SetRandomSeed(std::chrono::system_clock::now().time_since_epoch().count());
     assets.FirstAssets();
@@ -776,11 +723,10 @@ int main(int argc, char *argv[]) {
     menu.currentScreen = CACHE_LOADING_SCREEN;
     Menu::onNewMenu = true;
     enctime.SetOffset(settingsMain.avOffsetMS / 1000.0);
+
     audioManager.loadSample("Assets/highway/clap.mp3", "clap");
     while (!WindowShouldClose()) {
         u.calcUnits();
-        GuiSetStyle(DEFAULT, TEXT_SIZE, (int)u.hinpct(0.03f));
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 0);
         double curTime = GetTime();
         float bgTime = curTime / 5.0f;
         if (IsKeyPressed(KEY_F11)
@@ -805,8 +751,6 @@ int main(int argc, char *argv[]) {
                 SetWindowSize(GetScreenWidth(), minHeight);
         }
 
-        // float diffDistance = player.diff == 3 ? 2.0f : 1.5f;
-        // float lineDistance = player.diff == 3 ? 1.5f : 1.0f;
         BeginDrawing();
         ClearBackground(DARKGRAY);
         SetShaderValue(assets.bgShader, assets.bgTimeLoc, &bgTime, SHADER_UNIFORM_FLOAT);
@@ -819,13 +763,25 @@ int main(int argc, char *argv[]) {
             glfwSetKeyCallback(glfwGetCurrentContext(), origKeyCallback);
             glfwSetGamepadStateCallback(origGamepadCallback);
             switch (menu.currentScreen) { // NOTE: when adding a new Menu derivative, you
-                                          // must put its enum value in Screens, and its
-                                          // assignment in this switch/case. You will also
-                                          // add its case to the `ActiveMenu->Draw();`
-                                          // cases.
+                // must put its enum value in Screens, and its
+                // assignment in this switch/case. You will also
+                // add its case to the `ActiveMenu->Draw();`
+                // cases.
             case RESULTS: {
                 ActiveMenu = new resultsMenu;
                 ActiveMenu->Load();
+                break;
+            }
+            case SONG_SELECT: {
+                TheSongList.curSong->LoadAlbumArt();
+                break;
+            }
+            case READY_UP: {
+                TheSongList.curSong->LoadAlbumArt();
+                SetTextureWrap(TheSongList.curSong->albumArtBlur, TEXTURE_WRAP_REPEAT);
+                SetTextureFilter(
+                    TheSongList.curSong->albumArtBlur, TEXTURE_FILTER_ANISOTROPIC_16X
+                );
                 break;
             }
             case SOUND_TEST: {
@@ -837,7 +793,8 @@ int main(int argc, char *argv[]) {
                 ActiveMenu = new cacheLoadingScreen;
                 ActiveMenu->Load();
                 break;
-            } case GAMEPLAY: {
+            }
+            case GAMEPLAY: {
                 glfwSetKeyCallback(glfwGetCurrentContext(), keyCallback);
                 glfwSetGamepadStateCallback(gamepadStateCallback);
                 ActiveMenu = new GameplayMenu;
@@ -2077,7 +2034,8 @@ int main(int argc, char *argv[]) {
                     bool isCurSong = i == TheSongList.curSong->songListPos - 1;
                     Font &artistFont =
                         isCurSong ? assets.josefinSansItalic : assets.josefinSansItalic;
-                    Song &songi = TheSongList.songs[TheSongList.listMenuEntries[i].songListID];
+                    Song &songi =
+                        TheSongList.songs[TheSongList.listMenuEntries[i].songListID];
                     int songID = TheSongList.listMenuEntries[i].songListID;
 
                     // float buttonX =
@@ -2107,10 +2065,10 @@ int main(int argc, char *argv[]) {
                                         (u.RightSide - u.winpct(0.25f)),
                                         songEntryHeight },
                             ""
-                        ) && overshellRenderer.CanMouseClick) {
+                        )
+                        && overshellRenderer.CanMouseClick) {
                         // curPlayingSong = songID;
                         selSong = true;
-                        albumArtSelectedAndLoaded = false;
                         albumArtLoaded = false;
                         TheSongList.curSong = &TheSongList.songs[songID];
                     }
@@ -2477,7 +2435,8 @@ int main(int argc, char *argv[]) {
                                 u.winpct(0.2f),
                                 u.hinpct(0.05f) },
                     "Play Song"
-                ) && overshellRenderer.CanMouseClick) {
+                )
+                && overshellRenderer.CanMouseClick) {
                 // curPlayingSong = menu.ChosenSongInt;
                 if (!TheSongList.curSong->ini) {
                     TheSongList.curSong->LoadSong(TheSongList.curSong->songInfoPath);
@@ -2495,7 +2454,8 @@ int main(int argc, char *argv[]) {
                                 u.winpct(0.2f),
                                 u.hinpct(0.05f) },
                     "Sort"
-                ) && overshellRenderer.CanMouseClick) {
+                )
+                && overshellRenderer.CanMouseClick) {
                 currentSortValue = NextSortType(currentSortValue);
                 TheSongList.sortList(currentSortValue, TheSongList.curSong->songListPos);
             }
@@ -2505,7 +2465,8 @@ int main(int argc, char *argv[]) {
                                 u.winpct(0.2f),
                                 u.hinpct(0.05f) },
                     "Back"
-                ) && overshellRenderer.CanMouseClick) {
+                )
+                && overshellRenderer.CanMouseClick) {
                 for (Song &songi : TheSongList.songs) {
                     songi.titleXOffset = 0;
                     songi.artistXOffset = 0;
@@ -2521,15 +2482,6 @@ int main(int argc, char *argv[]) {
             break;
         }
         case READY_UP: {
-            if (!albumArtLoaded) {
-                // selectedSong = TheSongList.songs[curPlayingSong];
-                TheSongList.curSong->LoadAlbumArt();
-                albumArtLoaded = true;
-            }
-            SetTextureWrap(TheSongList.curSong->albumArtBlur, TEXTURE_WRAP_REPEAT);
-            SetTextureFilter(
-                TheSongList.curSong->albumArtBlur, TEXTURE_FILTER_ANISOTROPIC_16X
-            );
             menu.DrawAlbumArtBackground(TheSongList.curSong->albumArtBlur);
 
             float AlbumArtLeft = u.LeftSide;
@@ -2630,7 +2582,6 @@ int main(int argc, char *argv[]) {
                             player->instSelected = false;
                             player->diffSelected = false;
                             TheGameRenderer.midiLoaded = false;
-                            albumArtSelectedAndLoaded = false;
                             albumArtLoaded = false;
                             menu.SwitchScreen(SONG_SELECT);
                         } else {
@@ -2643,7 +2594,9 @@ int main(int argc, char *argv[]) {
                     // TheSongList.curSong->artist.c_str()), 70,7, WHITE);
 
                     for (int i = 0; i < TheSongList.curSong->parts.size(); i++) {
-                        bool CanClassic = ThePlayerManager.GetActivePlayer(playerInt)->ClassicMode == TheSongList.curSong->parts[i]->plastic;
+                        bool CanClassic =
+                            ThePlayerManager.GetActivePlayer(playerInt)->ClassicMode
+                            == TheSongList.curSong->parts[i]->plastic;
                         if (TheSongList.curSong->parts[i]->hasPart && CanClassic) {
                             GuiSetStyle(
                                 BUTTON,
@@ -2760,12 +2713,14 @@ int main(int argc, char *argv[]) {
                 }
                 // load difficulty select
                 if (TheGameRenderer.midiLoaded && player->diffSelection) {
-                    for (auto &chartDiff :TheSongList.curSong->parts[player->Instrument]->charts) {
+                    for (auto &chartDiff :
+                         TheSongList.curSong->parts[player->Instrument]->charts) {
                         if (chartDiff.valid) {
                             GuiSetStyle(
                                 BUTTON,
                                 BASE_COLOR_NORMAL,
-                                chartDiff.diff == player->Difficulty && player->diffSelected
+                                chartDiff.diff == player->Difficulty
+                                        && player->diffSelected
                                     ? ColorToInt(
                                           ColorBrightness(player->AccentColor, -0.25)
                                       )
@@ -2777,8 +2732,7 @@ int main(int argc, char *argv[]) {
                                           - (u.hinpct(0.05f) * chartDiff.diff),
                                       u.winpct(0.2f),
                                       u.hinpct(0.05f) },
-                                    diffList[chartDiff.diff]
-                                        .c_str()
+                                    diffList[chartDiff.diff].c_str()
                                 )) {
                                 player->Difficulty = chartDiff.diff;
                                 player->diffSelected = true;
@@ -2831,7 +2785,8 @@ int main(int argc, char *argv[]) {
                         }
                         if (GuiButton({ 0, 0, 60, 60 }, "<")) {
                             if (player->ReadiedUpBefore
-                                || !TheSongList.curSong->parts[player->Instrument]->hasPart) {
+                                || !TheSongList.curSong->parts[player->Instrument]
+                                        ->hasPart) {
                                 player->instSelection = true;
                                 player->diffSelection = false;
                                 player->instSelected = false;
@@ -2940,7 +2895,6 @@ int main(int argc, char *argv[]) {
                         // TheGameRenderer.highwayInAnimation = false;
                         // TheGameRenderer.songStartTime = GetTime();
                         menu.SwitchScreen(CHART_LOADING_SCREEN);
-
                     }
                     GuiSetStyle(
                         BUTTON,
@@ -3059,10 +3013,14 @@ int main(int argc, char *argv[]) {
             }
             break;
         }
-        case SOUND_TEST:
+        case SOUND_TEST: {
             ActiveMenu->Draw();
-        case CACHE_LOADING_SCREEN:
+            break;
+        }
+        case CACHE_LOADING_SCREEN: {
             ActiveMenu->Draw();
+            break;
+        }
         }
         EndDrawing();
 
@@ -3086,6 +3044,7 @@ int main(int argc, char *argv[]) {
             previousTime = currentTime;
         }
     }
+
     CloseWindow();
     return 0;
 }

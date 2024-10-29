@@ -8,8 +8,8 @@
 
 using json = nlohmann::json;
 
-PlayerManager::PlayerManager() {}
-PlayerManager::~PlayerManager() {}
+PlayerManager::PlayerManager() = default;
+PlayerManager::~PlayerManager() = default;
 
 void PlayerManager::LoadPlayerList() {
     try {
@@ -21,23 +21,14 @@ void PlayerManager::LoadPlayerList() {
             newPlayer.playerJsonObjectName = jsonObject.key();
             newPlayer.Name = jsonObject.value().at("name").get<std::string>();
             newPlayer.PlayerID = jsonObject.value().at("UUID").get<std::string>();
-            newPlayer.Difficulty = jsonObject.value().at("diff").get<int>();
-            newPlayer.Instrument = jsonObject.value().at("inst").get<int>();
-            newPlayer.NoteSpeed = jsonObject.value().at("NoteSpeed").get<float>();
-            newPlayer.InputCalibration =
-                jsonObject.value().at("inputOffset").get<float>();
 
-            if (!jsonObject.value()["length"].is_null())
-                newPlayer.HighwayLength = jsonObject.value().at("length").get<float>();
-            else
-                newPlayer.HighwayLength = 1.0f;
+#define SETTING_ACTION(type, name, key)                                                  \
+newPlayer.name = jsonObject.value().at(key).get<type>();
+            PLAYER_JSON_SETTINGS;
+#undef SETTING_ACTION
 
-            newPlayer.Bot = jsonObject.value().at("bot").get<bool>();
-            newPlayer.ClassicMode = jsonObject.value().at("classic").get<bool>();
-            newPlayer.ProDrums = jsonObject.value().at("proDrums").get<bool>();
-            newPlayer.LeftyFlip = jsonObject.value().at("lefty").get<bool>();
             if (!jsonObject.value()["accentColor"].is_null()) {
-                int r = 0, g = 0, b = 0;
+                int r, g, b;
                 r = jsonObject.value()["accentColor"].at("r").get<int>();
                 g = jsonObject.value()["accentColor"].at("g").get<int>();
                 b = jsonObject.value()["accentColor"].at("b").get<int>();
@@ -49,20 +40,29 @@ void PlayerManager::LoadPlayerList() {
                 newPlayer.AccentColor = { 255, 0, 255, 255 };
 
             TraceLog(LOG_INFO, ("Successfully loaded player " + newPlayer.Name).c_str());
-            if (newPlayer.PlayerID == "3" || newPlayer.PlayerID == "6" || newPlayer.PlayerID == "1") {
+            if (newPlayer.PlayerID == "3" || newPlayer.PlayerID == "6"
+                || newPlayer.PlayerID == "1") {
                 // FOR GOOD MEASURE SO PEOPLE DONT HAVE TO ASK
-                Encore::EncoreLog(LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS.");
-                Encore::EncoreLog(LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS.");
-                Encore::EncoreLog(LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS.");
-                Encore::EncoreLog(LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS.");
-                Encore::EncoreLog(LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS.");
+                Encore::EncoreLog(
+                    LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS."
+                );
+                Encore::EncoreLog(
+                    LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS."
+                );
+                Encore::EncoreLog(
+                    LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS."
+                );
+                Encore::EncoreLog(
+                    LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS."
+                );
+                Encore::EncoreLog(
+                    LOG_ERROR, "WE'RE DELETING YOUR PLAYER FILE. MAKE YOUR OWN PLAYERS."
+                );
 
                 remove(PlayerListSaveFile);
             } else {
                 PlayerList.push_back(std::move(newPlayer));
             }
-
-
         };
     } catch (const std::exception &e) {
         Encore::EncoreLog(
@@ -77,7 +77,7 @@ void PlayerManager::SavePlayerList() {
     }
 }; // ough this is gonna be complicated
 
-void PlayerManager::SaveSpecificPlayer(int slot) {
+void PlayerManager::SaveSpecificPlayer(const int slot) {
     json PlayerListJson;
     if (exists(PlayerListSaveFile)) {
         std::ifstream f(PlayerListSaveFile);
@@ -87,46 +87,48 @@ void PlayerManager::SaveSpecificPlayer(int slot) {
     Player *player = GetActivePlayer(slot);
     if (!PlayerListJson.contains(player->playerJsonObjectName)) {
         PlayerListJson[player->playerJsonObjectName] = {
-            {"name", player->Name},
-            {"UUID", player->PlayerID},
-#define SETTING_ACTION(type, name, key) {key, player->name},
+            { "name", player->Name },
+            { "UUID", player->PlayerID },
+#define SETTING_ACTION(type, name, key) { key, player->name },
             PLAYER_JSON_SETTINGS
 #undef SETTING_ACTION
-            {"accentColor",{
-                {"r", player->AccentColor.r},
-                {"g", player->AccentColor.g},
-                {"b", player->AccentColor.b}
-            }}
+            { "accentColor",
+              { { "r", player->AccentColor.r },
+                { "g", player->AccentColor.g },
+                { "b", player->AccentColor.b } } }
         };
     } else {
         PlayerListJson.at(player->playerJsonObjectName)["name"] = player->Name;
         PlayerListJson.at(player->playerJsonObjectName)["UUID"] = player->PlayerID;
 
-#define SETTING_ACTION(type, name, key) PlayerListJson.at(player->playerJsonObjectName)[key] = player->name;
+#define SETTING_ACTION(type, name, key)                                                  \
+    PlayerListJson.at(player->playerJsonObjectName)[key] = player->name;
         PLAYER_JSON_SETTINGS;
 #undef SETTING_ACTION
 
-        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["r"] = player->AccentColor.r;
-        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["g"] = player->AccentColor.g;
-        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["b"] = player->AccentColor.b;
+        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["r"] =
+            player->AccentColor.r;
+        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["g"] =
+            player->AccentColor.g;
+        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["b"] =
+            player->AccentColor.b;
     }
-
 
     std::ofstream o(PlayerListSaveFile, std::ios::out | std::ios::trunc);
     o << PlayerListJson.dump(2, ' ', false, nlohmann::detail::error_handler_t::strict);
     o.close();
 }
 
-void PlayerManager::CreatePlayer(std::string name) {
+void PlayerManager::CreatePlayer(const std::string &name) {
     Player newPlayer;
     newPlayer.Name = name;
     newPlayer.playerJsonObjectName = name;
     PlayerList.push_back(std::move(newPlayer));
 }; // set it as the next one in PlayerList
 
-void PlayerManager::DeletePlayer(Player PlayerToDelete) {
+void PlayerManager::DeletePlayer(const Player &PlayerToDelete) {
 
 }; // remove player, reload playerlist
-void PlayerManager::RenamePlayer(Player PlayerToRename) {
+void PlayerManager::RenamePlayer(const Player &PlayerToRename) {
 
 }; // rename player

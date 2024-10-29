@@ -284,6 +284,9 @@ public:
             note.countedForSection = false;
             note.countedForSolo = false;
             note.Ghosted = false;
+            for (auto &cLane : note.pLanes) {
+                cLane.heldTime = 0.0;
+            }
         }
         sections.ResetEvents();
         overdrive.ResetEvents();

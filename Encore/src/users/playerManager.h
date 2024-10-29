@@ -59,9 +59,9 @@ public:
         return nullptr;
     }
 
-    void CreatePlayer(std::string name);
-    void DeletePlayer(Player PlayerToDelete); // remove player, reload playerlist
-    void RenamePlayer(Player PlayerToRename); // rename player
+    void CreatePlayer(const std::string &name);
+    void DeletePlayer(const Player &PlayerToDelete); // remove player, reload playerlist
+    void RenamePlayer(const Player &PlayerToRename); // rename player
 };
 
 extern PlayerManager ThePlayerManager;

@@ -51,7 +51,7 @@ void InputHandler::CheckPlasticInputs(
     if (stats->curNoteInt >= curChart.notes.size())
         stats->curNoteInt = curChart.notes.size() - 1;
     Note &curNote = curChart.notes[stats->curNoteInt];
-    int pressedMask = calculatePressedMask(stats);
+    stats->PressedMask = calculatePressedMask(stats);
     bool inCoda = songList.curSong->BRE.IsCodaActive(eventTime);
     Note &lastNote = curChart.notes[stats->curNoteInt == 0 ? 0 : stats->curNoteInt - 1];
 
@@ -61,9 +61,9 @@ void InputHandler::CheckPlasticInputs(
 
     bool firstNote = stats->curNoteInt == 0;
 
-    bool greaterThanLastNoteMatch = pressedMask > (lastNote.mask << 2) + 1;
+    bool greaterThanLastNoteMatch = stats->PressedMask > (lastNote.mask << 2) + 1;
     bool frettingInput = action == GLFW_PRESS && lane != STRUM && lane != -1;
-    bool noteMatch = isNoteMatch(curNote, pressedMask, stats);
+    bool noteMatch = isNoteMatch(curNote, stats->PressedMask, stats);
 
     bool HopoOverstrumCheck =
         ((lastNote.phopo && lastNote.hit && !firstNote)

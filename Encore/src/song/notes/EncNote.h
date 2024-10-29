@@ -9,11 +9,23 @@
 #include <cstdint>
 #include <vector>
 
+struct ClassicLane {
+    double length = 0.0;
+    double beatsLen = 0.0;
+    double heldTime = 0.0;
+    int lane;
+    ClassicLane(double _length, double _beatsLen, int _lane) {
+        length = _length;
+        beatsLen = _beatsLen;
+        lane = _lane;
+    }
+};
+
 class Note {
 public:
     double time;
-    double len;
-    double beatsLen;
+    double len = 0.0;
+    double beatsLen = 0.0;
     double heldTime = 0.0;
     double sustainThreshold = 0.2;
     double HitOffset = 0.0;
@@ -39,7 +51,7 @@ public:
     bool hitWithFAS = false;
     uint8_t mask;
     bool chord = false;
-    std::vector<int> pLanes;
+    std::vector<ClassicLane> pLanes;
     bool pForceOn = false;
     bool pForceOff = false;
     bool phopo = false;
@@ -64,18 +76,18 @@ public:
     }
 
     void cHitNote(double eventTime, double offset) {
-        hit = true;
-        HitOffset = time - eventTime;
-        hitTime = eventTime;
+        this->hit = true;
+        this->HitOffset = this->time - eventTime;
+        this->hitTime = eventTime - offset;
 
-        if ((len) > 0) {
-            held = true;
+        if ((this->pLanes[0].length) > 0) {
+            this->held = true;
         }
         if (isPerfect(eventTime, offset)) {
-            perfect = true;
+            this->perfect = true;
         }
 
-        accounted = true;
+        this->accounted = true;
     }
 
     bool padHitNote(double eventTime, double offset) {

@@ -132,14 +132,14 @@ if (GuiButton(
                         }
 */
 bool MenuButton(int slot, int x, std::string string) {
-    Units &unit = Units::getInstance();
+    Units &u = Units::getInstance();
     float OvershellLeftLoc =
-        (unit.wpct(0.125) + (unit.winpct(0.25) * slot)) - unit.winpct(0.1);
+        (u.wpct(0.125) + (u.winpct(0.25) * slot)) - u.winpct(0.1);
     return GuiButton(
         { OvershellLeftLoc,
-          unit.hpct(1.0f) - (unit.winpct(0.03f) * (x + 1)),
-          unit.winpct(0.2f),
-          unit.winpct(0.03f) },
+          u.hpct(1.0f) - (u.winpct(0.03f) * (x + 1)),
+          u.winpct(0.2f),
+          u.winpct(0.03f) },
         string.c_str()
     );
     SETDEFAULTSTYLE();

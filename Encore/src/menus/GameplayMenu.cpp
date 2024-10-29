@@ -157,6 +157,10 @@ void GameplayMenu::Draw() {
     int played = TheSongTime.GetSongTime();
     int length = TheSongTime.GetSongLength();
     float Width = Remap(played, 0, length, 0, WidthOfTimerbox);
+    int TotalBandScore = ThePlayerManager.BandStats.Score;
+    for (int a = 0; a < ThePlayerManager.PlayersActive; a++) {
+        TotalBandScore += ThePlayerManager.BandStats.SustainScoreBuffer[a];
+    }
     BeginScissorMode(
         TimerboxX - WidthOfTimerbox,
         TimerboxY - HeightOfTimerbox,
@@ -173,10 +177,10 @@ void GameplayMenu::Draw() {
     );
     EndScissorMode();
     GameMenu::mhDrawText(
-        assets.redHatDisplayItalicLarge,
-        GameMenu::scoreCommaFormatter(ThePlayerManager.BandStats.Score),
-        { u.RightSide - u.winpct(0.015f), scoreY },
-        u.hinpct(0.053),
+        assets.redHatMono,
+        GameMenu::scoreCommaFormatter(TotalBandScore),
+        { u.RightSide - u.winpct(0.0145f), scoreY + u.hinpct(0.0025)},
+        u.hinpct(0.05),
         Color { 107, 161, 222, 255 },
         assets.sdfShader,
         RIGHT
@@ -276,52 +280,17 @@ void GameplayMenu::Draw() {
     }
 
     for (int pnum = 0; pnum < ThePlayerManager.PlayersActive; pnum++) {
-        switch (ThePlayerManager.PlayersActive) {
-        case (1): {
-            TheGameRenderer.cameraSel = 0;
-            TheGameRenderer.renderPos = 0;
-            break;
+        ThePlayerManager.BandStats.SustainScoreBuffer[pnum] = ThePlayerManager.GetActivePlayer(pnum)->stats->SustainScoreBuffer[0];
+        for (int g = 1; g < ThePlayerManager.GetActivePlayer(pnum)->stats->SustainScoreBuffer.size(); g++) {
+            ThePlayerManager.BandStats.SustainScoreBuffer[pnum] += ThePlayerManager.GetActivePlayer(pnum)->stats->SustainScoreBuffer[g];
         }
-        case (2): {
-            if (pnum == 0) {
-                TheGameRenderer.cameraSel = 1;
-                TheGameRenderer.renderPos = GetScreenWidth() / 8;
-            } else {
-                TheGameRenderer.cameraSel = 0;
-                TheGameRenderer.renderPos = -GetScreenWidth() / 8;
-            }
-            break;
-        }
-        case (3): {
-            if (pnum == 0) {
-                TheGameRenderer.cameraSel = 2;
-                TheGameRenderer.renderPos = GetScreenWidth() / 4;
-            } else if (pnum == 1) {
-                TheGameRenderer.cameraSel = 0;
-                TheGameRenderer.renderPos = 0;
-            } else if (pnum == 2) {
-                TheGameRenderer.cameraSel = 1;
-                TheGameRenderer.renderPos = -GetScreenWidth() / 4;
-            }
-            break;
-        }
-        case (4): {
-            if (pnum == 0) {
-                TheGameRenderer.cameraSel = 2;
-                TheGameRenderer.renderPos = GetScreenWidth() / 4;
-            } else if (pnum == 1) {
-                TheGameRenderer.cameraSel = 3;
-                TheGameRenderer.renderPos = GetScreenWidth() / 12;
-            } else if (pnum == 2) {
-                TheGameRenderer.cameraSel = 0;
-                TheGameRenderer.renderPos = -GetScreenWidth() / 12;
-            } else if (pnum == 3) {
-                TheGameRenderer.cameraSel = 1;
-                TheGameRenderer.renderPos = -GetScreenWidth() / 4;
-            }
-            break;
-        }
-        }
+        TheGameRenderer.cameraSel = CameraSelectionPerPlayer[ThePlayerManager.PlayersActive-1][pnum];
+        int pos = CameraPosPerPlayer[ThePlayerManager.PlayersActive-1][pnum];
+        if (pos == 0)
+            TheGameRenderer.renderPos = CameraPosPerPlayer[ThePlayerManager.PlayersActive-1][pnum];
+        else
+            TheGameRenderer.renderPos = GetScreenWidth() / CameraPosPerPlayer[ThePlayerManager.PlayersActive-1][pnum];
+
         TheGameRenderer.RenderGameplay(
             ThePlayerManager.GetActivePlayer(pnum), TheSongTime.GetSongTime(), *TheSongList.curSong
         );
@@ -527,21 +496,7 @@ void GameplayMenu::Draw() {
                 0, 0, GetScreenWidth(), GetScreenHeight(), Color { 0, 0, 0, 80 }
             );
             osr.DrawTopOvershell(0.2f);
-            GuiSetStyle(DEFAULT, TEXT_SIZE, (int)u.hinpct(0.08f));
-            GuiSetFont(assets.redHatDisplayBlack);
-            GuiSetStyle(DEFAULT, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-            GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, 0xaaaaaaFF);
-            GuiSetStyle(BUTTON, TEXT_COLOR_FOCUSED, 0xFFFFFFFF);
-            GuiSetStyle(BUTTON, BORDER_WIDTH, 0);
-            GuiSetStyle(BUTTON, BACKGROUND_COLOR, 0);
-            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, 0x00000000);
-            GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, 0x00000000);
-            GuiSetStyle(BUTTON, BASE_COLOR_PRESSED, 0x00000000);
-            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, 0x00000000);
-            GuiSetStyle(BUTTON, BORDER_COLOR_FOCUSED, 0x00000000);
-            GuiSetStyle(BUTTON, BORDER_COLOR_PRESSED, 0x00000000);
-            GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0x00000000);
-
+            SET_LARGE_BUTTON_STYLE();
             if (GuiButton(
                     { u.wpct(0.02f), u.hpct(0.3f), u.winpct(0.2f), u.hinpct(0.08f) },
                     "Resume"
@@ -618,33 +573,10 @@ void GameplayMenu::Draw() {
                 TheGameRenderer.highwayInAnimation = false;
                 TheGameRenderer.highwayInEndAnim = false;
                 TheGameRenderer.songPlaying = false;
-                GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, 0xFFFFFFFF);
-                GuiSetStyle(BUTTON, BORDER_COLOR_FOCUSED, 0xFFFFFFFF);
-                GuiSetStyle(BUTTON, BORDER_COLOR_PRESSED, 0xFFFFFFFF);
-                GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0x505050ff);
-                GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
-                GuiSetFont(assets.rubik);
-                GuiSetStyle(DEFAULT, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+                SETDEFAULTSTYLE();
                 return;
             }
-            GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, 0xFFFFFFFF);
-            GuiSetStyle(BUTTON, BORDER_COLOR_FOCUSED, 0xFFFFFFFF);
-            GuiSetStyle(BUTTON, BORDER_COLOR_PRESSED, 0xFFFFFFFF);
-            GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0x505050ff);
-            GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
-            GuiSetFont(assets.rubik);
-            GuiSetStyle(DEFAULT, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
-            GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, 0x181827FF);
-            GuiSetStyle(
-                BUTTON,
-                BASE_COLOR_FOCUSED,
-                ColorToInt(ColorBrightness(Color { 255, 0, 255, 255 }, -0.5))
-            );
-            GuiSetStyle(
-                BUTTON,
-                BASE_COLOR_PRESSED,
-                ColorToInt(ColorBrightness(Color { 255, 0, 255, 255 }, -0.3))
-            );
+            SETDEFAULTSTYLE();
 
             DrawTextEx(
                 assets.rubikBoldItalic,

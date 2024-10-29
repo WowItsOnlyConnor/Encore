@@ -310,7 +310,7 @@ void Chart::parsePlasticNotes(
                         int noteIdx = findNotePreIdx(noteOnTime[lane], lane);
                         if (noteIdx != -1) {
                             notesPre[noteIdx].beatsLen = (tick - notesPre[noteIdx].tick)
-                                / (float)midiFile.getTicksPerQuarterNote();
+                                / 480;
                             if (notesPre[noteIdx].beatsLen > 0.25) {
                                 notesPre[noteIdx].len = time - notesPre[noteIdx].time;
                             } else {
@@ -363,7 +363,7 @@ void Chart::parsePlasticNotes(
         newNote.mask = PlasticFrets[note.lane];
         for (Note noteMatching : notesPre) {
             if (noteMatching.tick == note.tick && noteMatching.lane != note.lane) {
-                newNote.pLanes.push_back(noteMatching.lane);
+                newNote.pLanes.push_back({noteMatching.len, noteMatching.beatsLen, noteMatching.lane});
                 newNote.mask += PlasticFrets[noteMatching.lane];
                 newNote.chord = true;
                 newNote.chordSize++;
@@ -374,12 +374,12 @@ void Chart::parsePlasticNotes(
                 }
             }
         }
-        newNote.pLanes.push_back(note.lane);
+        newNote.pLanes.push_back({note.len, note.beatsLen, note.lane});
         newNote.tick = note.tick;
         if (notes.size() > 0) {
             Note lastNote = notes[notes.size() - 1];
             if (lastNote.tick >= newNote.tick - hopoThresh
-                && lastNote.pLanes[0] != newNote.pLanes[0] && !newNote.chord) {
+                && lastNote.pLanes[0].lane != newNote.pLanes[0].lane && !newNote.chord) {
                 newNote.phopo = true;
             }
         }
@@ -511,7 +511,7 @@ void Chart::parsePlasticNotes(
             noteIt = notes.erase(noteIt);
         } else {
             baseScore += ((36 * note.pLanes.size()) * mult);
-            // baseScore += (note.beatsLen * 12) * mult;
+            baseScore += ((note.beatsLen * 12) * note.pLanes.size()) * mult;
             if (noteIdx == 9)
                 mult = 2;
             else if (noteIdx == 19)
@@ -532,6 +532,7 @@ void Chart::parsePlasticNotes(
     Encore::EncoreLog(LOG_DEBUG, TextFormat("ENC: Processed plastic chart for %01i", instrument));
               
 }
+/*
 void Chart::parsePlasticSection(
     smf::MidiFile &midiFile,
     int trkidx,
@@ -850,6 +851,7 @@ void Chart::parsePlasticSection(
     Encore::EncoreLog(LOG_DEBUG, TextFormat("ENC: Processed plastic chart for %01i", instrument));
               
 }
+*/
 void Chart::parsePlasticDrums(
     smf::MidiFile &midiFile,
     int trkidx,

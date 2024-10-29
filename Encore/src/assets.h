@@ -172,7 +172,7 @@ public:
     Font redHatDisplayBlack;
     Font redHatDisplayItalicLarge;
     Font josefinSansItalic;
-
+    Font redHatMono;
     Font rubik;
     Font rubikItalic;
 

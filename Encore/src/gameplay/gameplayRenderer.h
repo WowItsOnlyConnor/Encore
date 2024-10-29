@@ -55,12 +55,19 @@ class gameplayRenderer {
         float length
     );
 
-    void nDrawDrumsHitEffects(Note note, double time, float notePosX);
-    void nDrawFiveLaneHitEffects(Note note, double time, float notePosX, int lane);
+    void nDrawDrumsHitEffects(Player *player, Note note, double time, float notePosX);
+    void nDrawFiveLaneHitEffects(Player *player, Note note, double time, float notePosX, int lane);
     void
     nDrawPlasticNote(Note note, Color noteColor, float notePosX, float noteScrollPos);
     void nDrawPadNote(Note note, Color noteColor, float notePosX, float noteScrollPos);
-    void nDrawSustain(Note note, Color noteColor, float notePosX, Matrix sustainMatrix);
+    void nDrawSustain(
+        Note note,
+        Color noteColor,
+        float notePosX,
+        float length,
+        float relTime,
+        float relEnd
+    );
     void nDrawCodaLanes(
         float length,
         double sTime,
@@ -116,6 +123,11 @@ public:
     bool streamsLoaded = false;
     bool midiLoaded = false;
 
+    float Back4p = -12.0f;
+    float Height4p = 10.0f;
+    float Height = 7.25f;
+    float Back = -10.0f;
+
     bool extendedSustainActive = false;
     float textureOffset = 0;
     float renderPos = 0;
@@ -123,31 +135,9 @@ public:
     Mesh sustainPlane;
     Mesh soloPlane;
     Texture2D invSoloTex;
-    std::vector<std::vector<Camera3D> > cameraVectors;
-    std::vector<Camera3D> camera1pVector;
-    std::vector<Camera3D> camera2pVector;
-    std::vector<Camera3D> camera3pVector;
-    std::vector<Camera3D> camera4pVector;
+    std::vector<std::vector<Camera3D>> cameraVectors;
 
-    std::vector<float> drumSmasherRotations = {0,0,0,0};
-    std::vector<float> drumSmasherHeights = {0,0,0,0};
 
-    std::vector<float> fiveLaneSmasherRotation = {0,0,0,0,0};
-    std::vector<float> fiveLaneSmasherHeights = {0,0,0,0,0};
-
-    Camera3D camera1p = { 0 };
-
-    Camera3D camera2p1 = { 0 };
-    Camera3D camera2p2 = { 0 };
-
-    Camera3D camera3p1 = { 0 };
-    Camera3D camera3p2 = { 0 };
-    Camera3D camera3p3 = { 0 };
-
-    Camera3D camera4p1 = { 0 };
-    Camera3D camera4p2 = { 0 };
-    Camera3D camera4p3 = { 0 };
-    Camera3D camera4p4 = { 0 };
 
     /*
     gpr.camera.position = Vector3{ 0.0f, 7.0f, -10.0f };
