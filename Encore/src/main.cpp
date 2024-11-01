@@ -2344,11 +2344,16 @@ int main(int argc, char *argv[]) {
                 1,
                 TheSongList.listMenuEntries.size() - 10
             );
-            for (int i = 0; i < 7; i++) {
-                float IconWidth = (float)AlbumHeight / 5.0f;
-                float BoxTopPos = DiffTop + (float)(IconWidth * (i < 4 ? 0 : 1));
-                float ResetToLeftPos = (float)(i > 3 ? i - 4 : i);
-                int asdasd = (float)(i > 3 ? i - 4 : i);
+            float IconWidth = float(AlbumHeight - AlbumOuter) / 5.0f;
+            GameMenu::mhDrawText(assets.rubikItalic, "Pad", { (u.RightSide - AlbumHeight + AlbumInner), DiffTop}, AlbumOuter*3, WHITE, assets.sdfShader, LEFT);
+            GameMenu::mhDrawText(assets.rubikItalic, "Classic", { (u.RightSide - AlbumHeight + AlbumInner), DiffTop+IconWidth+(AlbumOuter*3)}, AlbumOuter*3, WHITE, assets.sdfShader, LEFT);
+            for (int i = 0; i < 10; i++) {
+                bool RowTwo = i < 5;
+                int RowTwoInt = i - 5;
+                float PosTopAddition = RowTwo ? AlbumOuter*3 : AlbumOuter*6;
+                float BoxTopPos = DiffTop + PosTopAddition + float(IconWidth * (RowTwo ? 0 : 1));
+                float ResetToLeftPos = (float)(RowTwo ? i : RowTwoInt);
+                int asdasd = (float)(RowTwo ? i : RowTwoInt);
                 float IconLeftPos =
                     (float)(u.RightSide - AlbumHeight) + IconWidth * ResetToLeftPos;
                 Rectangle Placement = { IconLeftPos, BoxTopPos, IconWidth, IconWidth };
@@ -2526,20 +2531,28 @@ int main(int argc, char *argv[]) {
             float TextPlacementTB = AlbumArtTop;
             float TextPlacementLR = AlbumArtRight + AlbumArtLeft + 32;
             DrawTextEx(
-                assets.rubikBoldItalic,
+                assets.redHatDisplayItalic,
                 TheSongList.curSong->title.c_str(),
-                { TextPlacementLR, TextPlacementTB - 5 },
-                u.hinpct(LargeHeader),
+                { TextPlacementLR, TextPlacementTB },
+                u.hinpct(0.05f),
                 0,
                 WHITE
             );
             DrawTextEx(
-                assets.rubik,
+                assets.rubikItalic,
                 TheSongList.curSong->artist.c_str(),
-                { TextPlacementLR, TextPlacementTB + u.hinpct(LargeHeader) },
-                u.hinpct(MediumHeader),
+                { TextPlacementLR, TextPlacementTB + u.hinpct(0.05125f)},
+                u.hinpct(0.04f),
                 0,
-                LIGHTGRAY
+                WHITE
+            );
+            DrawTextEx(
+                assets.rubikItalic,
+                TheSongList.curSong->charters[0].c_str(),
+                { TextPlacementLR, TextPlacementTB + u.hinpct(0.095f)},
+                u.hinpct(0.04f),
+                0,
+                WHITE
             );
             // todo: allow this to be run per player
             // load midi

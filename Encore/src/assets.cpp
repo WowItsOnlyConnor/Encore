@@ -281,8 +281,12 @@ void Assets::LoadAssets() {
         LoadTextureFilter((directory / "Assets/ui/hugh ring/lead-inv.png"), loadedAssets)
     );
     InstIcons.push_back(
+        LoadTextureFilter((directory / "Assets/ui/hugh ring/keys-inv.png"), loadedAssets)
+    );
+    InstIcons.push_back(
         LoadTextureFilter((directory / "Assets/ui/hugh ring/vox-inv.png"), loadedAssets)
     );
+
 
     SoloBox = Assets::LoadModel_((highwayDir / "Solo.obj"), loadedAssets);
     SoloBackground =

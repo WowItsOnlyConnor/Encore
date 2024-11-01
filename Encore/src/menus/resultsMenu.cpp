@@ -70,7 +70,7 @@ void resultsMenu::Draw() {
     DrawTextEx(
         assets.redHatDisplayItalic,
         TheSongList.curSong->title.c_str(),
-        { u.LeftSide, u.hpct(0.02125f) },
+        { u.LeftSide, u.hpct(0.0225f) },
         u.hinpct(0.05f),
         0,
         WHITE
@@ -78,7 +78,15 @@ void resultsMenu::Draw() {
     DrawTextEx(
         assets.rubikItalic,
         TheSongList.curSong->artist.c_str(),
-        { u.LeftSide, u.hpct(0.07f) },
+        { u.LeftSide, u.hpct(0.075f) },
+        u.hinpct(0.035f),
+        0,
+        WHITE
+    );
+    DrawTextEx(
+        assets.rubikItalic,
+        TheSongList.curSong->charters[0].c_str(),
+        { u.LeftSide, u.hpct(0.115f) },
         u.hinpct(0.035f),
         0,
         WHITE
@@ -117,7 +125,7 @@ void resultsMenu::Draw() {
         u.hinpct(0.05f),
         false
     );
-    float ScoreFontSize = u.hinpct(0.05f);
+    float ScoreFontSize = u.hinpct(0.075f);
     std::string ScoreText = GameMenu::scoreCommaFormatter(ThePlayerManager.BandStats.Score).c_str();
     GameMenu::mhDrawText(
         assets.redHatDisplayItalic,
