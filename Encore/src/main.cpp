@@ -2637,7 +2637,7 @@ int main(int argc, char *argv[]) {
                                 player->instSelected = true;
                                 player->Instrument = i;
                                 int isBassOrVocal = 0;
-                                if (i > 3)
+                                if (i > PartVocals)
                                     player->ClassicMode = true;
                                 else
                                     player->ClassicMode = false;
