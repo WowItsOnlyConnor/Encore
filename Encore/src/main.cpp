@@ -2607,10 +2607,7 @@ int main(int argc, char *argv[]) {
                     // TheSongList.curSong->artist.c_str()), 70,7, WHITE);
 
                     for (int i = 0; i < TheSongList.curSong->parts.size(); i++) {
-                        bool CanClassic =
-                            ThePlayerManager.GetActivePlayer(playerInt)->ClassicMode
-                            == TheSongList.curSong->parts[i]->plastic;
-                        if (TheSongList.curSong->parts[i]->hasPart && CanClassic) {
+                        if (TheSongList.curSong->parts[i]->hasPart) {
                             GuiSetStyle(
                                 BUTTON,
                                 BASE_COLOR_NORMAL,
