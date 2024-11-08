@@ -9,10 +9,11 @@
 #include <map>
 
 std::map<std::string, int> IniStems = {
-    { "song", Invalid },    { "guitar", PartGuitar },  { "bass", PartBass },     { "rhythm", PartBass },
-    { "keys", PartKeys },    { "vocals", PartVocals },  { "vocals_1", PartVocals }, { "vocals_2", PartVocals },
-    { "drums", PartDrums },   { "drums_1", PartDrums }, { "drums_2", PartDrums },  { "drums_3", PartDrums },
-    { "drums_4", PartDrums }, { "crowd", Invalid }
+    { "song", Invalid },        { "guitar", PartGuitar },   { "bass", PartBass },
+    { "rhythm", PartBass },     { "keys", PartKeys },       { "vocals", PartVocals },
+    { "vocals_1", PartVocals }, { "vocals_2", PartVocals }, { "drums", PartDrums },
+    { "drums_1", PartDrums },   { "drums_2", PartDrums },   { "drums_3", PartDrums },
+    { "drums_4", PartDrums },   { "crowd", Invalid }
 };
 
 void Song::LoadInfoINI(std::filesystem::path iniPath) {

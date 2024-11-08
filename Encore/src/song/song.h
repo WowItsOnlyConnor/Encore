@@ -73,8 +73,9 @@ struct Beat {
 
 inline std::string diffList[4] = { "Easy", "Medium", "Hard", "Expert" };
 inline std::vector<std::string> songPartsList {
-    "Drums",         "Bass",         "Lead",       "Keys",         "Vocals",
-    "Classic Drums", "Classic Bass", "Classic Lead", "Classic Keys", "Classic Vocals", "Classic Vocals",
+    "Drums",        "Bass",           "Lead",           "Keys",
+    "Vocals",       "Classic Drums",  "Classic Bass",   "Classic Lead",
+    "Classic Keys", "Classic Vocals", "Classic Vocals",
 };
 class Song {
 public:
@@ -127,20 +128,10 @@ public:
         { "PLASTIC VOCALS", SongParts::Invalid }
     };
 
-    std::vector<int> PlasticToPadEnumConverter = {
-        PartDrums,
-        PartBass,
-        PartGuitar,
-        PartVocals,
-        PartKeys,
-        PartDrums,
-        PartBass,
-        PartGuitar,
-        PartVocals,
-        PartKeys,
-        PartVocals,
-        Invalid
-    };
+    std::vector<int> PlasticToPadEnumConverter = { PartDrums,  PartBass,   PartGuitar,
+                                                   PartVocals, PartKeys,   PartDrums,
+                                                   PartBass,   PartGuitar, PartVocals,
+                                                   PartKeys,   PartVocals, Invalid };
 
     SongParts partFromString(const std::string &str) {
         auto it = midiNameToEnum.find(str);
@@ -414,7 +405,10 @@ public:
         std::ifstream ifs(jsonPath);
 
         if (!ifs.is_open()) {
-            Encore::EncoreLog(LOG_ERROR, TextFormat("Failed to open song JSON file. %s", jsonPath.c_str()));
+            Encore::EncoreLog(
+                LOG_ERROR,
+                TextFormat("Failed to open song JSON file. %s", jsonPath.c_str())
+            );
         }
         if (!stemsPath.empty())
             stemsPath.clear();
@@ -578,9 +572,9 @@ public:
     void parseBeatLines(smf::MidiFile &midiFile, int trkidx, smf::MidiEventList events) {
         for (int i = 0; i < events.getSize(); i++) {
             if (events[i].isNoteOn()) {
-                beatLines.push_back(
-                    { midiFile.getTimeInSeconds(trkidx, i),
-                    (int)events[i][1] == 12, false });
+                beatLines.push_back({ midiFile.getTimeInSeconds(trkidx, i),
+                                      (int)events[i][1] == 12,
+                                      false });
             }
         }
     }
@@ -617,11 +611,15 @@ public:
 
                 if (evt_string == "[music_start]") {
                     music_start = time;
-                    Encore::EncoreLog(LOG_DEBUG, TextFormat("SONG: Song start: %5.4f", time));
+                    Encore::EncoreLog(
+                        LOG_DEBUG, TextFormat("SONG: Song start: %5.4f", time)
+                    );
                 }
                 if (evt_string == "[end]") {
                     end = time;
-                    Encore::EncoreLog(LOG_DEBUG, TextFormat("SONG: Song end: %5.4f", time));
+                    Encore::EncoreLog(
+                        LOG_DEBUG, TextFormat("SONG: Song end: %5.4f", time)
+                    );
                 }
             }
         }
@@ -643,13 +641,16 @@ public:
                         } else
                             songPart = partFromString(trackName);
                         if (songPart > PlasticDrums && songPart <= PlasticGuitar) {
-                            int codaNote = 120; // i dont wanna bother with checking all five lanes
+                            int codaNote = 120; // i dont wanna bother with checking all
+                                                // five lanes
                             for (int i = 0; i < midiFile[track].getSize(); i++) {
                                 if (midiFile[track][i].isNoteOn()
                                     && !midiFile[track][i].isMeta()
                                     && (int)midiFile[track][i][1] == codaNote) {
                                     if (BRE.StartSec == 0.0) {
-                                        BRE.StartSec = midiFile.getTimeInSeconds(midiFile[track][i].tick);
+                                        BRE.StartSec = midiFile.getTimeInSeconds(
+                                            midiFile[track][i].tick
+                                        );
                                         BRE.StartTick = midiFile[track][i].tick;
                                         Encore::EncoreLog(LOG_DEBUG, "BRE start found");
                                     }
@@ -658,7 +659,9 @@ public:
                                     && !midiFile[track][i].isMeta()
                                     && (int)midiFile[track][i][1] == codaNote) {
                                     if (BRE.EndSec == 0.0) {
-                                        BRE.EndSec = midiFile.getTimeInSeconds(midiFile[track][i].tick);
+                                        BRE.EndSec = midiFile.getTimeInSeconds(
+                                            midiFile[track][i].tick
+                                        );
                                         BRE.EndTick = midiFile[track][i].tick;
                                         Encore::EncoreLog(LOG_DEBUG, "BRE end found");
                                         codaCount++;
