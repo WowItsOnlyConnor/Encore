@@ -401,11 +401,6 @@ void Chart::parsePlasticNotes(
         for (Note &note : notes) {
             if (note.time > tapPhrases[curTap].EndSec && curTap < tapPhrases.size() - 1)
                 curTap++;
-
-            // Encore::EncoreLog(LOG_DEBUG, "fOn: %01i", forcedOnPhrases[curFOn].StartSec << std::EndSecl <<
-            // "fOff: "
-            //           << forcedOnPhrases[curFOn].EndSec 
-
             if (note.tick >= tapPhrases[curTap].StartTick
                 && note.tick < tapPhrases[curTap].EndTick) {
                 note.pTap = true;
@@ -420,11 +415,6 @@ void Chart::parsePlasticNotes(
             if (note.time > forcedOffPhrases[curFOff].EndSec
                 && curFOff < forcedOffPhrases.size() - 1)
                 curFOff++;
-
-            // Encore::EncoreLog(LOG_DEBUG, "fOn: %01i", forcedOnPhrases[curFOn].StartSec << std::EndSecl <<
-            // "fOff: "
-            //           << forcedOnPhrases[curFOn].EndSec 
-
             if (note.time >= forcedOffPhrases[curFOff].StartSec
                 && note.time < forcedOffPhrases[curFOff].EndSec) {
                 if (!note.pTap)
@@ -438,11 +428,6 @@ void Chart::parsePlasticNotes(
             if (note.time > forcedOnPhrases[curFOn].EndSec
                 && curFOn < forcedOnPhrases.size() - 1)
                 curFOn++;
-
-            // Encore::EncoreLog(LOG_DEBUG, "fOn: %01i", forcedOnPhrases[curFOn].StartSec << std::EndSecl <<
-            // "fOff: "
-            //           << forcedOnPhrases[curFOn].EndSec 
-
             if (note.time >= forcedOnPhrases[curFOn].StartSec
                 && note.time < forcedOnPhrases[curFOn].EndSec) {
                 if (!note.pTap)

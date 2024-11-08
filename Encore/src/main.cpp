@@ -1,4 +1,4 @@
-﻿
+﻿#define JSON_DIAGNOSTICS 1
 #include "menus/GameplayMenu.h"
 #include "song/songlist.h"
 #include "users/playerManager.h"

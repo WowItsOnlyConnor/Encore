@@ -711,73 +711,74 @@ void gameplayRenderer::RenderPadNotes(
                 if (player->stats->overdriveFill > 1.0f)
                     player->stats->overdriveFill = 1.0f;
             }
+            double HighwayEnd = length + (smasherPos * 4);
 
             curChart.solos.UpdateEventViaNote(curNote, player->stats->curSolo);
             curChart.overdrive.UpdateEventViaNote(curNote, player->stats->curODPhrase);
             curChart.sections.UpdateEventViaNote(curNote, player->stats->curSection);
             curChart.fills.UpdateEventViaNote(curNote, player->stats->curFill);
+            double NoteStartPositionWorld =
+                        GetNotePos(curNote.time, curSongTime, player->NoteSpeed, HighwayEnd);
+            double NoteEndPositionWorld = GetNotePos(
+                curNote.time + curNote.len, curSongTime, player->NoteSpeed, HighwayEnd
+            );
 
-            double relTime = GetNoteOnScreenTime(
-                curNote.time, curSongTime, player->NoteSpeed, player->Difficulty, length
-            );
-            double relEnd = GetNoteOnScreenTime(
-                curNote.time + curNote.len,
-                curSongTime,
-                player->NoteSpeed,
-                player->Difficulty,
-                length
-            );
+            //double relTime = GetNoteOnScreenTime(
+            //    curNote.time, curSongTime, player->NoteSpeed, player->Difficulty, length
+            //);
+            //double relEnd = GetNoteOnScreenTime(
+            //    curNote.time + curNote.len,
+            //    curSongTime,
+            //    player->NoteSpeed,
+            //    player->Difficulty,
+            //    length
+            //);
             float notePosX = diffDistance
                 - (1.0f
                    * (float)(player->LeftyFlip
                                  ? (player->Difficulty == 3 ? 4 : 3) - curNote.lane
                                  : curNote.lane));
-            if (relTime > 1.5) {
+            if (NoteStartPositionWorld > HighwayEnd) {
                 break;
             }
-            if (relEnd > 1.5)
-                relEnd = 1.5;
-            if (relEnd < -1)
+            if (NoteEndPositionWorld > HighwayEnd)
+                NoteEndPositionWorld = HighwayEnd;
+            if (NoteEndPositionWorld < -1)
                 continue;
             // Vector3 NotePos = {notePosX, 0, smasherPos + (length * (float) relTime)};
-            float noteScrollPos = smasherPos + (length * (float)relTime);
+            // float noteScrollPos = smasherPos + (length * (float)relTime);
 
-            nDrawPadNote(curNote, NoteColor, notePosX, noteScrollPos);
+            nDrawPadNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
             PlayerGameplayStats *stats = player->stats;
             if ((curNote.len) > 0) {
-                if (curNote.hit && curNote.held) {
-                    if (curNote.heldTime
-                        < (curNote.len * (player->NoteSpeed * DiffMultiplier))) {
-                        curNote.heldTime = 0.0 - relTime;
-                        // note: this was old sustain scoring code
-                        // if (!bot) {
-                        stats->SustainScoreBuffer[curNote.lane] =
-                            (float)(curNote.heldTime / curNote.len)
-                            * (12 * curNote.beatsLen) * stats->multiplier();
-                        //}
-                        if (relTime < 0.0)
-                            relTime = 0.0;
-                    }
-                    if (relEnd <= 0.0) {
-                        if (relTime < 0.0)
-                            relTime = relEnd;
-                        // if (!bot) {
-                        stats->Score += stats->SustainScoreBuffer[curNote.lane];
-                        stats->SustainScoreBuffer[curNote.lane] = 0;
-                        // }
+                if (curNote.held) {
+                        NoteStartPositionWorld = smasherPos;
+                    curNote.heldTime = curSongTime - curNote.time;
+                    if (curNote.heldTime >= curNote.len)
+                        curNote.heldTime = curNote.len;
+                    stats->SustainScoreBuffer[lane] = float(curNote.heldTime / curNote.len)
+                        * (12 * stats->multiplier() * (curNote.perfect + 1)
+                           * curNote.beatsLen);
+                    if (!stats->HeldFrets[lane] && !stats->HeldFretsAlt[lane]) {
                         curNote.held = false;
                     }
-                } else if (curNote.hit && !curNote.held) {
-                    relTime = relTime + curNote.heldTime;
+                }
+                if (curNote.len <= curNote.heldTime) {
+                    curNote.held = false;
+                }
+                if (!curNote.held && curNote.hit) {
+                    stats->Score += stats->SustainScoreBuffer[lane];
+                    ThePlayerManager.BandStats.Score += stats->SustainScoreBuffer[lane];
+                    stats->SustainScoreBuffer[lane] = 0;
                 }
 
-                nDrawSustain(curNote, NoteColor, notePosX, length, relTime, relEnd);
+                nDrawSustain(curNote, NoteColor, notePosX, length, NoteStartPositionWorld, NoteEndPositionWorld);
             }
 
             nDrawFiveLaneHitEffects(player, curNote, curSongTime, notePosX, lane);
             NoteMultiplierEffect(curSongTime, curNote.time, curNote.miss, player);
 
-            if (relEnd < -1
+            if (NoteEndPositionWorld < -1
                 && player->stats->curNoteIdx[lane]
                     < curChart.notes_perlane[lane].size() - 1)
                 player->stats->curNoteIdx[lane] = i + 1;
@@ -879,8 +880,11 @@ void gameplayRenderer::RenderClassicNotes(
         }
         if (NoteEndPositionWorld > HighwayEnd)
             NoteEndPositionWorld = HighwayEnd;
+
+        bool SkipShit = false;
         if (NoteEndPositionWorld < -1)
-            continue;
+            SkipShit = true;
+
 
         for (ClassicLane cLane : curNote.pLanes) {
             int lane = cLane.lane;
@@ -893,8 +897,9 @@ void gameplayRenderer::RenderClassicNotes(
             float notePosX = diffDistance - (1.0f * noteLane);
 
             // float NoteScroll = smasherPos + (length * (float)relTime);
-
-            nDrawPlasticNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
+            if (!SkipShit) {
+                nDrawPlasticNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
+            }
 
             // todo: REMOVE SUSTAIN CHECK FROM RENDERER
             // todo: PLEASE REMOVE SUSTAIN CHECK FROM RENDERER
@@ -904,6 +909,7 @@ void gameplayRenderer::RenderClassicNotes(
             // relNow is strikeline             (relative now)
             //                                  weird way to put it i guess?
             if (curNote.len > 0) {
+
                 //
                 // if (curNote.held && curNote.heldTime < curNote.len) {
                 //     curNote.heldTime = curSongTime - curNote.time;
@@ -944,19 +950,21 @@ void gameplayRenderer::RenderClassicNotes(
                 }
                 std::cout << "note: " << stats->curNoteInt
                           << " held time: " << curNote.heldTime << std::endl;
-                nDrawSustain(
-                    curNote,
-                    NoteColor,
-                    notePosX,
-                    length,
-                    NoteStartPositionWorld,
-                    NoteEndPositionWorld
-                );
+                if (!SkipShit) {
+                    nDrawSustain(
+                        curNote,
+                        NoteColor,
+                        notePosX,
+                        length,
+                        NoteStartPositionWorld,
+                        NoteEndPositionWorld
+                    );
+                }
             }
-
             nDrawFiveLaneHitEffects(player, curNote, curSongTime, notePosX, lane);
 
             NoteMultiplierEffect(curSongTime, curNote.time, curNote.miss, player);
+
         }
     }
     EndMode3D();
