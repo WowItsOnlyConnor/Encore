@@ -18,3 +18,5 @@ Encore/build/*
 *.dmg
 *.exe
 /cmake-build-debug-coverage/
+/.cache/
+/.cache/*
