@@ -3,7 +3,9 @@
 // Created by marie on 20/10/2024.
 //
 
+#include "assets.h"
 #include "menu.h"
+#include "uiUnits.h"
 
 #include <vector>
 
@@ -24,6 +26,9 @@ class GameplayMenu : public Menu {
 public:
     GameplayMenu();
     virtual ~GameplayMenu();
+    void DrawScorebox(Units &u, Assets &assets, float scoreY);
+    void DrawTimerbox(Units &u, Assets &assets, float scoreY);
+    void DrawGameplayStars(Units &u, Assets &assets, float scorePos, float starY);
     virtual void Draw();
     virtual void Load();
 };

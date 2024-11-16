@@ -10,6 +10,16 @@
 
 
 class gameplayRenderer {
+    void ProcessSustainScoring(
+        int lane,
+        double beatsLen,
+        double heldTime,
+        double lenTime,
+        bool perfect,
+        PlayerGameplayStats *stats
+    );
+    void AddSustainPoints(int lane, PlayerGameplayStats *stats);
+    float GetNoteXPosition(Player *player, float diffDistance, int lane);
     void RenderPadNotes(
         Player *player,
         Chart &curChart,
@@ -41,6 +51,13 @@ class gameplayRenderer {
     void DrawFill(Player *player, Chart &curChart, float length, double musicTime);
     void DrawCoda(float length, double musicTime, Player *player);
 
+    void CheckPlasticNotes(
+        Player *player,
+        Chart &curChart,
+        double curSongTime,
+        PlayerGameplayStats *stats,
+        std::vector<Note>::value_type &curNote
+    );
     void RenderClassicNotes(
         Player *player,
         Chart &curChart,
@@ -199,7 +216,7 @@ public:
 
     void LowerHighway();
 
-    void NoteMultiplierEffect(double time, double hitTime, bool miss, Player *player);
+    void NoteMultiplierEffect(double time, Player *player);
     void DrawRenderTexture();
     double multiplierEffectTime = 1.0;
 };

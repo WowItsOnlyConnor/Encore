@@ -68,6 +68,12 @@ public:
     bool Mute;
 
     int Score;
+    // extra scoring information
+    int SustainScore = 0;
+    int MultiplierScore = 0;
+    int OverdriveScore = 0;
+    int PerfectScore = 0;
+    
     int Combo;
     int MaxCombo;
     int Overhits;
@@ -77,6 +83,8 @@ public:
     int PerfectHit;
     int NotesMissed;
     int PressedMask = 0;
+    double MultiplierEffectTime = 0.0;
+    bool Miss = false;
     int ScoreToDisplay();
 
     std::vector<float> drumSmasherRotations = {0,0,0,0};

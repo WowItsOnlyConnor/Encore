@@ -7,19 +7,7 @@
 #include "song/songlist.h"
 #include "assets.h"
 #include "users/player.h"
-
-enum Screens {
-    MENU,
-    SONG_SELECT,
-    READY_UP,
-    GAMEPLAY,
-    RESULTS,
-    SETTINGS,
-    CALIBRATION,
-    CHART_LOADING_SCREEN,
-    SOUND_TEST,
-    CACHE_LOADING_SCREEN
-};
+#include "OvershellMenu.h"
 
 enum TextAlign {
     LEFT,
@@ -27,35 +15,54 @@ enum TextAlign {
     RIGHT
 };
 
-class GameMenu {
-    template <typename CharT>
-    struct Separators : public std::numpunct<CharT> {
-        virtual std::string do_grouping() const { return "\003"; }
-    };
+template <typename CharT>
+struct Separators : public std::numpunct<CharT> {
+    virtual std::string do_grouping() const { return "\003"; }
+};
 
-public:
-    GameMenu() {};
+namespace GameMenu {
 
-    static std::string scoreCommaFormatter(int value) {
+    inline std::string scoreCommaFormatter(int value) {
         std::stringstream ss;
         ss.imbue(std::locale(std::cout.getloc(), new Separators<char>()));
         ss << std::fixed << value;
         return ss.str();
     }
-    static void DrawTopOvershell(float TopOvershell);
-    static void DrawBottomOvershell();
-    static Texture2D LoadTextureFilter(const std::filesystem::path &texturePath);
-    static Font LoadFontFilter(const std::filesystem::path &fontPath);
-    static void
-    mhDrawText(Font font, std::string, Vector2 pos, float fontSize, Color color, Shader sdfShader, int align);
-    static void DrawFPS(int posX, int posY);
-    static void DrawVersion();
+    void DrawTopOvershell(float TopOvershell);
+    void DrawBottomOvershell();
+    Texture2D LoadTextureFilter(const std::filesystem::path &texturePath);
+    Font LoadFontFilter(const std::filesystem::path &fontPath);
+    void mhDrawText(
+        Font font,
+        std::string,
+        Vector2 pos,
+        float fontSize,
+        Color color,
+        Shader sdfShader,
+        int align
+    );
+    void DrawFPS(int posX, int posY);
+    void DrawVersion();
+
+    void DrawAlbumArtBackground(Texture2D song);
+}
+
+class MainMenu : public OvershellMenu {
+    
+
+public:
+    // MainMenu() {};
     // drawing helper functions for other menus
 
     bool hehe = false;
     bool shouldBreak = false;
-    Screens currentScreen = CACHE_LOADING_SCREEN;
-    bool songsLoaded {};
+
+    MainMenu() {}
+    ~MainMenu() {}
+    void Draw();
+    void Load();
+    std::string SplashString;
+    bool songsLoaded = false;
     bool streamsLoaded = false;
     bool streamsPaused = false;
     bool stringChosen = false;
@@ -64,9 +71,5 @@ public:
     void loadMainMenu();
     inline void loadTitleScreen() {};
 
-    void SwitchScreen(Screens screen);
-    static void DrawAlbumArtBackground(Texture2D song);
     bool songChosen = false;
 };
-
-extern GameMenu TheGameMenu;

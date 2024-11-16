@@ -5,6 +5,7 @@
 #include "raylib.h"
 #include "raygui.h"
 #include <filesystem>
+#include "MenuManager.h"
 
 auto &TheAudioMgr = AudioManager::getInstance();
 
@@ -45,7 +46,7 @@ void SoundTestMenu::Draw() {
     }
 
     if (GuiButton({ 0, 0, u.winpct(0.3), u.hinpct(0.15) }, "Return"))
-        TheGameMenu.SwitchScreen(MENU);
+        TheMenuManager.SwitchScreen(MAIN_MENU);
 
     if (selectedSound < 0)
         selectedSound = mSoundIds.size() - 1;

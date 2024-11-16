@@ -2,12 +2,13 @@
 # project specific logic here.
 #
 
+
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_OSX_ARCHITECTURES x86_64;arm64)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 
 # Dependencies
 set(RAYLIB_VERSION 5.0)

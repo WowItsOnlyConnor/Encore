@@ -15,15 +15,9 @@
 /// std::vector<bool> OpenState = { false, false, false, false };
 /// std::vector<bool> InstrumentTypeState = { false, false, false, false };
 
-enum OSState {
-    OS_ATTRACT,
-    OS_PLAYER_SELECTION,
-    OS_OPTIONS,
-    OS_INSTRUMENT_SELECTIONS,
-    CREATION
-};
 
-int OvershellState[4] { OS_ATTRACT, OS_ATTRACT, OS_ATTRACT, OS_ATTRACT };
+/*
+
 
 void DrawBeacon(int slot, float x, float y, float width, float height, bool top) {
     PlayerManager &playerManager = ThePlayerManager;
@@ -74,6 +68,10 @@ bool DrawOvershellRectangleHeader(
         CENTER
     );
     return toReturn;
+}
+
+void OvershellRenderer::SetSlotState(int slot, int state) {
+
 }
 
 void OvershellRenderer::DrawTopOvershell(double height) {
@@ -130,7 +128,7 @@ if (GuiButton(
     SlotSelectingState[i] = false;
     gameMenu.shouldBreak = true;
                         }
-*/
+
 bool MenuButton(int slot, int x, std::string string) {
     Units &u = Units::getInstance();
     float OvershellLeftLoc =
@@ -212,7 +210,7 @@ bool BNSetting = false;
 void OvershellRenderer::DrawBottomOvershell() {
     Assets &assets = Assets::getInstance();
     Units &unit = Units::getInstance();
-    GameMenu &gameMenu = TheGameMenu;
+    MainMenu &gameMenu = TheGameMenu;
     float BottomBottomOvershell = GetScreenHeight() - unit.hpct(0.1f);
     float InnerBottom = BottomBottomOvershell + unit.hinpct(0.005f);
     DrawRectangle(
@@ -456,3 +454,5 @@ void OvershellRenderer::DrawBottomOvershell() {
         }
     }
 };
+
+*/

@@ -21,6 +21,7 @@ void PlayerGameplayStats::HitNote(bool perfect) {
     PerfectHit += perfect ? 1 : 0;
     GoodHit += perfect ? 0 : 1;
     Mute = false;
+    if (Combo >= 3) Miss = false;
 }
 void PlayerGameplayStats::HitDrumsNote(bool perfect, bool cymbal) {
     NotesHit += 1;
@@ -34,6 +35,7 @@ void PlayerGameplayStats::HitDrumsNote(bool perfect, bool cymbal) {
     PerfectHit += perfect ? 1 : 0;
     GoodHit += perfect ? 0 : 1;
     Mute = false;
+    if (Combo >= 3) Miss = false;
 }
 void PlayerGameplayStats::HitPlasticNote(Note note) {
     FAS = false;
@@ -48,6 +50,7 @@ void PlayerGameplayStats::HitPlasticNote(Note note) {
     GoodHit += note.perfect ? 0 : 1;
     curNoteInt++;
     Mute = false;
+    if (Combo >= 3) Miss = false;
 }
 void PlayerGameplayStats::MissNote() {
     NotesMissed += 1;
@@ -61,6 +64,7 @@ void PlayerGameplayStats::MissNote() {
     FC = false;
     curNoteInt++;
     Mute = true;
+    Miss = true;
 }
 void PlayerGameplayStats::OverHit() {
     // if (combo != 0)
@@ -73,6 +77,7 @@ void PlayerGameplayStats::OverHit() {
     Overhits += 1;
     FC = false;
     Mute = true;
+    Miss = true;
 }
 int PlayerGameplayStats::maxMultForMeter() {
     if (Instrument == PAD_BASS || Instrument == PAD_VOCALS || Instrument == PLASTIC_BASS)

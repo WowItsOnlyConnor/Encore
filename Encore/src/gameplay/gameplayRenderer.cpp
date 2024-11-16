@@ -1,6 +1,8 @@
 //
 // Created by marie on 09/06/2024.
 //
+float diffDistance = 2.0f;
+float lineDistance = 1.5f;
 
 #include "gameplayRenderer.h"
 
@@ -545,10 +547,48 @@ void gameplayRenderer::LowerHighway() {
     */
 };
 
+Color MultiplierEffect(double curSongTime, Player *player) {
+    double multiplierEffectTime = 1.0;
+    Color RingDefault = player->stats->Overdrive ? GOLD : ColorBrightness(player->AccentColor, -0.7);
+    double TimeHit = player->stats->MultiplierEffectTime;
+    bool miss = player->stats->Miss;
+    Color ColorForEffect = miss ? RED : WHITE;
+    Color ColorToReturn = player->stats->Overdrive ? GOLD : ColorBrightness(player->AccentColor, -0.7);
+    if (curSongTime < TimeHit + multiplierEffectTime && curSongTime > TimeHit) {
+        double TimeSinceHit = curSongTime - TimeHit;
+        ColorToReturn.r = Remap(
+                    getEasingFunction(EaseOutQuart)(TimeSinceHit / multiplierEffectTime),
+                    0,
+                    1.0,
+                    ColorForEffect.r,
+                    RingDefault.r
+                );
+        ColorToReturn.g = Remap(
+            getEasingFunction(EaseOutQuart)(TimeSinceHit / multiplierEffectTime),
+            0,
+            1.0,
+            ColorForEffect.g,
+            RingDefault.g
+        );
+        ColorToReturn.b = Remap(
+            getEasingFunction(EaseOutQuart)(TimeSinceHit / multiplierEffectTime),
+            0,
+            1.0,
+            ColorForEffect.b,
+            RingDefault.b
+        );
+    }
+    return ColorToReturn;
+}
+
+
 void gameplayRenderer::NoteMultiplierEffect(
-    double curSongTime, double hitTime, bool miss, Player *player
+    double curSongTime, Player *player
 ) {
-    if (curSongTime < hitTime + multiplierEffectTime && curSongTime > hitTime) {
+    double TimeHit = player->stats->MultiplierEffectTime;
+    bool miss = player->stats->Miss;
+    if (curSongTime < TimeHit + multiplierEffectTime && curSongTime > TimeHit) {
+
         Color missColor = { 200, 0, 0, 255 };
         Color comboColor = { 200, 200, 200, 255 };
 
@@ -557,7 +597,7 @@ void gameplayRenderer::NoteMultiplierEffect(
         unsigned char g = RingDefault.g;
         unsigned char b = RingDefault.b;
         unsigned char a = 255;
-        double TimeSinceHit = curSongTime - hitTime;
+        double TimeSinceHit = curSongTime - TimeHit;
         if (!miss) {
             if (player->stats->Combo <= player->stats->maxMultForMeter() * 10
                 && player->stats->Combo % 10 == 0) {
@@ -650,6 +690,34 @@ void DisableFadeShaderForSmallObjectsThatUseRaylibMeshFuncs() {
         gprAssets.HighwayFade, gprAssets.HighwayAccentFadeLoc, &DontIn, SHADER_UNIFORM_INT
     );
 }
+void gameplayRenderer::ProcessSustainScoring(
+    int lane,
+    double beatsLen,
+    double heldTime,
+    double lenTime,
+    bool perfect,
+    PlayerGameplayStats *stats
+) {
+    stats->SustainScoreBuffer[lane] =
+        float(heldTime / lenTime) * (12 * stats->multiplier() * (perfect + 1) * beatsLen);
+}
+
+void gameplayRenderer::AddSustainPoints(int lane, PlayerGameplayStats *stats) {
+    stats->Score += stats->SustainScoreBuffer[lane];
+    stats->SustainScore += stats->SustainScoreBuffer[lane];
+    ThePlayerManager.BandStats.Score += stats->SustainScoreBuffer[lane];
+    stats->SustainScoreBuffer[lane] = 0;
+}
+
+float gameplayRenderer::GetNoteXPosition(
+    Player *player, float diffDistance, int lane
+) {
+    bool IsPlayerExpert = (player->Difficulty == 3);
+    int NotePosAccountingForLefty =
+        player->LeftyFlip ? (IsPlayerExpert + 3) - lane : lane;
+    return diffDistance - (1.0f * NotePosAccountingForLefty);
+}
+
 void gameplayRenderer::RenderPadNotes(
     Player *player, Chart &curChart, double curSongTime, float length
 ) {
@@ -663,9 +731,10 @@ void gameplayRenderer::RenderPadNotes(
         for (int i = player->stats->curNoteIdx[lane];
              i < curChart.notes_perlane[lane].size();
              i++) {
-            Color NoteColor = TheGameMenu.hehe && player->Difficulty == 3
-                ? TRANS[lane]
-                : player->AccentColor;
+            Color NoteColor = player->AccentColor;
+                // TheGameMenu.hehe && player->Difficulty == 3
+                //? TRANS[lane]
+                //: player->AccentColor;
 
             Note &curNote = curChart.notes[curChart.notes_perlane[lane][i]];
             // if (curNote.hit) {
@@ -723,21 +792,8 @@ void gameplayRenderer::RenderPadNotes(
                 curNote.time + curNote.len, curSongTime, player->NoteSpeed, HighwayEnd
             );
 
-            //double relTime = GetNoteOnScreenTime(
-            //    curNote.time, curSongTime, player->NoteSpeed, player->Difficulty, length
-            //);
-            //double relEnd = GetNoteOnScreenTime(
-            //    curNote.time + curNote.len,
-            //    curSongTime,
-            //    player->NoteSpeed,
-            //    player->Difficulty,
-            //    length
-            //);
-            float notePosX = diffDistance
-                - (1.0f
-                   * (float)(player->LeftyFlip
-                                 ? (player->Difficulty == 3 ? 4 : 3) - curNote.lane
-                                 : curNote.lane));
+            float notePosX = GetNoteXPosition(player, diffDistance, curNote.lane);
+
             if (NoteStartPositionWorld > HighwayEnd) {
                 break;
             }
@@ -745,8 +801,6 @@ void gameplayRenderer::RenderPadNotes(
                 NoteEndPositionWorld = HighwayEnd;
             if (NoteEndPositionWorld < -1)
                 continue;
-            // Vector3 NotePos = {notePosX, 0, smasherPos + (length * (float) relTime)};
-            // float noteScrollPos = smasherPos + (length * (float)relTime);
 
             nDrawPadNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
             PlayerGameplayStats *stats = player->stats;
@@ -756,27 +810,30 @@ void gameplayRenderer::RenderPadNotes(
                     curNote.heldTime = curSongTime - curNote.time;
                     if (curNote.heldTime >= curNote.len)
                         curNote.heldTime = curNote.len;
-                    stats->SustainScoreBuffer[lane] = float(curNote.heldTime / curNote.len)
-                        * (12 * stats->multiplier() * (curNote.perfect + 1)
-                           * curNote.beatsLen);
+                    ProcessSustainScoring(
+                        lane,
+                        curNote.beatsLen,
+                        curNote.heldTime,
+                        curNote.len,
+                        curNote.perfect,
+                        stats
+                    );
                     if (!stats->HeldFrets[lane] && !stats->HeldFretsAlt[lane]) {
                         curNote.held = false;
                     }
+                    if (curNote.len <= curNote.heldTime) {
+                        curNote.held = false;
+                    }
                 }
-                if (curNote.len <= curNote.heldTime) {
-                    curNote.held = false;
-                }
+
                 if (!curNote.held && curNote.hit) {
-                    stats->Score += stats->SustainScoreBuffer[lane];
-                    ThePlayerManager.BandStats.Score += stats->SustainScoreBuffer[lane];
-                    stats->SustainScoreBuffer[lane] = 0;
+                    AddSustainPoints(lane, stats);
                 }
 
                 nDrawSustain(curNote, NoteColor, notePosX, length, NoteStartPositionWorld, NoteEndPositionWorld);
             }
 
             nDrawFiveLaneHitEffects(player, curNote, curSongTime, notePosX, lane);
-            NoteMultiplierEffect(curSongTime, curNote.time, curNote.miss, player);
 
             if (NoteEndPositionWorld < -1
                 && player->stats->curNoteIdx[lane]
@@ -791,13 +848,64 @@ void gameplayRenderer::RenderPadNotes(
 
 double relNow = 0.0;
 
+void gameplayRenderer::CheckPlasticNotes(
+    Player *player,
+    Chart &curChart,
+    double curSongTime,
+    PlayerGameplayStats *stats,
+    std::vector<Note>::value_type &curNote
+) {
+    if (!curNote.hit && !curNote.accounted
+        && curNote.time + goodBackend + player->InputCalibration < curSongTime
+        && !TheSongTime.SongComplete() && stats->curNoteInt < curChart.notes.size()
+        && !player->Bot) {
+        Encore::EncoreLog(
+            LOG_INFO,
+            TextFormat(
+                "Missed note at %f, note %01i", curSongTime, player->stats->curNoteInt
+            )
+        );
+        stats->MissNote();
+        curNote.miss = true;
+        curNote.accounted = true;
+        stats->Miss = true;
+        player->stats->MultiplierEffectTime = curSongTime;
+    } else if (player->Bot) {
+        if (!curNote.hit && !curNote.accounted
+            && curNote.time + player->InputCalibration < curSongTime
+            && stats->curNoteInt < curChart.notes.size() && !TheSongTime.SongComplete()) {
+            ThePlayerManager.BandStats.AddClassicNotePoint(
+                curNote.perfect, stats->noODmultiplier(), curNote.chordSize
+            );
+            stats->HitPlasticNote(curNote);
+            curNote.cHitNote(curSongTime, 0);
+        }
+    }
+    if (curNote.hit && curChart.overdrive.Perfect(stats->curODPhrase)) {
+        if (stats->Overdrive) {
+            stats->overdriveActiveFill +=
+                curChart.overdrive.AddOverdrive(stats->curODPhrase);
+            if (stats->overdriveActiveFill > 1.0f)
+                player->stats->overdriveActiveFill = 1.0f;
+        } else {
+            player->stats->overdriveFill +=
+                curChart.overdrive.AddOverdrive(stats->curODPhrase);
+            if (player->stats->overdriveFill > 1.0f)
+                player->stats->overdriveFill = 1.0f;
+        }
+    }
+
+
+
+    curChart.solos.UpdateEventViaNote(curNote, stats->curSolo);
+    curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
+    curChart.sections.UpdateEventViaNote(curNote, stats->curSection);
+    curChart.fills.UpdateEventViaNote(curNote, stats->curFill);
+}
 void gameplayRenderer::RenderClassicNotes(
     Player *player, Chart &curChart, double curSongTime, float length
 ) {
-    float diffDistance = 2.0f;
-    float lineDistance = 1.5f;
-    float DiffMultiplier =
-        Remap(player->Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
+    
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
     PlayerGameplayStats *stats = player->stats;
@@ -814,65 +922,14 @@ void gameplayRenderer::RenderClassicNotes(
             continue;
         }
 
-        if (!curNote.hit && !curNote.accounted
-            && curNote.time + goodBackend + player->InputCalibration < curSongTime
-            && !TheSongTime.SongComplete() && stats->curNoteInt < curChart.notes.size()
-            && !player->Bot) {
-            Encore::EncoreLog(
-                LOG_INFO,
-                TextFormat(
-                    "Missed note at %f, note %01i", curSongTime, player->stats->curNoteInt
-                )
-            );
-            stats->MissNote();
-            curNote.miss = true;
-            curNote.accounted = true;
-        } else if (player->Bot) {
-            if (!curNote.hit && !curNote.accounted
-                && curNote.time + player->InputCalibration < curSongTime
-                && stats->curNoteInt < curChart.notes.size()
-                && !TheSongTime.SongComplete()) {
-                ThePlayerManager.BandStats.AddClassicNotePoint(
-                    curNote.perfect, stats->noODmultiplier(), curNote.chordSize
-                );
-                stats->HitPlasticNote(curNote);
-                curNote.cHitNote(curSongTime, 0);
-            }
-        }
-        if (curNote.hit && curChart.overdrive.Perfect(stats->curODPhrase)) {
-            if (stats->Overdrive) {
-                stats->overdriveActiveFill +=
-                    curChart.overdrive.AddOverdrive(stats->curODPhrase);
-                if (stats->overdriveActiveFill > 1.0f)
-                    player->stats->overdriveActiveFill = 1.0f;
-            } else {
-                player->stats->overdriveFill +=
-                    curChart.overdrive.AddOverdrive(stats->curODPhrase);
-                if (player->stats->overdriveFill > 1.0f)
-                    player->stats->overdriveFill = 1.0f;
-            }
-        }
+        CheckPlasticNotes(player, curChart, curSongTime, stats, curNote);
+
         double HighwayEnd = length + (smasherPos * 4);
-        ;
-        curChart.solos.UpdateEventViaNote(curNote, stats->curSolo);
-        curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
-        curChart.sections.UpdateEventViaNote(curNote, stats->curSection);
-        curChart.fills.UpdateEventViaNote(curNote, stats->curFill);
+
         double NoteStartPositionWorld =
             GetNotePos(curNote.time, curSongTime, player->NoteSpeed, HighwayEnd);
         double NoteEndPositionWorld = GetNotePos(
             curNote.time + curNote.len, curSongTime, player->NoteSpeed, HighwayEnd
-        );
-
-        double relTime = GetNoteOnScreenTime(
-            curNote.time, curSongTime, player->NoteSpeed, player->Difficulty, HighwayEnd
-        );
-        double relEnd = GetNoteOnScreenTime(
-            curNote.time + curNote.len,
-            curSongTime,
-            player->NoteSpeed,
-            player->Difficulty,
-            HighwayEnd
         );
 
         if (NoteStartPositionWorld > HighwayEnd) {
@@ -890,7 +947,8 @@ void gameplayRenderer::RenderClassicNotes(
             int lane = cLane.lane;
             int noteLane = gprSettings.mirrorMode ? 4 - lane : lane;
 
-            Color NoteColor = TheGameMenu.hehe ? TRANS[lane] : GRYBO[lane];
+            Color NoteColor = GRYBO[lane];
+            // TheGameMenu.hehe ? TRANS[lane] : GRYBO[lane];
             if (curNote.pOpen)
                 NoteColor = PURPLE;
 
@@ -900,30 +958,18 @@ void gameplayRenderer::RenderClassicNotes(
             if (!SkipShit) {
                 nDrawPlasticNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
             }
+            // note: WE'RE GETTING CLOSE CHAT. HOLY SHIT CHAT WE'RE GETTING THERE
+            // HOLY FUCK CHAT IT MIGHT HAPPEN
+            // WE MIGHT DO IT
+            // ITS GONNA HAPPEN I FEEL
+            // JUST GIVE IT SOME TIME
+            // WE MIGHT GET IT
+            // this is copium i think
 
             // todo: REMOVE SUSTAIN CHECK FROM RENDERER
             // todo: PLEASE REMOVE SUSTAIN CHECK FROM RENDERER
             // todo: PLEASE REMOVE LOGIC FROM RENDERER PLEASE :sob:
-            // reltime is beginning of sustain  (relative note time)
-            // relend is end of sustain         (relative note end)
-            // relNow is strikeline             (relative now)
-            //                                  weird way to put it i guess?
-            if (curNote.len > 0) {
-
-                //
-                // if (curNote.held && curNote.heldTime < curNote.len) {
-                //     curNote.heldTime = curSongTime - curNote.time;
-                //
-                //     if (relTime < relNow)
-                //         relTime = relNow;
-                // }
-                //
-                // // if sustain is ended
-                // if (curNote.len + curNote.time >= curSongTime) {
-                //     if (relTime < relNow)
-                //         relTime = relEnd;
-                //     curNote.held = false;
-                // }
+            if (curNote.len > 0 && !SkipShit) {
                 // this is stupid sustain bullshit because you know
                 // cant separate the renderer and logic i guess /shrug
                 //
@@ -931,26 +977,32 @@ void gameplayRenderer::RenderClassicNotes(
                 if (curNote.held) {
                     NoteStartPositionWorld = smasherPos;
                     cLane.heldTime = curSongTime - curNote.time;
-                    if (cLane.heldTime >= cLane.length)
+                    if (cLane.heldTime >= cLane.length) {
                         cLane.heldTime = cLane.length;
-                    stats->SustainScoreBuffer[lane] = float(cLane.heldTime / cLane.length)
-                        * (12 * stats->multiplier() * (curNote.perfect + 1)
-                           * cLane.beatsLen);
-                    if (!((stats->PressedMask >> lane) & 1)) {
+                    }
+
+                    ProcessSustainScoring(lane,
+                        cLane.beatsLen,
+                        cLane.heldTime,
+                        cLane.length,
+                        curNote.perfect,
+                        stats
+                    );
+
+                    if (!((stats->PressedMask >> lane) & 1) && !player->Bot) {
                         curNote.held = false;
                     }
+
                 }
                 if (cLane.length <= cLane.heldTime) {
                     curNote.held = false;
                 }
-                if (!curNote.held && curNote.hit) {
-                    stats->Score += stats->SustainScoreBuffer[lane];
-                    ThePlayerManager.BandStats.Score += stats->SustainScoreBuffer[lane];
-                    stats->SustainScoreBuffer[lane] = 0;
+                if (!curNote.held && curNote.hit && !cLane.accounted) {
+                    AddSustainPoints(lane, stats);
+                    cLane.accounted = true;
                 }
                 std::cout << "note: " << stats->curNoteInt
                           << " held time: " << curNote.heldTime << std::endl;
-                if (!SkipShit) {
                     nDrawSustain(
                         curNote,
                         NoteColor,
@@ -959,11 +1011,9 @@ void gameplayRenderer::RenderClassicNotes(
                         NoteStartPositionWorld,
                         NoteEndPositionWorld
                     );
-                }
+                
             }
             nDrawFiveLaneHitEffects(player, curNote, curSongTime, notePosX, lane);
-
-            NoteMultiplierEffect(curSongTime, curNote.time, curNote.miss, player);
 
         }
     }
@@ -1135,7 +1185,6 @@ void gameplayRenderer::RenderGameplay(Player *player, double curSongTime, Song s
         SetTextureFilter(GameplayRenderTexture.texture, TEXTURE_FILTER_BILINEAR);
     }
     Chart &curChart = song.parts[player->Instrument]->charts[player->Difficulty];
-
     float highwayLength = 17.25 * player->HighwayLength;
     player->stats->Difficulty = player->Difficulty;
     player->stats->Instrument = player->Instrument;
@@ -1172,6 +1221,7 @@ void gameplayRenderer::RenderGameplay(Player *player, double curSongTime, Song s
                                         highwayColor.b / 255.0f,
                                         highwayColor.a / 255.0f };
 
+    // NoteMultiplierEffect(curSongTime, player);
     SetShaderValue(
         gprAssets.Highway,
         gprAssets.HighwayTimeShaderLoc,
@@ -1283,6 +1333,7 @@ void gameplayRenderer::RenderGameplay(Player *player, double curSongTime, Song s
         ColorBrightness(highwayColor, -0.35);
     gprAssets.smasherBoardEMH.materials[0].maps[MATERIAL_MAP_ALBEDO].color = highwayColor;
 
+    gprAssets.MultOuterFrame.materials[0].maps[MATERIAL_MAP_ALBEDO].color = MultiplierEffect(curSongTime, player);
     gprAssets.expertHighway.meshes[0].colors = (unsigned char *)ColorToInt(highwayColor);
     gprAssets.emhHighway.meshes[0].colors = (unsigned char *)ColorToInt(highwayColor);
     gprAssets.smasherBoard.meshes[0].colors =
@@ -1429,8 +1480,8 @@ void gameplayRenderer::RenderExpertHighway(Player *player, Song song, double cur
     BeginBlendMode(BLEND_CUSTOM_SEPARATE);
     PlayerGameplayStats *stats = player->stats;
 
-    float diffDistance = 2.0f;
-    float lineDistance = 1.5f;
+    
+    
 
     float highwayLength =
         (defaultHighwayLength * 1.5f) * player->HighwayLength; //* player->HighwayLength;
@@ -1521,9 +1572,11 @@ void gameplayRenderer::RenderExpertHighway(Player *player, Song song, double cur
         // 4 ? SKYBLUE : i == 1 || i == 3 ? PINK : WHITE : accentColor;
         int noteColor = gprSettings.mirrorMode ? 4 - i : i;
         if (player->ClassicMode) {
-            NoteColor = TheGameMenu.hehe ? TRANS[i] : GRYBO[i];
+            NoteColor = GRYBO[i];
+            // TheGameMenu.hehe ? TRANS[i] : GRYBO[i];
         } else {
-            NoteColor = TheGameMenu.hehe ? TRANS[i] : player->AccentColor;
+            NoteColor = player->AccentColor;
+            // TheGameMenu.hehe ? TRANS[i] : player->AccentColor;
         }
         Model smasherTopModel = gprAssets.smasherInner;
         Color smasherColor =
@@ -1659,11 +1712,9 @@ void gameplayRenderer::RenderEmhHighway(Player *player, Song song, double curSon
     DrawModel(gprAssets.smasherBoardEMH, Vector3 { 0, 0.001f, 0 }, 1.0f, WHITE);
 
     for (int i = 0; i < 4; i++) {
-        Color NoteColor = TheGameMenu.hehe && player->Difficulty == 3
-            ? i == 0 || i == 4     ? SKYBLUE
-                : i == 1 || i == 3 ? PINK
-                                   : WHITE
-            : player->AccentColor;
+        Color NoteColor = player->AccentColor;
+       //TheGameMenu.hehe && player->Difficulty == 3 ? TRANS[i]
+         //   : player->AccentColor;
 
         gprAssets.smasherPressed.materials[0].maps[MATERIAL_MAP_ALBEDO].color = NoteColor;
         // gprAssets.smasherReg.materials[0].maps[MATERIAL_MAP_ALBEDO].color = NoteColor;
@@ -2030,7 +2081,7 @@ gameplayRenderer::~gameplayRenderer() {
 void gameplayRenderer::RenderPDrumsNotes(
     Player *player, Chart &curChart, double curSongTime, float length
 ) {
-    float diffDistance = 2.0f;
+    
     float DiffMultiplier =
         Remap(player->Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
     StartRenderTexture();
@@ -2211,7 +2262,6 @@ void gameplayRenderer::RenderPDrumsNotes(
         }
 
         nDrawDrumsHitEffects(player, curNote, curSongTime, notePosX);
-        NoteMultiplierEffect(curSongTime, curNote.time, curNote.miss, player);
     }
     EndMode3D();
 
@@ -2224,8 +2274,8 @@ void gameplayRenderer::RenderPDrumsHighway(Player *player, Song song, double cur
 
     PlayerGameplayStats *stats = player->stats;
 
-    float diffDistance = 2.0f;
-    float lineDistance = 1.5f;
+    
+    
 
     float highwayLength = (defaultHighwayLength * 1.5f) * player->HighwayLength;
     float highwayPosShit = ((20) * (1 - gprSettings.highwayLengthMult));
@@ -2756,9 +2806,9 @@ void gameplayRenderer::nDrawCodaLanes(
         );
 
         Color noteColor = GRYBO[i];
-        if (TheGameMenu.hehe) {
-            noteColor = TRANS[i];
-        }
+        //if (TheGameMenu.hehe) {
+        //    noteColor = TRANS[i];
+        //}
         BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
         Material lane = gprAssets.CodaLane;
         lane.shader.locs[SHADER_LOC_MAP_ALBEDO] = gprAssets.HighwayColorLoc;

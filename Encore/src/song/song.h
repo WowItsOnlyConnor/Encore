@@ -36,8 +36,8 @@ enum SongParts {
     PlasticBass,
     PlasticGuitar,
     PlasticKeys,
-    PitchedVocals,
     PlasticVocals,
+    PitchedVocals,
     Invalid
 };
 

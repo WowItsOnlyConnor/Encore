@@ -13,6 +13,7 @@ struct ClassicLane {
     double length = 0.0;
     double beatsLen = 0.0;
     double heldTime = 0.0;
+    bool accounted = false;
     int lane;
     ClassicLane(double _length, double _beatsLen, int _lane) {
         length = _length;

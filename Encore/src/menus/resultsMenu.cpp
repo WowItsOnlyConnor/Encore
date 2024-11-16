@@ -4,12 +4,13 @@
 
 #include "resultsMenu.h"
 #include "gameMenu.h"
-#include "overshellRenderer.h"
 #include "raygui.h"
 #include "styles.h"
 #include "uiUnits.h"
 #include "song/audio.h"
 #include "users/playerManager.h"
+#include "OvershellHelper.h"
+#include "MenuManager.h"
 
 resultsMenu::~resultsMenu() {}
 resultsMenu::resultsMenu() {}
@@ -45,7 +46,6 @@ void resultsMenu::Load() {
 }
 
 void resultsMenu::Draw() {
-    OvershellRenderer osr;
     Units &u = Units::getInstance();
     Assets &assets = Assets::getInstance();
     GameMenu::DrawAlbumArtBackground(TheSongList.curSong->albumArtBlur);
@@ -54,7 +54,7 @@ void resultsMenu::Draw() {
         drawPlayerResults(ThePlayerManager.GetActivePlayer(i), *TheSongList.curSong, i);
     }
     
-    osr.DrawTopOvershell(0.2f);
+    encOS::DrawTopOvershell(0.2f);
 
     GameMenu::DrawVersion();
 
@@ -149,11 +149,9 @@ void resultsMenu::Draw() {
         }
         TheSongList.curSong->midiParsed = false;
         ThePlayerManager.BandStats.ResetBandGameplayStats();
-        TheGameMenu.SwitchScreen(SONG_SELECT);
+        TheMenuManager.SwitchScreen(SONG_SELECT);
     }
-    GameMenu::DrawBottomOvershell();
-
-    osr.DrawBottomOvershell();
+    DrawOvershell();
 }
 
 void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {

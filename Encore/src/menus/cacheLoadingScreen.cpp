@@ -13,6 +13,7 @@
 #include "uiUnits.h"
 #include "song/songlist.h"
 #include "raygui.h"
+#include "MenuManager.h"
 
 std::vector<std::string> CacheSplash = {
     "Want a break from the cache?",
@@ -114,10 +115,9 @@ void cacheLoadingScreen::Draw() {
         started = true;
         std::thread CacheLoader(LoadCache);
         CacheLoader.detach();
-        TheGameMenu.songsLoaded = true;
     }
     if (finished)
-        TheGameMenu.SwitchScreen(MENU);
+        TheMenuManager.SwitchScreen(MAIN_MENU);
 }
 
 cacheLoadingScreen::~cacheLoadingScreen() {}

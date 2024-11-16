@@ -105,6 +105,10 @@ void InputHandler::CheckPlasticInputs(
         playerManager.BandStats.AddClassicNotePoint(
             curNote.perfect, stats->noODmultiplier(), curNote.chordSize
         );
+        if (stats->Combo <= stats->maxMultForMeter() * 10 && stats->Combo != 0
+            && stats->Combo % 10 == 0) {
+            player->stats->MultiplierEffectTime = eventTime;
+        }
         stats->HitPlasticNote(curNote);
         return;
     }

@@ -310,7 +310,7 @@ void Chart::parsePlasticNotes(
                         int noteIdx = findNotePreIdx(noteOnTime[lane], lane);
                         if (noteIdx != -1) {
                             notesPre[noteIdx].beatsLen = (tick - notesPre[noteIdx].tick)
-                                / 480;
+                                / float(midiFile.getTicksPerQuarterNote());
                             if (notesPre[noteIdx].beatsLen > 0.25) {
                                 notesPre[noteIdx].len = time - notesPre[noteIdx].time;
                             } else {
