@@ -18,6 +18,26 @@ constexpr Color AccentColor = { 255, 0, 255, 255 };
 
 #endif // FONTSIZEVALUES_H
 
+#define SET_WINDOW_WINDOWED()                                                            \
+    ClearWindowState(FLAG_WINDOW_UNDECORATED);                                           \
+    SetWindowSize(                                                                       \
+        GetMonitorWidth(GetCurrentMonitor()) * 0.75f,                                    \
+        GetMonitorHeight(GetCurrentMonitor()) * 0.75f                                    \
+    );                                                                                   \
+    SetWindowPosition(                                                                   \
+        (GetMonitorWidth(GetCurrentMonitor()) * 0.5f)                                    \
+            - (GetMonitorWidth(GetCurrentMonitor()) * 0.375f),                           \
+        (0.5f * GetMonitorHeight(GetCurrentMonitor()))                                   \
+            - (GetMonitorHeight(GetCurrentMonitor()) * 0.375f)                           \
+    );
+
+#define SET_WINDOW_FULLSCREEN_BORDERLESS()                                               \
+    SetWindowSize(                                                                       \
+        GetMonitorWidth(GetCurrentMonitor()), GetMonitorHeight(GetCurrentMonitor())      \
+    );                                                                                   \
+    SetWindowState(FLAG_WINDOW_UNDECORATED);                                             \
+    SetWindowPosition(0, 0);
+
 #define SET_LARGE_BUTTON_STYLE()                                                         \
     GuiSetStyle(DEFAULT, TEXT_SIZE, (int)u.hinpct(0.08f));                               \
     GuiSetFont(assets.redHatDisplayBlack);                                               \

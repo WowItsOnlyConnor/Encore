@@ -227,6 +227,10 @@ public:
         songPaths.push_back(directory / "Songs");
     }
 
+    std::filesystem::path getDirectory() {
+        return directory;
+    }
+
     void writeDefaultSettings(std::filesystem::path settingsFile, bool migrate = false) {
         rapidjson::Document::AllocatorType &allocator = settings.GetAllocator();
         settings.SetObject();

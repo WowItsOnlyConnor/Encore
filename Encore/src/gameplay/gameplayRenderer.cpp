@@ -301,6 +301,7 @@ void gameplayRenderer::LoadGameplayAssets() {
 
     GameplayRenderTexture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
+
     sustainPlane = GenMeshPlane(0.8f, 1.0f, 1, 1);
     soloPlane = GenMeshPlane(1.0f, 1.0f, 1, 1);
     Image invSolo = LoadImageFromTexture(gprAssets.soloTexture);
@@ -1161,16 +1162,21 @@ void gameplayRenderer::RenderHud(Player *player, float length) {
     SetShaderValueTexture(
         gprAssets.FullComboIndicator, gprAssets.TopTextureLoc, gprAssets.MultFCTex2
     );
-    DrawModel(gprAssets.MultInnerDot, Vector3 { 0, 0.0f, 1.1f }, 1.1, WHITE);
-    DrawModel(gprAssets.MultFill, Vector3 { 0, 0.0f, 1.1f }, 1.1, WHITE);
-    DrawModel(gprAssets.MultOuterFrame, Vector3 { 0, 0.0f, 1.1f }, 1.1, WHITE);
+
+    // DrawModel(gprAssets.MultInnerDot, Vector3 { 0, 0.0f, 1.1f }, 1.1, WHITE);
+    DrawModel(gprAssets.MultFill, Vector3 { 0, 0.0f, 1.1f }, 1.0, WHITE);
+    DrawModel(gprAssets.MultOuterFrame, Vector3 { 0, 0.0f, 1.1f }, 1.0, WHITE);
     DrawModel(
         gprAssets.MultInnerFrame,
         Vector3 { 0, 0.0f, 1.1f },
-        1.1,
+        1.0,
         ColorBrightness(player->AccentColor, -0.4)
     );
-
+    DrawModelEx(gprAssets.multNumber,
+        Vector3 { 0, 0.0f, 1.075f },
+        {0},0,
+        {1.0, 1.15, 1.15},
+        WHITE);
     DrawRenderTexture();
 }
 
@@ -1192,6 +1198,9 @@ void gameplayRenderer::RenderGameplay(Player *player, double curSongTime, Song s
     // 1) : (!player->stats->Multiplayer ? ((float)(player->stats->multiplier() / 2) - 1)
     // / (float)player->stats->maxMultForMeter() : (float)(player->stats->multiplier() -
     // 1)));
+    SetShaderValue(gprAssets.multNumberShader, gprAssets.uvOffsetXLoc, &player->stats->uvOffsetX, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(gprAssets.multNumberShader, gprAssets.uvOffsetYLoc, &player->stats->uvOffsetY, SHADER_UNIFORM_FLOAT);
+
     float multFill =
         (!player->stats->Overdrive ? (float)(player->stats->multiplier() - 1)
                                    : ((float)(player->stats->multiplier() / 2) - 1))

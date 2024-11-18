@@ -280,7 +280,7 @@ void GameplayMenu::Draw() {
                                              [TheGameRenderer.cameraSel]
             )
                 .x;
-        float fontSize = u.hinpct(0.025);
+        float fontSize = u.hinpct(0.035 );
         float textWidth = MeasureTextEx(
                               assets.rubikBold,
                               ThePlayerManager.GetActivePlayer(pnum)->Name.c_str(),
@@ -294,7 +294,7 @@ void GameplayMenu::Draw() {
             assets.rubikBold,
             ThePlayerManager.GetActivePlayer(pnum)->Name.c_str(),
             { (CenterPosForText - (textWidth / 2)) - (TheGameRenderer.renderPos),
-              GetScreenHeight() - u.hinpct(0.03) },
+              GetScreenHeight() - u.hinpct(0.04) },
             fontSize,
             0,
             headerUsernameColor
@@ -633,6 +633,7 @@ void GameplayMenu::Draw() {
     //				{5, GetScreenHeight() - u.hinpct(0.05f)}, u.hinpct(0.04), 0,
     //				SKYBLUE);
     // if (!TheGameRenderer.bot)
+    /*
     GuiProgressBar(
         Rectangle { 0,
                     (float)GetScreenHeight() - u.hinpct(0.005f),
@@ -644,7 +645,7 @@ void GameplayMenu::Draw() {
         0,
         (float)songLength
     );
-    /*
+
     std::string ScriptDisplayString = "";
     lua.script_file("scripts/testing.lua");
     ScriptDisplayString = lua["TextDisplay"];
