@@ -42,7 +42,7 @@ void OvershellMenu::DrawOvershell() {
             float HalfWidth = OvershellCenterLoc - OvershellLeftLoc;
             switch (OvershellState[i]) {
             case CREATION: {
-                static char name[32] = { 0 };
+               static char name[32] = { 0 };
                 Rectangle textBoxPosition { OvershellLeftLoc,
                                             unit.hpct(1.0f) - (unit.winpct(0.03f) * 3),
                                             unit.winpct(0.2f),

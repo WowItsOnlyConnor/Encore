@@ -34,7 +34,7 @@ std::vector<std::vector<int> > pDiffRangeNotes = {
 };
 
 void IsPartValid(smf::MidiEventList track, SongParts songPart, int trackNumber) {
-    if (songPart != SongParts::Invalid && songPart != PitchedVocals) {
+    if (songPart != SongParts::Invalid && songPart != PitchedVocals && songPart != BeatLines) {
         for (int diff = 0; diff < 4; diff++) {
             bool StopSearching = false;
             Chart newChart;
@@ -139,6 +139,9 @@ void ReadyUpMenu::Draw() {
             for (int track = 0; track < midiFile.getTrackCount(); track++) {
                 SongParts songPart = GetSongPart(midiFile[track]);
                 IsPartValid(midiFile[track], songPart, track);
+                if (songPart == BeatLines) {
+                    TheSongList.curSong->BeatTrackID = track;
+                }
             }
 
             TheSongList.curSong->midiParsed = true;

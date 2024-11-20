@@ -38,7 +38,8 @@ enum SongParts {
     PlasticKeys,
     PlasticVocals,
     PitchedVocals,
-    Invalid
+    Invalid,
+    BeatLines
 };
 
 enum Difficulty {
@@ -111,7 +112,8 @@ public:
         { "PLASTIC GUITAR", SongParts::PlasticGuitar },
         { "PLASTIC VOCALS", SongParts::PlasticVocals },
         { "PLASTIC KEYS", SongParts::PlasticKeys },
-        { "PITCHED VOCALS", SongParts::Invalid }
+        { "PITCHED VOCALS", SongParts::Invalid },
+        { "BEAT", SongParts::BeatLines}
     };
 
     std::unordered_map<std::string, SongParts> midiNameToEnumINI = {
@@ -125,7 +127,8 @@ public:
         { "PART GUITAR", SongParts::PlasticGuitar },
         { "PART VOCALS", SongParts::Invalid },
         { "PART KEYS", SongParts::PlasticKeys },
-        { "PLASTIC VOCALS", SongParts::Invalid }
+        { "PLASTIC VOCALS", SongParts::Invalid },
+        { "BEAT", SongParts::BeatLines}
     };
 
     std::vector<int> PlasticToPadEnumConverter = { PartDrums,  PartBass,   PartGuitar,
@@ -166,7 +169,7 @@ public:
     std::string album = "";
     int length = 0;
     int songListPos = 0;
-
+    int BeatTrackID = 0;
     std::vector<BPM> bpms {};
     std::vector<TimeSig> timesigs {};
 
@@ -569,11 +572,11 @@ public:
         }
         ifs.close();
     }
-    void parseBeatLines(smf::MidiFile &midiFile, int trkidx, smf::MidiEventList events) {
-        for (int i = 0; i < events.getSize(); i++) {
-            if (events[i].isNoteOn()) {
+    void parseBeatLines(smf::MidiFile &midiFile, int trkidx) {
+        for (int i = 0; i < midiFile[trkidx].getSize(); i++) {
+            if (midiFile[trkidx][i].isNoteOn()) {
                 beatLines.push_back({ midiFile.getTimeInSeconds(trkidx, i),
-                                      (int)events[i][1] == 12,
+                                      (int)midiFile[trkidx][i][1] == 12,
                                       false });
             }
         }

@@ -44,7 +44,7 @@ class gameplayRenderer {
 
     void
     RenderEmhHighway(Player *player, Song song, double time);
-    void DrawBeatlines(Player *player, Song *song, float length, double musicTime);
+    void DrawBeatlines(Player *player, Song &song, float length, double musicTime);
     void DrawOverdrive(Player *player, Chart &curChart, float length, double musicTime);
     void DrawSolo(Player *player, Chart &curChart, float length, double musicTime);
 

@@ -19,6 +19,7 @@ void LoadCharts() {
     smf::MidiFile midiFile;
     midiFile.read(TheSongList.curSong->midiPath.string());
     TheSongList.curSong->getTiming(midiFile, 0, midiFile[0]);
+    TheSongList.curSong->parseBeatLines(midiFile, TheSongList.curSong->BeatTrackID);
     for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
         Player *player = ThePlayerManager.GetActivePlayer(playerNum);
         int diff = player->Difficulty;
