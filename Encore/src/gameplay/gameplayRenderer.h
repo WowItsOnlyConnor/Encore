@@ -16,64 +16,46 @@ class gameplayRenderer {
         double heldTime,
         double lenTime,
         bool perfect,
-        PlayerGameplayStats *stats
+        PlayerGameplayStats &stats
     );
-    void AddSustainPoints(int lane, PlayerGameplayStats *stats);
-    float GetNoteXPosition(Player *player, float diffDistance, int lane);
-    void RenderPadNotes(
-        Player *player,
-        Chart &curChart,
-        double time,
-        float length
-    );
-    void RenderHud(Player *player, float length);
+    void AddSustainPoints(int lane, PlayerGameplayStats &stats);
+    float GetNoteXPosition(Player &player, float diffDistance, int lane);
+    void RenderPadNotes(Player &player, Chart &curChart, double curSongTime, float length);
+    void RenderHud(Player &player, float length);
     void RenderExpertHighway(
-        Player *player,
+        Player &player,
         Song song,
         double time
     );
-    void RenderPDrumsHighway(
-        Player *player,
-        Song song,
-        double time
-    );
+    void RenderPDrumsHighway(Player &player, Song song, double curSongTime);
     void DrawHighwayMesh(
         float LengthMultiplier, bool Overdrive, float ActiveTime, float SongTime
     );
     void StartRenderTexture();
 
     void
-    RenderEmhHighway(Player *player, Song song, double time);
-    void DrawBeatlines(Player *player, Song &song, float length, double musicTime);
-    void DrawOverdrive(Player *player, Chart &curChart, float length, double musicTime);
-    void DrawSolo(Player *player, Chart &curChart, float length, double musicTime);
+    RenderEmhHighway(Player &player, Song song, double time);
+    void DrawBeatlines(Player &player, Song &song, float length, double musicTime);
+    void DrawOverdrive(Player &player, Chart &curChart, float length, double musicTime);
+    void DrawSolo(Player &player, Chart &curChart, float length, double musicTime);
 
-    void DrawFill(Player *player, Chart &curChart, float length, double musicTime);
-    void DrawCoda(float length, double musicTime, Player *player);
+    void DrawFill(Player &player, Chart &curChart, float length, double musicTime);
+    void DrawCoda(float length, double musicTime, Player &player);
 
     void CheckPlasticNotes(
-        Player *player,
+        Player &player,
         Chart &curChart,
         double curSongTime,
-        PlayerGameplayStats *stats,
         std::vector<Note>::value_type &curNote
     );
-    void RenderClassicNotes(
-        Player *player,
-        Chart &curChart,
-        double time,
-        float length
-    );
-    void DrawHitwindow(Player *player, float length);
-    void RenderPDrumsNotes(
-        Player *player,
-        Chart &curChart,
-        double time,
-        float length
-    );
+    void RenderClassicNotes(Player &player, Chart &curChart, double curSongTime, float length);
+    void DrawHitwindow(Player &player, float length);
+    void RenderPDrumsNotes(Player &player, Chart &curChart, double curSongTime, float length);
 
-    void nDrawDrumsHitEffects(Player *player, Note note, double time, float notePosX);
-    void nDrawFiveLaneHitEffects(Player *player, Note note, double time, float notePosX, int lane);
+    void nDrawDrumsHitEffects(Player &player, Note note, double curSongTime, float notePosX);
+    void nDrawFiveLaneHitEffects(
+        Player &player, Note note, double curSongTime, float notePosX, int lane
+    );
     void
     nDrawPlasticNote(Note note, Color noteColor, float notePosX, float noteScrollPos);
     void nDrawPadNote(Note note, Color noteColor, float notePosX, float noteScrollPos);
@@ -163,7 +145,7 @@ public:
      */
 
     void
-    RenderGameplay(Player *player, double time, Song song);
+    RenderGameplay(Player &player, double curSongTime, Song song);
     enum ModelVectorEnum {
         mHOPO,
         mLIFT,
@@ -216,7 +198,7 @@ public:
 
     void LowerHighway();
 
-    void NoteMultiplierEffect(double time, Player *player);
+    void NoteMultiplierEffect(double curSongTime, Player &player);
     void DrawRenderTexture();
     double multiplierEffectTime = 1.0;
 };

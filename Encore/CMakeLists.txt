@@ -48,7 +48,8 @@ option(SUPPORT_FILEFORMAT_JPG "Support loading JPG as textures" ON)
 file(GLOB_RECURSE SRC_FILES "src/*.cpp" "include/*.cpp" "include/*.c")
 file(GLOB_RECURSE INC_FILES "include/*.h" "include/*.h*" "src/*.h")
 # Add source files to the executable
-add_executable(Encore ${SRC_FILES} ${INC_FILES})
+add_executable(Encore ${SRC_FILES} ${INC_FILES}
+        src/song/scoring.h)
 # Temp player file
 
 file(COPY "Songs" DESTINATION ${CMAKE_BINARY_DIR}/Encore)

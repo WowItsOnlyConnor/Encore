@@ -112,14 +112,14 @@ void OvershellMenu::DrawOvershell() {
             }
             case OS_OPTIONS: {
                 Color headerUsernameColor =
-                    playerManager.GetActivePlayer(i)->Bot ? SKYBLUE : WHITE;
+                    playerManager.GetActivePlayer(i).Bot ? SKYBLUE : WHITE;
                 if (DrawOvershellRectangleHeader(
                         OvershellLeftLoc,
                         OvershellTopLoc - (ButtonHeight * 5),
                         unit.winpct(0.2f),
                         unit.winpct(0.05f),
-                        playerManager.GetActivePlayer(i)->Name,
-                        playerManager.GetActivePlayer(i)->AccentColor,
+                        playerManager.GetActivePlayer(i).Name,
+                        playerManager.GetActivePlayer(i).AccentColor,
                         headerUsernameColor
                     )) {
                     OvershellState[i] = OS_ATTRACT;
@@ -137,7 +137,7 @@ void OvershellMenu::DrawOvershell() {
                             i,
                             3,
                             "Breakneck Speed",
-                            &playerManager.GetActivePlayer(i)->NoteSpeed,
+                            &playerManager.GetActivePlayer(i).NoteSpeed,
                             0.25,
                             0.25,
                             3
@@ -150,8 +150,8 @@ void OvershellMenu::DrawOvershell() {
                     OvershellState[i] = OS_INSTRUMENT_SELECTIONS;
                     break;
                 }
-                playerManager.GetActivePlayer(i)->Bot =
-                    OvershellCheckbox(i, 2, "Bot", playerManager.GetActivePlayer(i)->Bot);
+                playerManager.GetActivePlayer(i).Bot =
+                    OvershellCheckbox(i, 2, "Bot", playerManager.GetActivePlayer(i).Bot);
 
                 if (OvershellButton(i, 1, "Drop Out")) {
                     playerManager.SaveSpecificPlayer(i);
@@ -176,17 +176,17 @@ void OvershellMenu::DrawOvershell() {
                                HalfWidth * 2,
                                GetScreenHeight(),
                                false,
-                               playerManager.GetActivePlayer(i)->AccentColor
+                               playerManager.GetActivePlayer(i).AccentColor
                     );
                     Color headerUsernameColor =
-                        playerManager.GetActivePlayer(i)->Bot ? SKYBLUE : WHITE;
+                        playerManager.GetActivePlayer(i).Bot ? SKYBLUE : WHITE;
                     if (DrawOvershellRectangleHeader(
                             OvershellLeftLoc,
                             OvershellTopLoc,
                             unit.winpct(0.2f),
                             unit.winpct(0.05f),
-                            playerManager.GetActivePlayer(i)->Name,
-                            playerManager.GetActivePlayer(i)->AccentColor,
+                            playerManager.GetActivePlayer(i).Name,
+                            playerManager.GetActivePlayer(i).AccentColor,
                             headerUsernameColor
                         )) {
                         OvershellState[i] = OS_OPTIONS;
@@ -233,23 +233,23 @@ void OvershellMenu::DrawOvershell() {
             case OS_INSTRUMENT_SELECTIONS: {
                 int ButtonHeight = unit.winpct(0.03f);
                 Color headerUsernameColor =
-                    playerManager.GetActivePlayer(i)->Bot ? SKYBLUE : WHITE;
+                    playerManager.GetActivePlayer(i).Bot ? SKYBLUE : WHITE;
                 DrawOvershellRectangleHeader(
                     OvershellLeftLoc,
                     OvershellTopLoc - (ButtonHeight * 3),
                     unit.winpct(0.2f),
                     unit.winpct(0.05f),
-                    playerManager.GetActivePlayer(i)->Name,
-                    playerManager.GetActivePlayer(i)->AccentColor,
+                    playerManager.GetActivePlayer(i).Name,
+                    playerManager.GetActivePlayer(i).AccentColor,
                     headerUsernameColor
                 );
 
-                playerManager.GetActivePlayer(i)->ClassicMode = OvershellCheckbox(
-                    i, 1, "Classic", playerManager.GetActivePlayer(i)->ClassicMode
+                playerManager.GetActivePlayer(i).ClassicMode = OvershellCheckbox(
+                    i, 1, "Classic", playerManager.GetActivePlayer(i).ClassicMode
                 );
 
-                playerManager.GetActivePlayer(i)->ProDrums = OvershellCheckbox(
-                    i, 2, "Pro Drums", playerManager.GetActivePlayer(i)->ProDrums
+                playerManager.GetActivePlayer(i).ProDrums = OvershellCheckbox(
+                    i, 2, "Pro Drums", playerManager.GetActivePlayer(i).ProDrums
                 );
 
                 if (OvershellButton(i, 0, "Back")) {

@@ -1153,7 +1153,7 @@ void Chart::parsePlasticDrums(
         } else {
             baseScore +=
                 (int)(36.0f * mult
-                      * (proDrums ? (note.pSnare || note.pDrumTom ? 1.0f : 1.3f) : 1));
+                      * (proDrums ? (note.pSnare || note.pDrumTom ? 1.0f : 1.25f) : 1));
             if (noteIdx == 9)
                 mult = 2;
             else if (noteIdx == 19)

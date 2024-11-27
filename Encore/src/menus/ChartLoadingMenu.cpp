@@ -21,9 +21,9 @@ void LoadCharts() {
     TheSongList.curSong->getTiming(midiFile, 0, midiFile[0]);
     TheSongList.curSong->parseBeatLines(midiFile, TheSongList.curSong->BeatTrackID);
     for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
-        Player *player = ThePlayerManager.GetActivePlayer(playerNum);
-        int diff = player->Difficulty;
-        int inst = player->Instrument;
+        Player &player = ThePlayerManager.GetActivePlayer(playerNum);
+        int diff = player.Difficulty;
+        int inst = player.Instrument;
         int track = TheSongList.curSong->parts[inst]->charts[diff].track;
         std::string trackName;
 
@@ -42,7 +42,7 @@ void LoadCharts() {
             } else if (inst == PlasticDrums) {
                 chart.plastic = true;
                 chart.parsePlasticDrums(
-                    midiFile, track, midiFile[track], diff, inst, player->ProDrums, true
+                    midiFile, track, midiFile[track], diff, inst, player.ProDrums, true
                 );
             } else {
                 chart.plastic = false;
@@ -94,7 +94,7 @@ void ChartLoadingMenu::Draw() {
     float AfterLoadingTextPos =
         MeasureTextEx(assets.redHatDisplayBlack, "LOADING...  ", u.hinpct(0.125f), 0).x;
 
-    std::string LoadingPhrase = "";
+    std::string LoadingPhrase;
 
     switch (LoadingState) {
     case BEATLINES: {

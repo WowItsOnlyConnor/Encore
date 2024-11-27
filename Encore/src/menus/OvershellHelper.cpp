@@ -59,7 +59,7 @@ void encOS::DrawTopOvershell(double height) {
                 HalfWidth * 2,
                 unit.hpct(height) - unit.hinpct(0.005f),
                 true,
-                ThePlayerManager.GetActivePlayer(i)->AccentColor
+                ThePlayerManager.GetActivePlayer(i).AccentColor
             );
         }
     }

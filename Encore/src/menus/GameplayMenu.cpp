@@ -124,8 +124,8 @@ void GameplayMenu::DrawGameplayStars(
         DrawTexturePro(assets.emptyStar, emptyStarWH, starRect, { 0, 0 }, 0, WHITE);
         float yMaskPos = Remap(
             starPercent,
-            firstStar ? 0 : ThePlayerManager.BandStats.xStarThreshold[i - 1],
-            ThePlayerManager.BandStats.xStarThreshold[i],
+            firstStar ? 0 : BAND_STAR_THRESHOLD[i - 1],
+            BAND_STAR_THRESHOLD[i],
             0,
             u.hinpct(0.05)
         );
@@ -140,18 +140,14 @@ void GameplayMenu::DrawGameplayStars(
         );
         EndScissorMode();
     }
-    if (starPercent >= ThePlayerManager.BandStats.xStarThreshold[4]
+    if (starPercent >= BAND_STAR_THRESHOLD[4]
         && ThePlayerManager.BandStats.EligibleForGoldStars) {
         float starWH = u.hinpct(0.05);
         Rectangle emptyStarWH = {
             0, 0, (float)assets.goldStar.width, (float)assets.goldStar.height
         };
         float yMaskPos = Remap(
-            starPercent,
-            ThePlayerManager.BandStats.xStarThreshold[4],
-            ThePlayerManager.BandStats.xStarThreshold[5],
-            0,
-            u.hinpct(0.05)
+            starPercent, BAND_STAR_THRESHOLD[4], BAND_STAR_THRESHOLD[5], 0, u.hinpct(0.05)
         );
         BeginScissorMode(
             scorePos - (starWH * 6), (starY + starWH) - yMaskPos, scorePos, yMaskPos
@@ -160,8 +156,8 @@ void GameplayMenu::DrawGameplayStars(
             float starX = scorePos - u.hinpct(0.26) + (i * u.hinpct(0.0525));
             Rectangle starRect = { starX, starY, starWH, starWH };
             DrawTexturePro(
-                ThePlayerManager.BandStats.GoldStars ? assets.goldStar
-                                                     : assets.goldStarUnfilled,
+                ThePlayerManager.BandStats.GoldStars() ? assets.goldStar
+                                                       : assets.goldStarUnfilled,
                 emptyStarWH,
                 starRect,
                 { 0, 0 },
@@ -179,7 +175,7 @@ void GameplayMenu::Draw() {
     Assets &assets = Assets::getInstance();
     SettingsOld &settings = SettingsOld::getInstance();
 
-//    OvershellRenderer osr;
+    //    OvershellRenderer osr;
     double curTime = GetTime();
 
     // IMAGE BACKGROUNDS??????
@@ -211,13 +207,13 @@ void GameplayMenu::Draw() {
     } else {
         for (int i = 0; i < ThePlayerManager.PlayersActive; i++) {
             for (auto &stream : audioManager.loadedStreams) {
-                Player *player = ThePlayerManager.GetActivePlayer(i);
-                if ((player->ClassicMode ? player->Instrument - 5 : player->Instrument)
+                Player &player = ThePlayerManager.GetActivePlayer(i);
+                if ((player.ClassicMode ? player.Instrument - 5 : player.Instrument)
                     == stream.instrument) {
                     audioManager.SetAudioStreamVolume(
                         stream.handle,
-                        player->stats->Mute ? settings.MainVolume * settings.MissVolume
-                                            : settings.MainVolume * settings.PlayerVolume
+                        player.stats.Mute ? settings.MainVolume * settings.MissVolume
+                                           : settings.MainVolume * settings.PlayerVolume
                     );
                 } else {
                     audioManager.SetAudioStreamVolume(
@@ -251,12 +247,12 @@ void GameplayMenu::Draw() {
 
     for (int pnum = 0; pnum < ThePlayerManager.PlayersActive; pnum++) {
         ThePlayerManager.BandStats.SustainScoreBuffer[pnum] =
-            ThePlayerManager.GetActivePlayer(pnum)->stats->SustainScoreBuffer[0];
+            ThePlayerManager.GetActivePlayer(pnum).stats.SustainScoreBuffer[0];
         for (int g = 1;
-             g < ThePlayerManager.GetActivePlayer(pnum)->stats->SustainScoreBuffer.size();
+             g < ThePlayerManager.GetActivePlayer(pnum).stats.SustainScoreBuffer.size();
              g++) {
             ThePlayerManager.BandStats.SustainScoreBuffer[pnum] +=
-                ThePlayerManager.GetActivePlayer(pnum)->stats->SustainScoreBuffer[g];
+                ThePlayerManager.GetActivePlayer(pnum).stats.SustainScoreBuffer[g];
         }
         TheGameRenderer.cameraSel =
             CameraSelectionPerPlayer[ThePlayerManager.PlayersActive - 1][pnum];
@@ -280,19 +276,19 @@ void GameplayMenu::Draw() {
                                              [TheGameRenderer.cameraSel]
             )
                 .x;
-        float fontSize = u.hinpct(0.035 );
+        float fontSize = u.hinpct(0.035);
         float textWidth = MeasureTextEx(
                               assets.rubikBold,
-                              ThePlayerManager.GetActivePlayer(pnum)->Name.c_str(),
+                              ThePlayerManager.GetActivePlayer(pnum).Name.c_str(),
                               fontSize,
                               0
         )
                               .x;
         Color headerUsernameColor =
-            ThePlayerManager.GetActivePlayer(pnum)->Bot ? SKYBLUE : WHITE;
+            ThePlayerManager.GetActivePlayer(pnum).Bot ? SKYBLUE : WHITE;
         DrawTextEx(
             assets.rubikBold,
-            ThePlayerManager.GetActivePlayer(pnum)->Name.c_str(),
+            ThePlayerManager.GetActivePlayer(pnum).Name.c_str(),
             { (CenterPosForText - (textWidth / 2)) - (TheGameRenderer.renderPos),
               GetScreenHeight() - u.hinpct(0.04) },
             fontSize,
@@ -482,9 +478,9 @@ void GameplayMenu::Draw() {
     float floatSongLength = audioManager.GetMusicTimePlayed();
 
     if (!ThePlayerManager.BandStats.Multiplayer) {
-        Player *player = ThePlayerManager.GetActivePlayer(0);
-        PlayerGameplayStats *stats = player->stats;
-        if (player->stats->Paused) {
+        Player &player = ThePlayerManager.GetActivePlayer(0);
+        PlayerGameplayStats &stats = player.stats;
+        if (stats.Paused) {
             DrawRectangle(
                 0, 0, GetScreenWidth(), GetScreenHeight(), Color { 0, 0, 0, 80 }
             );
@@ -502,20 +498,20 @@ void GameplayMenu::Draw() {
             if (GuiButton(ResumeBox, "Resume")) {
                 audioManager.unpauseStreams();
                 TheSongTime.Resume();
-                stats->Paused = false;
+                stats.Paused = false;
             }
             if (GuiButton(RestartBox, "Restart")) {
                 TheSongTime.Reset();
-                TheSongList.curSong->parts[player->Instrument]
-                    ->charts[player->Difficulty]
+                TheSongList.curSong->parts[player.Instrument]
+                    ->charts[player.Difficulty]
                     .restartNotes();
 
                 TheGameRenderer.highwayInAnimation = false;
                 TheGameRenderer.highwayInEndAnim = false;
                 TheGameRenderer.songPlaying = false;
                 TheGameRenderer.Restart = true;
-                player->ResetGameplayStats();
-                stats->Paused = false;
+                player.ResetGameplayStats();
+                stats.Paused = false;
             }
             if (GuiButton(QuitBox, "Back to Music Library")) {
                 // notes =
@@ -523,14 +519,14 @@ void GameplayMenu::Draw() {
                 // notes = TheSongList.curSong->parts[instrument]->charts[diff];
 
                 TheSongList.curSong->LoadAlbumArt();
-                player->ResetGameplayStats();
+                player.ResetGameplayStats();
                 TheGameRenderer.midiLoaded = false;
                 TheSongTime.Reset();
-                TheSongList.curSong->parts[player->Instrument]
-                    ->charts[player->Difficulty]
+                TheSongList.curSong->parts[player.Instrument]
+                    ->charts[player.Difficulty]
                     .resetNotes();
                 audioManager.unloadStreams();
-                player->stats->Quit = true;
+                stats.Quit = true;
                 TheGameRenderer.highwayInAnimation = false;
                 TheGameRenderer.highwayInEndAnim = false;
                 TheGameRenderer.songPlaying = false;
@@ -553,8 +549,8 @@ void GameplayMenu::Draw() {
 
             const char *instDiffText = TextFormat(
                 "%s %s",
-                diffList[player->Difficulty].c_str(),
-                songPartsList[player->Instrument].c_str()
+                diffList[player.Difficulty].c_str(),
+                songPartsList[player.Instrument].c_str()
             );
 
             float TitleHeight = MeasureTextEx(
@@ -618,6 +614,7 @@ void GameplayMenu::Draw() {
             DrawTextEx(
                 assets.rubikBold, instDiffText, SongInstDiffBox, SongFontSize, 0, WHITE
             );
+            DrawOvershell();
         }
     }
 
@@ -717,28 +714,24 @@ void GameplayMenu::Load() {
     if (ThePlayerManager.PlayersActive > 1) {
         ThePlayerManager.BandStats.Multiplayer = true;
         for (int player = 0; player < ThePlayerManager.PlayersActive; player++) {
-            ThePlayerManager.GetActivePlayer(player)->stats->Multiplayer = true;
+            ThePlayerManager.GetActivePlayer(player).stats.Multiplayer = true;
         }
     } else {
         ThePlayerManager.BandStats.Multiplayer = false;
         for (int player = 0; player < ThePlayerManager.PlayersActive; player++) {
-            ThePlayerManager.GetActivePlayer(player)->stats->Multiplayer = false;
+            ThePlayerManager.GetActivePlayer(player).stats.Multiplayer = false;
         }
     }
 
     for (int i = 0; i < ThePlayerManager.PlayersActive; i++) {
+        Player &player = ThePlayerManager.GetActivePlayer(i);
+        player.stats.BaseScore = TheSongList.curSong->parts[player.Instrument]
+                                      ->charts[player.Difficulty]
+                                      .baseScore;
         if (i == 0) {
-            ThePlayerManager.BandStats.BaseScore =
-                TheSongList.curSong
-                    ->parts[ThePlayerManager.GetActivePlayer(i)->Instrument]
-                    ->charts[ThePlayerManager.GetActivePlayer(i)->Difficulty]
-                    .baseScore;
+            ThePlayerManager.BandStats.BaseScore = player.stats.BaseScore;
         } else {
-            ThePlayerManager.BandStats.BaseScore +=
-                TheSongList.curSong
-                    ->parts[ThePlayerManager.GetActivePlayer(i)->Instrument]
-                    ->charts[ThePlayerManager.GetActivePlayer(i)->Difficulty]
-                    .baseScore;
+            ThePlayerManager.BandStats.BaseScore += player.stats.BaseScore;
         }
     }
 }

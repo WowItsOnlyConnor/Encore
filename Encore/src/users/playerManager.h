@@ -22,8 +22,8 @@ public:
     std::vector<int> ActivePlayers { -1, -1, -1, -1 };
     int PlayersActive = 0;
 
-    Player *GetActivePlayer(int slot) {
-        return &PlayerList.at(ActivePlayers.at(slot));
+    Player &GetActivePlayer(int slot) {
+        return PlayerList.at(ActivePlayers.at(slot));
     }
 
     void SetPlayerListSaveFileLocation(std::filesystem::path file) {
@@ -32,7 +32,7 @@ public:
 
     void AddActivePlayer(int playerNum, int slot) {
         ActivePlayers.at(slot) = playerNum;
-        GetActivePlayer(slot)->joypadID = slot;
+        GetActivePlayer(slot).joypadID = slot;
         PlayersActive += 1;
     }
 
@@ -43,20 +43,25 @@ public:
 
     bool IsGamepadActive(int joystickID) {
         for (int playesr = 0; playesr < PlayersActive; playesr++) {
-            if (GetActivePlayer(playesr)->joypadID == joystickID) {
+            if (GetActivePlayer(playesr).joypadID == joystickID) {
                 return true;
             }
         }
         return false;
     }
 
-    Player *GetPlayerGamepad(int joystickID) {
+    Player &GetPlayerGamepad(int joystickID) {
         for (int playesr = 0; playesr < PlayersActive; playesr++) {
-            if (GetActivePlayer(playesr)->joypadID == joystickID) {
+            if (GetActivePlayer(playesr).joypadID == joystickID) {
                 return GetActivePlayer(playesr);
             }
         }
-        return nullptr;
+        // WE'RE GONNA CRASH
+        // WE'RE GONNA CRASH
+        // WE'RE GONNA CRASH
+        // WE'RE GONNA CRASH
+        // WE'RE GONNA CRASH
+        // WE'RE GONNA CRASH
     }
 
     void CreatePlayer(const std::string &name);

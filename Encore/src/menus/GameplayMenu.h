@@ -3,6 +3,7 @@
 // Created by marie on 20/10/2024.
 //
 
+#include "OvershellMenu.h"
 #include "assets.h"
 #include "menu.h"
 #include "uiUnits.h"
@@ -10,7 +11,7 @@
 #include <vector>
 
 // technically this IS a menu, but realistically, is it?
-class GameplayMenu : public Menu {
+class GameplayMenu : public OvershellMenu {
     int CameraSelectionPerPlayer[4][4] {
         {0,0,0,0},
         {1,0,0,0},

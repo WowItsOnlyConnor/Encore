@@ -84,34 +84,34 @@ void PlayerManager::SaveSpecificPlayer(const int slot) {
         PlayerListJson = json::parse(f);
         f.close();
     }
-    Player *player = GetActivePlayer(slot);
-    if (!PlayerListJson.contains(player->playerJsonObjectName)) {
-        PlayerListJson[player->playerJsonObjectName] = {
-            { "name", player->Name },
-            { "UUID", player->PlayerID },
-#define SETTING_ACTION(type, name, key) { key, player->name },
+    Player &player = GetActivePlayer(slot);
+    if (!PlayerListJson.contains(player.playerJsonObjectName)) {
+        PlayerListJson[player.playerJsonObjectName] = {
+            { "name", player.Name },
+            { "UUID", player.PlayerID },
+#define SETTING_ACTION(type, name, key) { key, player.name },
             PLAYER_JSON_SETTINGS
 #undef SETTING_ACTION
             { "accentColor",
-              { { "r", player->AccentColor.r },
-                { "g", player->AccentColor.g },
-                { "b", player->AccentColor.b } } }
+              { { "r", player.AccentColor.r },
+                { "g", player.AccentColor.g },
+                { "b", player.AccentColor.b } } }
         };
     } else {
-        PlayerListJson.at(player->playerJsonObjectName)["name"] = player->Name;
-        PlayerListJson.at(player->playerJsonObjectName)["UUID"] = player->PlayerID;
+        PlayerListJson.at(player.playerJsonObjectName)["name"] = player.Name;
+        PlayerListJson.at(player.playerJsonObjectName)["UUID"] = player.PlayerID;
 
 #define SETTING_ACTION(type, name, key)                                                  \
-    PlayerListJson.at(player->playerJsonObjectName)[key] = player->name;
+    PlayerListJson.at(player.playerJsonObjectName)[key] = player.name;
         PLAYER_JSON_SETTINGS;
 #undef SETTING_ACTION
 
-        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["r"] =
-            player->AccentColor.r;
-        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["g"] =
-            player->AccentColor.g;
-        PlayerListJson.at(player->playerJsonObjectName)["accentColor"]["b"] =
-            player->AccentColor.b;
+        PlayerListJson.at(player.playerJsonObjectName)["accentColor"]["r"] =
+            player.AccentColor.r;
+        PlayerListJson.at(player.playerJsonObjectName)["accentColor"]["g"] =
+            player.AccentColor.g;
+        PlayerListJson.at(player.playerJsonObjectName)["accentColor"]["b"] =
+            player.AccentColor.b;
     }
 
     std::ofstream o(PlayerListSaveFile, std::ios::out | std::ios::trunc);

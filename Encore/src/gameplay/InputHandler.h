@@ -18,17 +18,13 @@ enum EventLanes {
 };
 
 class InputHandler {
-    static int calculatePressedMask(PlayerGameplayStats *stats);
+    static int calculatePressedMask(PlayerGameplayStats &stats);
     static bool
-    isNoteMatch(const Note &curNote, int pressedMask, PlayerGameplayStats *stats);
-    void CheckPlasticInputs(
-        Player *player, int lane, int action, float eventTime, PlayerGameplayStats *stats
-    );
+    isNoteMatch(const Note &curNote, int pressedMask, PlayerGameplayStats &stats);
+    void CheckPlasticInputs(Player &player, int lane, int action, float eventTime);
 public:
-    void handleInputs(Player *player, int lane, int action);
-    void CheckPadInputs(
-        Player *player, int lane, int action, double eventTime, PlayerGameplayStats *stats
-    );
+    void handleInputs(Player &player, int lane, int action);
+    void CheckPadInputs(Player &player, int lane, int action, double eventTime);
 };
 
 

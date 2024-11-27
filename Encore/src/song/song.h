@@ -64,12 +64,14 @@ struct TimeSig {
 struct BPM {
     double time;
     double bpm;
+    int tick;
 };
 
 struct Beat {
     double Time;
     bool Major = false;
     bool Clapped = false;
+    int Tick;
 };
 
 inline std::string diffList[4] = { "Easy", "Medium", "Hard", "Expert" };
@@ -113,7 +115,7 @@ public:
         { "PLASTIC VOCALS", SongParts::PlasticVocals },
         { "PLASTIC KEYS", SongParts::PlasticKeys },
         { "PITCHED VOCALS", SongParts::Invalid },
-        { "BEAT", SongParts::BeatLines}
+        { "BEAT", SongParts::BeatLines }
     };
 
     std::unordered_map<std::string, SongParts> midiNameToEnumINI = {
@@ -128,7 +130,7 @@ public:
         { "PART VOCALS", SongParts::Invalid },
         { "PART KEYS", SongParts::PlasticKeys },
         { "PLASTIC VOCALS", SongParts::Invalid },
-        { "BEAT", SongParts::BeatLines}
+        { "BEAT", SongParts::BeatLines }
     };
 
     std::vector<int> PlasticToPadEnumConverter = { PartDrums,  PartBass,   PartGuitar,
@@ -233,34 +235,44 @@ public:
                                     jsonPath.parent_path() / path.value.GetString()
                                 )) {
                                 if (stem == "drums")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          PartDrums });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          PartDrums }
+                                    );
 
                                 else if (stem == "bass")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          PartBass });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          PartBass }
+                                    );
 
                                 else if (stem == "lead")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          PartGuitar });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          PartGuitar }
+                                    );
 
                                 else if (stem == "vocals")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          PartVocals });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          PartVocals }
+                                    );
 
                                 else if (stem == "backing")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          5 });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          5 }
+                                    );
                             }
                         } else if (path.value.IsArray()) {
                             for (auto &path2 : path.value.GetArray()) {
@@ -268,34 +280,39 @@ public:
                                         jsonPath.parent_path() / path2.GetString()
                                     )) {
                                     if (stem == "drums")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              PartDrums });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              PartDrums }
+                                        );
 
                                     else if (stem == "bass")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              PartBass });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              PartBass }
+                                        );
 
                                     else if (stem == "lead")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              PartGuitar });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              PartGuitar }
+                                        );
 
                                     else if (stem == "vocals")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              PartVocals });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              PartVocals }
+                                        );
 
                                     else if (stem == "backing")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              5 });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              5 }
+                                        );
                                 }
                             }
                         }
@@ -490,34 +507,44 @@ public:
                                     jsonPath.parent_path() / path.value.GetString()
                                 )) {
                                 if (stem == "drums")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          0 });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          0 }
+                                    );
 
                                 else if (stem == "bass")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          1 });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          1 }
+                                    );
 
                                 else if (stem == "lead")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          2 });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          2 }
+                                    );
 
                                 else if (stem == "vocals")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          3 });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          3 }
+                                    );
 
                                 else if (stem == "backing")
-                                    stemsPath.push_back({ (jsonPath.parent_path()
-                                                           / path.value.GetString())
-                                                              .string(),
-                                                          4 });
+                                    stemsPath.push_back(
+                                        { (jsonPath.parent_path() / path.value.GetString()
+                                          )
+                                              .string(),
+                                          4 }
+                                    );
                             }
                         } else if (path.value.IsArray()) {
                             for (auto &path2 : path.value.GetArray()) {
@@ -525,34 +552,39 @@ public:
                                         jsonPath.parent_path() / path2.GetString()
                                     )) {
                                     if (stem == "drums")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              0 });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              0 }
+                                        );
 
                                     else if (stem == "bass")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              1 });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              1 }
+                                        );
 
                                     else if (stem == "lead")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              2 });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              2 }
+                                        );
 
                                     else if (stem == "vocals")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              3 });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              3 }
+                                        );
 
                                     else if (stem == "backing")
-                                        stemsPath.push_back({ (jsonPath.parent_path()
-                                                               / path2.GetString())
-                                                                  .string(),
-                                                              4 });
+                                        stemsPath.push_back(
+                                            { (jsonPath.parent_path() / path2.GetString())
+                                                  .string(),
+                                              4 }
+                                        );
                                 }
                             }
                         }
@@ -575,26 +607,32 @@ public:
     void parseBeatLines(smf::MidiFile &midiFile, int trkidx) {
         for (int i = 0; i < midiFile[trkidx].getSize(); i++) {
             if (midiFile[trkidx][i].isNoteOn()) {
-                beatLines.push_back({ midiFile.getTimeInSeconds(trkidx, i),
-                                      (int)midiFile[trkidx][i][1] == 12,
-                                      false });
+                beatLines.push_back(
+                    { midiFile.getTimeInSeconds(trkidx, i),
+                      (int)midiFile[trkidx][i][1] == 12,
+                      false,
+                      midiFile[trkidx][i].tick }
+                );
             }
         }
     }
     void getTiming(smf::MidiFile &midiFile, int trkidx, smf::MidiEventList events) {
         for (int i = 0; i < events.getSize(); i++) {
             if (events[i].isTempo()) {
-                bpms.push_back({ midiFile.getTimeInSeconds(trkidx, i),
-                                 events[i].getTempoBPM() });
-                //std::cout << "BPM @" << midiFile.getTimeInSeconds(trkidx, i) << ": "
-                //          << events[i].getTempoBPM() << std::endl;
+                bpms.push_back(
+                    { midiFile.getTimeInSeconds(trkidx, i),
+                      events[i].getTempoBPM(),
+                      events[i].tick }
+                );
+                // std::cout << "BPM @" << midiFile.getTimeInSeconds(trkidx, i) << ": "
+                //           << events[i].getTempoBPM() << std::endl;
             } else if (events[i].isMeta() && events[i][1] == 0x58) {
                 int numer = (int)events[i][3];
                 int denom = pow(2, (int)events[i][4]);
-                timesigs.push_back({ midiFile.getTimeInSeconds(trkidx, i), numer, denom }
-                );
-                //std::cout << "TIMESIG @" << midiFile.getTimeInSeconds(trkidx, i) << ": "
-                //          << numer << "/" << denom << std::endl;
+                timesigs.push_back({ midiFile.getTimeInSeconds(trkidx, i), numer, denom });
+                // std::cout << "TIMESIG @" << midiFile.getTimeInSeconds(trkidx, i) << ":
+                // "
+                //           << numer << "/" << denom << std::endl;
             }
         }
         if (timesigs.size() == 0) {

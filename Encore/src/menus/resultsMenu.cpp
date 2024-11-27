@@ -118,13 +118,7 @@ void resultsMenu::Draw() {
         0
     );
 
-    renderStars(
-        &ThePlayerManager.BandStats,
-        u.wpct(0.5f),
-        u.hpct(0.1f),
-        u.hinpct(0.05f),
-        false
-    );
+    renderStars(ThePlayerManager.BandStats, u.wpct(0.5f), u.hpct(0.1f), u.hinpct(0.05f), false);
     float ScoreFontSize = u.hinpct(0.075f);
     std::string ScoreText = GameMenu::scoreCommaFormatter(ThePlayerManager.BandStats.Score).c_str();
     GameMenu::mhDrawText(
@@ -136,15 +130,15 @@ void resultsMenu::Draw() {
         sdfShader,
         CENTER
     );
-    // assets.DrawTextRHDI(player->songToBeJudged.title.c_str(),songNamePos, 50, WHITE);
+    // assets.DrawTextRHDI(player.songToBeJudged.title.c_str(),songNamePos, 50, WHITE);
     if (GuiButton({ 0, 0, 60, 60 }, "<")) {
         // player.quit = false;
         for (int PlayersToReset = 0; PlayersToReset < ThePlayerManager.PlayersActive;
              PlayersToReset++) {
-            Player *player = ThePlayerManager.GetActivePlayer(PlayersToReset);
-            player->ResetGameplayStats();
-            TheSongList.curSong->parts[player->Instrument]
-                ->charts[player->Difficulty]
+            Player &player = ThePlayerManager.GetActivePlayer(PlayersToReset);
+            player.ResetGameplayStats();
+            TheSongList.curSong->parts[player.Instrument]
+                ->charts[player.Difficulty]
                 .resetNotes();
         }
         TheSongList.curSong->midiParsed = false;
@@ -154,7 +148,7 @@ void resultsMenu::Draw() {
     DrawOvershell();
 }
 
-void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
+void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
     Units &u = Units::getInstance();
     Assets &assets = Assets::getInstance();
     float cardPos =
@@ -173,23 +167,23 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
         cardTop,
         cardWidth,
         u.hinpct(0.2f),
-        ColorBrightness(player->AccentColor, -0.5f),
+        ColorBrightness(player.AccentColor, -0.5f),
         backgroundColor
     );
 
 
     Color bottomColorForStatus = backgroundColor;
-    bool rendAsFC = player->stats->FC && !player->stats->Quit && !player->Bot;
-    if (player->Bot) {
+    bool rendAsFC = player.stats.FC && !player.stats.Quit && !player.Bot;
+    if (player.Bot) {
         bottomColorForStatus = ColorContrast(ColorBrightness(SKYBLUE, -0.5f), -0.25f);
     }
-    if (player->stats->Quit && !player->Bot) {
+    if (player.stats.Quit && !player.Bot) {
         bottomColorForStatus = ColorBrightness(RED, -0.5f);
     }
-    if (rendAsFC && !player->Bot) {
+    if (rendAsFC && !player.Bot) {
         bottomColorForStatus = ColorContrast(ColorBrightness(GOLD, -0.5f), -0.25f);
     }
-    if (player->stats->PerfectHit == player->stats->Notes && rendAsFC && !player->Bot) {
+    if (player.stats.PerfectHit == player.stats.Notes && rendAsFC && !player.Bot) {
         bottomColorForStatus = ColorBrightness(WHITE, -0.5f);
     }
     DrawRectangleGradientV(
@@ -215,10 +209,10 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
         cardTop + u.hinpct(0.4f),
         WHITE
     );
-    std::string scoreString = GameMenu::scoreCommaFormatter(player->stats->Score);
+    std::string scoreString = GameMenu::scoreCommaFormatter(player.stats.Score);
     float scorePos = (cardPos + cardHalfWidth);
     float Percent =
-        floorf(((float)player->stats->NotesHit / (float)player->stats->Notes) * 100.0f);
+        floorf(((float)player.stats.NotesHit / (float)player.stats.Notes) * 100.0f);
 
     GameMenu::mhDrawText(
         assets.redHatDisplayItalic,
@@ -230,8 +224,8 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
         CENTER
     );
 
-    renderStars(
-        player->stats,
+    renderPlayerStars(
+        player.stats,
         (cardPos + cardHalfWidth),
         (float)GetScreenHeight() / 2 - u.hinpct(0.06f),
         u.hinpct(0.055f),
@@ -243,11 +237,11 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
     if (rendAsFC) {
         ImportantInfoText = "Flawless!";
     }
-    if (player->stats->Quit && !player->Bot) {
+    if (player.stats.Quit && !player.Bot) {
         ImportantInfoText = "Quit";
         ImportantInfoTextColor = RED;
     }
-    if (player->Bot) {
+    if (player.Bot) {
         ImportantInfoText = "BOT";
         ImportantInfoTextColor = SKYBLUE;
     }
@@ -281,8 +275,8 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
 
     std::string InstDiffName = TextFormat(
         "%s %s",
-        diffList[player->Difficulty].c_str(),
-        songPartsList[player->Instrument].c_str()
+        diffList[player.Difficulty].c_str(),
+        songPartsList[player.Instrument].c_str()
     );
     float InstDiffPos =
         MeasureTextEx(assets.rubikBold, InstDiffName.c_str(), u.hinpct(0.03f), 0).x;
@@ -344,28 +338,28 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
         WHITE
     );
 
-    float hitpct = ((float)player->stats->PerfectHit / (float)player->stats->Notes);
+    float hitpct = ((float)player.stats.PerfectHit / (float)player.stats.Notes);
     float pHitPercent = floorf(hitpct * 100.0f);
     std::string PerfectDisplay =
-        TextFormat("%01i (%3.0f%%)", player->stats->PerfectHit, pHitPercent);
+        TextFormat("%01i (%3.0f%%)", player.stats.PerfectHit, pHitPercent);
 
     float gpct =
-        ((float)(player->stats->NotesHit - player->stats->PerfectHit)
-         / (float)player->stats->Notes);
+        ((float)(player.stats.NotesHit - player.stats.PerfectHit)
+         / (float)player.stats.Notes);
     float gHitPercent = floorf(gpct * 100.0f);
     std::string GoodDisplay = TextFormat(
-        "%01i (%3.0f%%)", player->stats->NotesHit - player->stats->PerfectHit, gHitPercent
+        "%01i (%3.0f%%)", player.stats.NotesHit - player.stats.PerfectHit, gHitPercent
     );
 
-    float mpct = ((float)player->stats->NotesMissed / (float)player->stats->Notes);
+    float mpct = ((float)player.stats.NotesMissed / (float)player.stats.Notes);
     float mHitPercent = floorf(mpct * 100.0f);
     std::string MissDisplay =
-        TextFormat("%01i (%3.0f%%)", player->stats->NotesMissed, mHitPercent);
+        TextFormat("%01i (%3.0f%%)", player.stats.NotesMissed, mHitPercent);
 
-    std::string NotesDisplay = TextFormat("%01i", player->stats->Notes);
+    std::string NotesDisplay = TextFormat("%01i", player.stats.Notes);
 
     int MaxNotes =
-        song.parts[player->Instrument]->charts[player->Difficulty].notes.size();
+        song.parts[player.Instrument]->charts[player.Difficulty].notes.size();
     float FontSize = u.hinpct(0.03f);
     DrawTextEx(
         assets.rubik,
@@ -396,10 +390,10 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
     );
     DrawTextEx(
         assets.rubik,
-        TextFormat("%01i", player->stats->Overhits, player->stats->Notes),
+        TextFormat("%01i", player.stats.Overhits, player.stats.Notes),
         { statsRight
               - MeasureTextEx(
-                    assets.rubik, TextFormat("%01i", player->stats->Overhits), u.hinpct(0.03f), 0
+                    assets.rubik, TextFormat("%01i", player.stats.Overhits), u.hinpct(0.03f), 0
               )
                     .x,
           statsHeight + u.hinpct(0.105f) },
@@ -409,11 +403,11 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
     );
     DrawTextEx(
         assets.rubik,
-        TextFormat("%01i/%01i", player->stats->MaxCombo, player->stats->Notes),
+        TextFormat("%01i/%01i", player.stats.MaxCombo, player.stats.Notes),
         { statsRight
               - MeasureTextEx(
                     assets.rubik,
-                    TextFormat("%01i/%01i", player->stats->MaxCombo, player->stats->Notes),
+                    TextFormat("%01i/%01i", player.stats.MaxCombo, player.stats.Notes),
                     u.hinpct(0.03f),
                     0
               )
@@ -432,16 +426,16 @@ void resultsMenu::drawPlayerResults(Player *player, Song song, int playerslot) {
         0,
         WHITE
     );
-    // DrawTextEx(rubik, TextFormat("%2.2f", player->totalOffset / player->notesHit),
-    // {statsRight - MeasureTextEx(rubik, TextFormat("%2.2f", player->totalOffset /
-    // player->notesHit), u.hinpct(0.03f), 0).x, statsHeight+u.hinpct(0.17f)},
+    // DrawTextEx(rubik, TextFormat("%2.2f", player.totalOffset / player.notesHit),
+    // {statsRight - MeasureTextEx(rubik, TextFormat("%2.2f", player.totalOffset /
+    // player.notesHit), u.hinpct(0.03f), 0).x, statsHeight+u.hinpct(0.17f)},
     // u.hinpct(0.03f),0,WHITE);
 };
 
-void resultsMenu::renderStars(
-    PlayerGameplayStats *stats, float xPos, float yPos, float scale, bool left
+void resultsMenu::renderPlayerStars(
+    PlayerGameplayStats &stats, float xPos, float yPos, float scale, bool left
 ) {
-    int starsval = stats->Stars();
+    int starsval = stats.Stars();
 
     float starX = left ? 0 : scale * 2.5f;
     for (int i = 0; i < 5; i++) {
@@ -455,10 +449,11 @@ void resultsMenu::renderStars(
         );
     }
     for (int i = 0; i < starsval; i++) {
+
         DrawTexturePro(
-            stats->GoldStars ? GoldStar : Star,
+            stats.GoldStars() ? GoldStar : Star,
             { 0, 0, (float)EmptyStar.width, (float)EmptyStar.height },
-            { (xPos + (i * scale) - starX), yPos, scale, scale },
+            { (xPos + ((i) * scale) - starX), yPos, scale, scale },
             { 0, 0 },
             0,
             WHITE
@@ -467,9 +462,9 @@ void resultsMenu::renderStars(
 };
 
 void resultsMenu::renderStars(
-    BandGameplayStats *stats, float xPos, float yPos, float scale, bool left
+    BandGameplayStats &stats, float xPos, float yPos, float scale, bool left
 ) {
-    int starsval = stats->Stars();
+    int starsval = stats.Stars();
 
     float starX = left ? 0 : scale * 2.5f;
     for (int i = 0; i < 5; i++) {
@@ -484,7 +479,7 @@ void resultsMenu::renderStars(
     }
     for (int i = 0; i < starsval; i++) {
         DrawTexturePro(
-            stats->GoldStars ? GoldStar : Star,
+            stats.GoldStars() ? GoldStar : Star,
             { 0, 0, (float)EmptyStar.width, (float)EmptyStar.height },
             { (xPos + (i * scale) - starX), yPos, scale, scale },
             { 0, 0 },
