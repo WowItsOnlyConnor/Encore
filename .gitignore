@@ -20,3 +20,5 @@ Encore/build/*
 /cmake-build-debug-coverage/
 /.cache/
 /.cache/*
+/latex/
+/html/
