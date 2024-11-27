@@ -280,6 +280,12 @@ double GetNotePos(double noteTime, double songTime, float noteSpeed, float lengt
     return ((noteTime - songTime) * (noteSpeed * (length / 2))) + 2.4f;
 }
 
+double TimeRangeToTickDelta(double timeStart, double timeEnd, BPM bpm) {
+    double timeDelta = timeEnd - timeStart;
+    double beatDelta = timeDelta * bpm.bpm / 60.0;
+    return beatDelta * 480.0;
+}
+
 // this is kind of a. "replacement" for loading everything in Assets
 // technically i should be putting this in another class but you know
 // maybe i should make a struct for a "note model" so its easier to do this
@@ -910,6 +916,8 @@ void gameplayRenderer::RenderClassicNotes(
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
     PlayerGameplayStats &stats = player.stats;
+    double PointsPerTick = double(SUSTAIN_POINTS_PER_BEAT) / 480.0;
+
     for (auto &curNote : curChart.notes) {
         // if (curNote.time < TheSongTime.GetFakeStartTime()) {
         //     player.stats.curNoteInt++;
@@ -981,6 +989,9 @@ void gameplayRenderer::RenderClassicNotes(
                         cLane.heldTime = cLane.length;
                     }
 
+                    stats.Score += (CurrentTick - stats.LastTick) * PointsPerTick;
+                    ThePlayerManager.BandStats.Score += (CurrentTick - stats.LastTick) * PointsPerTick;
+                    /*
                     ProcessSustainScoring(
                         lane,
                         cLane.beatsLen,
@@ -992,14 +1003,40 @@ void gameplayRenderer::RenderClassicNotes(
 */
                     if (!((stats.PressedMask >> lane) & 1) && !player.Bot) {
                         curNote.held = false;
+                        if (cLane.heldTime > (cLane.length * 0.95)) {
+                            /*
+                            ProcessSustainScoring(
+                                lane,
+                                cLane.beatsLen,
+                                cLane.length,
+                                cLane.length,
+                                curNote.perfect,
+                                stats
+                            );
+                            */
+                            NoteStartPositionWorld = 0;
+                            NoteEndPositionWorld = 0;
+                        }
+                        // AddSustainPoints(lane, stats);
                     }
                 }
                 if (cLane.length <= cLane.heldTime) {
                     curNote.held = false;
-                }
-                if (!curNote.held && curNote.hit && !cLane.accounted) {
-                    AddSustainPoints(lane, stats);
-                    cLane.accounted = true;
+                    if (cLane.heldTime > (cLane.length * 0.95)) {
+                        /*
+                        ProcessSustainScoring(
+                            lane,
+                            cLane.beatsLen,
+                            cLane.length,
+                            cLane.length,
+                            curNote.perfect,
+                            stats
+                        );
+                        */
+                        NoteStartPositionWorld = 0;
+                        NoteEndPositionWorld = 0;
+                    }
+                    // AddSustainPoints(lane, stats);
                 }
 
                 if (!SkipShit) {
@@ -1199,6 +1236,12 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
         SetTextureFilter(GameplayRenderTexture.texture, TEXTURE_FILTER_BILINEAR);
     }
     PlayerGameplayStats &stats = player.stats;
+    CurrentTick = TheSongList.curSong->bpms[stats.curBPM].tick
+        + TimeRangeToTickDelta(
+                          TheSongList.curSong->bpms[stats.curBPM].time,
+                          curSongTime,
+                          TheSongList.curSong->bpms[stats.curBPM]
+        );
     Chart &curChart = song.parts[player.Instrument]->charts[player.Difficulty];
     float highwayLength = 17.25 * player.HighwayLength;
     player.stats.Difficulty = player.Difficulty;
@@ -1395,17 +1438,21 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
         highwayInEndAnim = false;
         TheSongTime.Start(songEnd);
     }
-
-    if (player->stats->Overdrive) {
+    double OverdriveDrainPerTick = double(OVERDRIVE_DRAIN_PER_BEAT) / 480.0;
+    if (player.stats.Overdrive) {
         // THIS IS LOGIC!
-        player->stats->overdriveFill = player->stats->overdriveActiveFill
-            - (float)((curSongTime - player->stats->overdriveActiveTime)
-                      / (1920 / song.bpms[player->stats->curBPM].bpm));
-        if (player->stats->overdriveFill <= 0) {
-            player->stats->overdriveActivateTime = curSongTime;
-            player->stats->Overdrive = false;
-            player->stats->overdriveActiveFill = 0;
-            player->stats->overdriveActiveTime = 0.0;
+        player.stats.overdriveFill -= (CurrentTick - stats.LastTick) * OverdriveDrainPerTick;
+        /*
+        player.stats.overdriveFill = player.stats.overdriveActiveFill
+            - (float)((curSongTime - player.stats.overdriveActiveTime)
+                      / (1920 / song.bpms[player.stats.curBPM].bpm));
+                      */
+        if (player.stats.overdriveFill <= 0) {
+            player.stats.overdriveActivateTime = curSongTime;
+            player.stats.Overdrive = false;
+            player.stats.overdriveFill = 0;
+            player.stats.overdriveActiveFill = 0;
+            player.stats.overdriveActiveTime = 0.0;
             ThePlayerManager.BandStats.PlayersInOverdrive -= 1;
             ThePlayerManager.BandStats.Overdrive = false;
         }
@@ -1444,6 +1491,7 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
     if (!song.BRE.IsCodaActive(curSongTime)) {
         RenderHud(player, highwayLength);
     }
+    stats.LastTick = CurrentTick;
 }
 
 void gameplayRenderer::DrawHighwayMesh(
