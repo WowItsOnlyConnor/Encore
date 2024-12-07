@@ -62,7 +62,7 @@ A fully fleshed out `info.json` file will look similar to the following:
 The minimum fields required are
 - `"title"`
 - `"artist"`
-- `"diff"` and child fields, like `"drums"`, `"bass"`, `"guitar"`, and/or `"vocals"
+- `"diff"` and child fields, like `"drums"`, `"bass"`, `"guitar"`, and/or `"vocals"`
 - `"stems"` and at least its child field, `"backing"`
 - `"midi"`
 - `"sid"` or `"icon_drums"`
