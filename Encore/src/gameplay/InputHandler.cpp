@@ -241,6 +241,8 @@ void InputHandler::CheckPadInputs(
             if (LiftHit) {
                 stats.lastHitLifts[lane] = curChart.notes_perlane[lane][i];
             }
+            if (curNote.perfect)
+                stats.LastPerfectTime = curNote.perfect;
             stats.HitNote(curNote.perfect);
             playerManager.BandStats.AddNotePoint(curNote.perfect, stats.multiplier());
             return;

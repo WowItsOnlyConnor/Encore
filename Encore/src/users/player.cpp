@@ -47,7 +47,8 @@ void PlayerGameplayStats::HitPlasticNote(Note note) {
     NotesHit += 1;
     Notes += 1;
     Combo += 1;
-    LastPerfectTime = note.hitTime;
+    if (note.perfect)
+        LastPerfectTime = note.hitTime;
     if (Combo > MaxCombo)
         MaxCombo = Combo;
     double BaseNoteScore = (note.chordSize * BASE_NOTE_POINT);

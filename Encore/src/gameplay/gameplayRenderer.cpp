@@ -2158,7 +2158,7 @@ void gameplayRenderer::DrawPerfectText(double noteTime, double songTime, Player 
         3.0
     );*/
 
-    Color InnerBoxColor = { 255, 255, 255, unsigned char(HitAlpha / 2) };
+    Color InnerBoxColor = { 255, 255, 255, static_cast<unsigned char>(HitAlpha / 2) };
     Color OuterBoxColor = { 255, 255, 255, HitAlpha };
     Color BackgroundColor = {GOLD.r, GOLD.g, GOLD.b, HitAlpha};
     float Width = 1.0f;
