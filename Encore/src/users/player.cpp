@@ -47,16 +47,21 @@ void PlayerGameplayStats::HitPlasticNote(Note note) {
     NotesHit += 1;
     Notes += 1;
     Combo += 1;
+    LastPerfectTime = note.hitTime;
     if (Combo > MaxCombo)
         MaxCombo = Combo;
+    double BaseNoteScore = (note.chordSize * BASE_NOTE_POINT);
+    double OverdriveNoteScore = (BaseNoteScore * noODmultiplier());
+    NoteScore += BaseNoteScore;
+    MultiplierScore += (BaseNoteScore * noODmultiplier()) - BaseNoteScore;
+    OverdriveScore += (BaseNoteScore * multiplier()) - OverdriveNoteScore;
     float perfectMult = note.perfect ? PERFECT_MULTIPLIER : 1.0f;
-    Score += (note.chordSize * (int)(BASE_NOTE_POINT * (multiplier()) * perfectMult));
+    PerfectScore += (BaseNoteScore * perfectMult) - BaseNoteScore;
+    Score += (note.chordSize * (BASE_NOTE_POINT * multiplier() * perfectMult));
     PerfectHit += note.perfect ? 1 : 0;
     GoodHit += note.perfect ? 0 : 1;
     curNoteInt++;
     Mute = false;
-    if (Combo >= 3)
-        Miss = false;
 }
 void PlayerGameplayStats::MissNote() {
     NotesMissed += 1;
@@ -172,58 +177,41 @@ int PlayerGameplayStats::multiplier() {
         }
     };
 }
+
 int PlayerGameplayStats::noODmultiplier() {
-    if (Instrument == PartBass || Instrument == PartVocals
+    if (Instrument == PartBass || Instrument == PartDrums
         || Instrument == PlasticBass) {
         if (Combo < 10) {
-            uvOffsetX = 0;
-            uvOffsetY = 0;
             return 1;
         } else if (Combo < 20) {
-            uvOffsetX = 0.25f;
-            uvOffsetY = 0;
             return 2;
         } else if (Combo < 30) {
-            uvOffsetX = 0.5f;
-            uvOffsetY = 0;
             return 3;
         } else if (Combo < 40) {
-            uvOffsetX = 0.75f;
-            uvOffsetY = 0;
             return 4;
         } else if (Combo < 50) {
-            uvOffsetX = 0;
-            uvOffsetY = 0.25f;
             return 5;
         } else if (Combo >= 50) {
-            uvOffsetX = 0.25f;
-            uvOffsetY = 0.25f;
             return 6;
         } else {
             return 1;
         };
-    } else {
-        if (Combo < 10) {
-            uvOffsetX = 0;
-            uvOffsetY = 0;
-            return 1;
-        } else if (Combo < 20) {
-            uvOffsetX = 0.25f;
-            uvOffsetY = 0;
-            return 2;
-        } else if (Combo < 30) {
-            uvOffsetX = 0.5f;
-            uvOffsetY = 0;
-            return 3;
-        } else if (Combo >= 30) {
-            uvOffsetX = 0.75f;
-            uvOffsetY = 0;
-            return 4;
         } else {
-            return 1;
-        }
-    };
+            if (Combo < 10) {
+                return 1;
+            } else if (Combo < 20) {
+                return 2;
+            } else if (Combo < 30) {
+                return 3;
+            } else if (Combo >= 30) {
+                return 4;
+            } else {
+                return 1;
+            }
+        };
+    return 4;
 }
+
 bool PlayerGameplayStats::IsBassOrVox() {
     if (Instrument == PartBass || Instrument == PartVocals
         || Instrument == PlasticBass) {
@@ -319,7 +307,12 @@ void Player::ResetGameplayStats() {
     stats.StartTime = 0.0;
     stats.SongStartTime = 0.0;
 
-    std::vector<int> curNoteIdx = { 0, 0, 0, 0, 0 };
+    stats.SustainScore = 0;
+    stats.MultiplierScore = 0;
+    stats.OverdriveScore = 0;
+    stats.PerfectScore = 0;
+    stats.NoteScore = 0;
+
     stats.Score = 0;
     stats.Combo = 0;
     stats.MaxCombo = 0;
@@ -394,12 +387,19 @@ void BandGameplayStats::ResetBandGameplayStats() {
     overdriveActiveTime = 0.0;
     overdriveActivateTime = 0.0;
 
+    SustainScore = 0;
+    MultiplierScore = 0;
+    OverdriveScore = 0;
+    PerfectScore = 0;
+    NoteScore = 0;
+
     BaseScore = 0;
 
     StartTime = 0.0;
     SongStartTime = 0.0;
 
     Health = 100;
+    PlayersInOverdrive = 0;
 
     BaseScore = 0;
     EligibleForGoldStars = true;
@@ -421,10 +421,12 @@ void BandGameplayStats::AddClassicNotePoint(bool perfect, int playerMult, int ch
     if (Combo > MaxCombo)
         MaxCombo = Combo;
     float perfectMult = perfect ? PERFECT_MULTIPLIER : 1.0f;
-    Score += (int)((
-        chordSize * BASE_NOTE_POINT * playerMult * perfectMult
-        * OverdriveMultiplier[PlayersInOverdrive]
-    ));
+    double BaseNoteScore = (chordSize * BASE_NOTE_POINT);
+    NoteScore += BaseNoteScore;
+    MultiplierScore += (BaseNoteScore * playerMult) - BaseNoteScore;
+    OverdriveScore += (BaseNoteScore * OverdriveMultiplier[PlayersInOverdrive]) - BaseNoteScore;
+    PerfectScore += (BaseNoteScore * perfectMult) - BaseNoteScore;
+    Score += (chordSize * (BASE_NOTE_POINT * playerMult * OverdriveMultiplier[PlayersInOverdrive] * perfectMult ));
     // mute = false;
 }
 

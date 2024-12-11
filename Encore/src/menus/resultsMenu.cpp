@@ -43,6 +43,24 @@ void resultsMenu::Load() {
     ;
     diffList = { "Easy", "Medium", "Hard", "Expert" };
     sdfShader = LoadShader(0, (assetsdir / "fonts/sdf.fs").string().c_str());
+    std::cout << "Band Score: " << ThePlayerManager.BandStats.Score << std::endl;
+    std::cout << "Band Sustain Score: " << ThePlayerManager.BandStats.SustainScore << std::endl;
+    std::cout << "Band Multiplier Score: " << ThePlayerManager.BandStats.MultiplierScore << std::endl;
+    std::cout << "Band Overdrive Score: " << ThePlayerManager.BandStats.OverdriveScore << std::endl;
+    std::cout << "Band Perfect Score: " << ThePlayerManager.BandStats.PerfectScore << std::endl;
+    std::cout << "Band Note Score: " << ThePlayerManager.BandStats.NoteScore << std::endl;
+
+    for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
+        Player &player = ThePlayerManager.GetActivePlayer(playerNum);
+        PlayerGameplayStats &stats = ThePlayerManager.GetActivePlayer(playerNum).stats;
+        std::cout << player.Name << " Score: " << stats.Score << std::endl;
+        std::cout << player.Name << " Sustain Score: " << stats.SustainScore << std::endl;
+        std::cout << player.Name << " Multiplier Score: " << stats.MultiplierScore << std::endl;
+        std::cout << player.Name << " Overdrive Score: " << stats.OverdriveScore << std::endl;
+        std::cout << player.Name << " Perfect Score: " << stats.PerfectScore << std::endl;
+        std::cout << player.Name << " Note Score: " << stats.NoteScore << std::endl;
+
+    }
 }
 
 void resultsMenu::Draw() {
@@ -133,6 +151,7 @@ void resultsMenu::Draw() {
     // assets.DrawTextRHDI(player.songToBeJudged.title.c_str(),songNamePos, 50, WHITE);
     if (GuiButton({ 0, 0, 60, 60 }, "<")) {
         // player.quit = false;
+        ThePlayerManager.BandStats.ResetBandGameplayStats();
         for (int PlayersToReset = 0; PlayersToReset < ThePlayerManager.PlayersActive;
              PlayersToReset++) {
             Player &player = ThePlayerManager.GetActivePlayer(PlayersToReset);
@@ -142,7 +161,6 @@ void resultsMenu::Draw() {
                 .resetNotes();
         }
         TheSongList.curSong->midiParsed = false;
-        ThePlayerManager.BandStats.ResetBandGameplayStats();
         TheMenuManager.SwitchScreen(SONG_SELECT);
     }
     DrawOvershell();

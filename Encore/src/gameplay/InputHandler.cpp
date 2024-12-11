@@ -103,6 +103,8 @@ void InputHandler::CheckPlasticInputs(
     if ((curNote.hitWithFAS || CouldTap) && IsInWindow && noteMatch) {
         curNote.cHitNote(eventTime, player.InputCalibration);
         // TODO: fix for plastic
+        stats.HitPlasticNote(curNote);
+        std::cout << stats.noODmultiplier() << std::endl;
         playerManager.BandStats.AddClassicNotePoint(
             curNote.perfect, stats.noODmultiplier(), curNote.chordSize
         );
@@ -110,7 +112,7 @@ void InputHandler::CheckPlasticInputs(
             && stats.Combo % 10 == 0) {
             stats.MultiplierEffectTime = eventTime;
         }
-        stats.HitPlasticNote(curNote);
+
         return;
     }
     if (!curNote.hit && frettingInput)

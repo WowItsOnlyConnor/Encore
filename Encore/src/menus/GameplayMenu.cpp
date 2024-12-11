@@ -38,13 +38,9 @@ void GameplayMenu::DrawScorebox(Units &u, Assets &assets, float scoreY) {
     DrawTexturePro(
         assets.Scorebox, scoreboxSrc, scoreboxDraw, { WidthOfScorebox, 0 }, 0, WHITE
     );
-    int TotalBandScore = ThePlayerManager.BandStats.Score;
-    for (int a = 0; a < ThePlayerManager.PlayersActive; a++) {
-        TotalBandScore += ThePlayerManager.BandStats.SustainScoreBuffer[a];
-    }
     GameMenu::mhDrawText(
         assets.redHatMono,
-        GameMenu::scoreCommaFormatter(TotalBandScore),
+        GameMenu::scoreCommaFormatter(ThePlayerManager.BandStats.Score),
         { u.RightSide - u.winpct(0.0145f), scoreY + u.hinpct(0.0025) },
         u.hinpct(0.05),
         Color { 107, 161, 222, 255 },
@@ -169,6 +165,11 @@ void GameplayMenu::DrawGameplayStars(
     }
 }
 
+unsigned char BeatToCharViaTickThing(int tick, int MinBrightness, int MaxBrightness) {
+    float TickModulo = tick % 480;
+    return Remap(getEasingFunction(EaseOutQuad)(TickModulo / 480.0f), 0, 1.0f, MaxBrightness, MinBrightness);
+}
+
 void GameplayMenu::Draw() {
     AudioManager &audioManager = AudioManager::getInstance();
     Units &u = Units::getInstance();
@@ -180,9 +181,11 @@ void GameplayMenu::Draw() {
 
     // IMAGE BACKGROUNDS??????
     ClearBackground(BLACK);
-
+    unsigned char BackgroundColor = 128;
+    if (ThePlayerManager.BandStats.PlayersInOverdrive > 0)
+        BackgroundColor = BeatToCharViaTickThing(TheGameRenderer.CurrentTick, 128, 96);
     GameMenu::DrawAlbumArtBackground(TheSongList.curSong->albumArtBlur);
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color { 0, 0, 0, 128 });
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color { 0, 0, 0, BackgroundColor });
 
     /* Band Multiplier Drawing
     float bandMult = u.RightSide - WidthOfScorebox;
@@ -246,14 +249,6 @@ void GameplayMenu::Draw() {
     }
 
     for (int pnum = 0; pnum < ThePlayerManager.PlayersActive; pnum++) {
-        ThePlayerManager.BandStats.SustainScoreBuffer[pnum] =
-            ThePlayerManager.GetActivePlayer(pnum).stats.SustainScoreBuffer[0];
-        for (int g = 1;
-             g < ThePlayerManager.GetActivePlayer(pnum).stats.SustainScoreBuffer.size();
-             g++) {
-            ThePlayerManager.BandStats.SustainScoreBuffer[pnum] +=
-                ThePlayerManager.GetActivePlayer(pnum).stats.SustainScoreBuffer[g];
-        }
         TheGameRenderer.cameraSel =
             CameraSelectionPerPlayer[ThePlayerManager.PlayersActive - 1][pnum];
         int pos = CameraPosPerPlayer[ThePlayerManager.PlayersActive - 1][pnum];
@@ -511,6 +506,7 @@ void GameplayMenu::Draw() {
                 TheGameRenderer.songPlaying = false;
                 TheGameRenderer.Restart = true;
                 player.ResetGameplayStats();
+                ThePlayerManager.BandStats.ResetBandGameplayStats();
                 stats.Paused = false;
             }
             if (GuiButton(QuitBox, "Back to Music Library")) {
@@ -520,6 +516,7 @@ void GameplayMenu::Draw() {
 
                 TheSongList.curSong->LoadAlbumArt();
                 player.ResetGameplayStats();
+                ThePlayerManager.BandStats.ResetBandGameplayStats();
                 TheGameRenderer.midiLoaded = false;
                 TheSongTime.Reset();
                 TheSongList.curSong->parts[player.Instrument]

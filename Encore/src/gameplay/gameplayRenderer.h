@@ -98,6 +98,7 @@ class gameplayRenderer {
     double GetNoteOnScreenTime(
         double noteTime, double songTime, float noteSpeed, int Difficulty, float length
     );
+    void DrawPerfectText(double noteTime, double songTime, Player& player);
     double HighwaySpeedDifficultyMultiplier(int Difficulty);
     float MaxHighwaySpeed = 1.25f;
     float MinHighwaySpeed = 0.5f;
@@ -105,7 +106,7 @@ class gameplayRenderer {
 public:
     gameplayRenderer();
     ~gameplayRenderer();
-
+    double CurrentTick = 0.0;
     float highwayLevel = 0;
     float smasherPos = 2.4f;
     float HitAnimDuration = 0.15f;

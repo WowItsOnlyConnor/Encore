@@ -32,6 +32,7 @@ public:
     bool Quit;
     bool FC;
     bool Paused;
+    double LastPerfectTime = -2.0;
     bool GoldStars() {
         float starPercent = Score / BaseScore;
         if (starPercent >= STAR_THRESHOLDS[Instrument][5])
@@ -43,11 +44,12 @@ public:
 
     double Score;
     // extra scoring information
-    int SustainScore = 0;
-    int MultiplierScore = 0;
-    int OverdriveScore = 0;
-    int PerfectScore = 0;
-    
+    double SustainScore = 0;
+    double MultiplierScore = 0;
+    double OverdriveScore = 0;
+    double PerfectScore = 0;
+    double NoteScore = 0;
+
     int Combo;
     int MaxCombo;
     int Overhits;

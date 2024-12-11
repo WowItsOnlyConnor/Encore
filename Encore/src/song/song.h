@@ -605,6 +605,14 @@ public:
         ifs.close();
     }
     void parseBeatLines(smf::MidiFile &midiFile, int trkidx) {
+        int MaxTick = midiFile[trkidx].last().tick;
+        for (int i = 0; i < MaxTick; i += 240) {
+            beatLines.push_back(
+                    { midiFile.getTimeInSeconds(i),false,false, i }
+            );
+        }
+
+        /*
         for (int i = 0; i < midiFile[trkidx].getSize(); i++) {
             if (midiFile[trkidx][i].isNoteOn()) {
                 beatLines.push_back(
@@ -615,7 +623,9 @@ public:
                 );
             }
         }
+        */
     }
+
     void getTiming(smf::MidiFile &midiFile, int trkidx, smf::MidiEventList events) {
         for (int i = 0; i < events.getSize(); i++) {
             if (events[i].isTempo()) {
