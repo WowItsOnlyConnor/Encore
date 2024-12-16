@@ -8,26 +8,26 @@
 #include "GLFW/glfw3.h"
 #include "song/songlist.h"
 
-int InputHandler::calculatePressedMask(PlayerGameplayStats &stats) {
+int InputHandler::calculatePressedMask(PlayerGameplayStats *&stats) {
     int mask = 0;
-    for (int pressedButtons = 0; pressedButtons < stats.HeldFrets.size();
+    for (int pressedButtons = 0; pressedButtons < stats->HeldFrets.size();
          pressedButtons++) {
-        if (stats.HeldFrets[pressedButtons] || stats.HeldFretsAlt[pressedButtons])
+        if (stats->HeldFrets[pressedButtons] || stats->HeldFretsAlt[pressedButtons])
             mask += PlasticFrets[pressedButtons];
     }
     return mask;
 }
 
 bool InputHandler::isNoteMatch(
-    const Note &curNote, int pressedMask, PlayerGameplayStats &stats
+    const Note &curNote, int pressedMask, PlayerGameplayStats *&stats
 ) {
     bool maskGreater = pressedMask >= curNote.mask;
     bool maskEqual = pressedMask == curNote.mask;
     bool maskLess = pressedMask < (curNote.mask * 2);
     if (!curNote.pOpen) {
-        bool chordMatch = stats.extendedSustainActive ? maskGreater : maskEqual;
+        bool chordMatch = stats->extendedSustainActive ? maskGreater : maskEqual;
         bool singleMatch =
-            stats.extendedSustainActive ? maskGreater : maskGreater && maskLess;
+            stats->extendedSustainActive ? maskGreater : maskGreater && maskLess;
         if (curNote.chord) {
             return chordMatch;
         }
@@ -42,60 +42,57 @@ bool InputHandler::isNoteMatch(
 void InputHandler::CheckPlasticInputs(
     Player &player, int lane, int action, float eventTime
 ) {
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     // basic shit so that its easier to Do Things lol
     PlayerManager &playerManager = ThePlayerManager;
     SongList &songList = TheSongList;
     Chart &curChart =
         songList.curSong->parts[player.Instrument]->charts[player.Difficulty];
 
-    if (stats.curNoteInt >= curChart.notes.size())
-        stats.curNoteInt = curChart.notes.size() - 1;
-    Note &curNote = curChart.notes[stats.curNoteInt];
-    stats.PressedMask = calculatePressedMask(stats);
+    if (stats->curNoteInt >= curChart.notes.size())
+        stats->curNoteInt = curChart.notes.size() - 1;
+    Note &curNote = curChart.notes[stats->curNoteInt];
+    stats->PressedMask = calculatePressedMask(stats);
     bool inCoda = songList.curSong->BRE.IsCodaActive(eventTime);
-    Note &lastNote = curChart.notes[stats.curNoteInt == 0 ? 0 : stats.curNoteInt - 1];
+    Note &lastNote = curChart.notes[stats->curNoteInt == 0 ? 0 : stats->curNoteInt - 1];
 
     // TODO: BRE logic
     if (inCoda)
         return;
-
-    bool firstNote = stats.curNoteInt == 0;
-
-    bool greaterThanLastNoteMatch = stats.PressedMask > (lastNote.mask << 2) + 1;
+    bool firstNote = stats->curNoteInt == 0;
+    bool greaterThanLastNoteMatch = stats->PressedMask > (lastNote.mask << 2) + 1;
     bool frettingInput = action == GLFW_PRESS && lane != STRUM && lane != -1;
-    bool noteMatch = isNoteMatch(curNote, stats.PressedMask, stats);
-
+    bool noteMatch = isNoteMatch(curNote, stats->PressedMask, stats);
     bool HopoOverstrumCheck =
         ((lastNote.phopo && lastNote.hit && !firstNote)
              ? (eventTime > lastNote.hitTime + 0.075f)
              : (true));
     float calibratedTime = eventTime + player.InputCalibration;
-    bool fretHopoMatch = (curNote.phopo && (stats.Combo > 0 || stats.curNoteInt == 0));
+    bool fretHopoMatch = (curNote.phopo && (stats->Combo > 0 || stats->curNoteInt == 0));
     bool fretTapMatch = curNote.pTap;
     bool CouldTap = (fretHopoMatch || fretTapMatch) && curNote.GhostCount < 2;
 
     bool IsInWindow = curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit
         && !curNote.accounted;
     if (lane == STRUM && action == GLFW_RELEASE) {
-        stats.DownStrum = false;
-        stats.UpStrum = false;
+        stats->DownStrum = false;
+        stats->UpStrum = false;
         return;
     }
-    if (lane == STRUM && action == GLFW_PRESS && !stats.FAS) {
-        stats.StrumNoFretTime = calibratedTime;
+    if (lane == STRUM && action == GLFW_PRESS && !stats->FAS) {
+        stats->StrumNoFretTime = calibratedTime;
         curNote.strumCount++;
         if (IsInWindow && !curNote.hitWithFAS) {
-            stats.FAS = true;
+            stats->FAS = true;
             curNote.hitWithFAS = true;
-            stats.strummedNote = stats.curNoteInt;
+            stats->strummedNote = stats->curNoteInt;
         }
         if (!IsInWindow && HopoOverstrumCheck) {
-            stats.OverHit();
+            stats->OverHit();
             if (lastNote.held && !firstNote) {
                 lastNote.held = false;
             }
-            curChart.overdrive.UpdateEventViaNote(curNote, stats.curODPhrase);
+            curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
         }
     }
 
@@ -103,14 +100,14 @@ void InputHandler::CheckPlasticInputs(
     if ((curNote.hitWithFAS || CouldTap) && IsInWindow && noteMatch) {
         curNote.cHitNote(eventTime, player.InputCalibration);
         // TODO: fix for plastic
-        stats.HitPlasticNote(curNote);
-        std::cout << stats.noODmultiplier() << std::endl;
+        stats->HitPlasticNote(curNote);
+        std::cout << stats->noODmultiplier() << std::endl;
         playerManager.BandStats.AddClassicNotePoint(
-            curNote.perfect, stats.noODmultiplier(), curNote.chordSize
+            curNote.perfect, stats->noODmultiplier(), curNote.chordSize
         );
-        if (stats.Combo <= stats.maxMultForMeter() * 10 && stats.Combo != 0
-            && stats.Combo % 10 == 0) {
-            stats.MultiplierEffectTime = eventTime;
+        if (stats->Combo <= stats->maxMultForMeter() * 10 && stats->Combo != 0
+            && stats->Combo % 10 == 0) {
+            stats->MultiplierEffectTime = eventTime;
         }
 
         return;
@@ -120,13 +117,13 @@ void InputHandler::CheckPlasticInputs(
 }
 
 void InputHandler::handleInputs(Player &player, int lane, int action) {
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     SettingsOld &settings = SettingsOld::getInstance();
     SongTime &enctime = TheSongTime;
     SongList &songList = TheSongList;
     PlayerManager &playerManager = ThePlayerManager;
 
-    if (stats.Paused)
+    if (stats->Paused)
         return;
     if (lane == -2)
         return;
@@ -140,13 +137,13 @@ void InputHandler::handleInputs(Player &player, int lane, int action) {
         songList.curSong->parts[player.Instrument]->charts[player.Difficulty];
     float eventTime = enctime.GetSongTime();
     if (true) {
-        if (action == GLFW_PRESS && (lane == -1) && stats.overdriveFill > 0
-            && !stats.Overdrive) {
-            stats.overdriveActiveTime = eventTime;
-            stats.overdriveActiveFill = stats.overdriveFill;
-            stats.Overdrive = true;
-            stats.overdriveHitAvailable = true;
-            stats.overdriveHitTime = eventTime;
+        if (action == GLFW_PRESS && (lane == -1) && stats->overdriveFill > 0
+            && !stats->Overdrive) {
+            stats->overdriveActiveTime = eventTime;
+            stats->overdriveActiveFill = stats->overdriveFill;
+            stats->Overdrive = true;
+            stats->overdriveHitAvailable = true;
+            stats->overdriveHitTime = eventTime;
 
             playerManager.BandStats.PlayersInOverdrive += 1;
             playerManager.BandStats.Overdrive = true;
@@ -162,7 +159,7 @@ void InputHandler::handleInputs(Player &player, int lane, int action) {
 void InputHandler::CheckPadInputs(
     Player &player, int lane, int action, double eventTime
 ) {
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     PlayerManager &playerManager = ThePlayerManager;
     SongList &songList = TheSongList;
     Chart &curChart =
@@ -170,8 +167,8 @@ void InputHandler::CheckPadInputs(
     SettingsOld &settings = SettingsOld::getInstance();
 
     if (lane == OVERDRIVE_ACT) {
-        if ((action == GLFW_PRESS && !stats.overdriveHitAvailable)
-            || (action == GLFW_RELEASE && !stats.overdriveLiftAvailable))
+        if ((action == GLFW_PRESS && !stats->overdriveHitAvailable)
+            || (action == GLFW_RELEASE && !stats->overdriveLiftAvailable))
             return;
         Note *curNote = &curChart.notes[0];
         for (auto &note : curChart.notes) {
@@ -180,10 +177,10 @@ void InputHandler::CheckPadInputs(
                 break;
             }
         }
-        if (action == GLFW_PRESS && !stats.overdriveHeld) {
-            stats.overdriveHeld = true;
-        } else if (action == GLFW_RELEASE && stats.overdriveHeld) {
-            stats.overdriveHeld = false;
+        if (action == GLFW_PRESS && !stats->overdriveHeld) {
+            stats->overdriveHeld = true;
+        } else if (action == GLFW_RELEASE && stats->overdriveHeld) {
+            stats->overdriveHeld = false;
         }
 
         for (int newlane = 0; newlane < 5; newlane++) {
@@ -193,13 +190,13 @@ void InputHandler::CheckPadInputs(
 
             Note &chordNote = curChart.notes[chordLane];
             bool PressToHitNote = !chordNote.accounted && action == GLFW_PRESS
-                && stats.overdriveHitAvailable;
+                && stats->overdriveHitAvailable;
 
             bool ReleaseToHitNote = !chordNote.accounted && action == GLFW_RELEASE
-                && stats.overdriveLiftAvailable && stats.overdriveLanesHit[newlane];
+                && stats->overdriveLiftAvailable && stats->overdriveLanesHit[newlane];
 
             bool SustainReleased = action == GLFW_RELEASE && curNote->held
-                && (curNote->len) > 0 && stats.overdriveLiftAvailable;
+                && (curNote->len) > 0 && stats->overdriveLiftAvailable;
 
             bool Expert = player.Difficulty == 3;
 
@@ -209,25 +206,25 @@ void InputHandler::CheckPadInputs(
             if ((PressToHitNote || ReleaseToHitNote) && !SustainReleased) {
                 if (!chordNote.padHitNote(eventTime, player.InputCalibration))
                     break;
-                stats.overdriveLanesHit[newlane] = PressToHitNote;
-                stats.HitNote(chordNote.perfect);
+                stats->overdriveLanesHit[newlane] = PressToHitNote;
+                stats->HitNote(chordNote.perfect);
                 playerManager.BandStats.AddNotePoint(
-                    chordNote.perfect, stats.multiplier()
+                    chordNote.perfect, stats->multiplier()
                 );
-                stats.overdriveHitAvailable = !PressToHitNote;
-                stats.overdriveLiftAvailable = !ReleaseToHitNote;
+                stats->overdriveHitAvailable = !PressToHitNote;
+                stats->overdriveLiftAvailable = !ReleaseToHitNote;
                 return;
             }
 
             // this is for releasing sustains
             if (!StillHeldCheck) {
                 chordNote.held = false;
-                stats.Mute = true;
+                stats->Mute = true;
             }
         }
         return;
     }
-    for (int i = stats.curNoteIdx[lane]; i < curChart.notes_perlane[lane].size(); i++) {
+    for (int i = stats->curNoteIdx[lane]; i < curChart.notes_perlane[lane].size(); i++) {
         Note &curNote = curChart.notes[curChart.notes_perlane[lane][i]];
 
         if (lane != curNote.lane)
@@ -239,33 +236,33 @@ void InputHandler::CheckPadInputs(
             if (!curNote.padHitNote(eventTime, player.InputCalibration))
                 break;
             if (LiftHit) {
-                stats.lastHitLifts[lane] = curChart.notes_perlane[lane][i];
+                stats->lastHitLifts[lane] = curChart.notes_perlane[lane][i];
             }
             if (curNote.perfect)
-                stats.LastPerfectTime = curNote.perfect;
-            stats.HitNote(curNote.perfect);
-            playerManager.BandStats.AddNotePoint(curNote.perfect, stats.multiplier());
+                stats->LastPerfectTime = curNote.perfect;
+            stats->HitNote(curNote.perfect);
+            playerManager.BandStats.AddNotePoint(curNote.perfect, stats->multiplier());
             return;
         }
-        if ((!stats.HeldFrets[curNote.lane] && !stats.HeldFretsAlt[curNote.lane])
+        if ((!stats->HeldFrets[curNote.lane] && !stats->HeldFretsAlt[curNote.lane])
             && curNote.held && (curNote.len) > 0) {
             curNote.held = false;
-            stats.Mute = true;
+            stats->Mute = true;
             return;
         }
         bool AfterSongStart = eventTime > songList.curSong->music_start;
 
         if (TapHit && AfterSongStart
             && !curNote.isGood(eventTime, player.InputCalibration) && !curNote.accounted
-            && eventTime > stats.overdriveHitTime + 0.05 && !stats.OverhitFrets[lane]) {
-            if (stats.lastHitLifts[lane] != -1) {
-                if (eventTime > curChart.notes[stats.lastHitLifts[lane]].time - 0.05
-                    && eventTime < curChart.notes[stats.lastHitLifts[lane]].time + 0.05)
+            && eventTime > stats->overdriveHitTime + 0.05 && !stats->OverhitFrets[lane]) {
+            if (stats->lastHitLifts[lane] != -1) {
+                if (eventTime > curChart.notes[stats->lastHitLifts[lane]].time - 0.05
+                    && eventTime < curChart.notes[stats->lastHitLifts[lane]].time + 0.05)
                     continue;
             }
-            stats.OverHit();
-            curChart.overdrive.MissCurrentEvent(eventTime, stats.curODPhrase);
-            stats.OverhitFrets[lane] = true;
+            stats->OverHit();
+            curChart.overdrive.MissCurrentEvent(eventTime, stats->curODPhrase);
+            stats->OverhitFrets[lane] = true;
         }
     }
 }

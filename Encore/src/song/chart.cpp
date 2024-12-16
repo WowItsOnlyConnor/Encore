@@ -388,6 +388,8 @@ void Chart::parsePlasticNotes(
         newNote.valid = true;
         notes.push_back(newNote);
     }
+
+    Encore::EncoreLog(LOG_DEBUG, TextFormat("ENC: Processed classic notes for %01i", instrument));
     LoadingState = NOTE_SORTING;
     auto it = std::unique(notes.begin(), notes.end(), areNotesEqual);
     notes.erase(it, notes.end());

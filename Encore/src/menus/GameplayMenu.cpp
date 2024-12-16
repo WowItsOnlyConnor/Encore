@@ -23,7 +23,9 @@
 #include <raylib.h>
 
 GameplayMenu::GameplayMenu() {}
-GameplayMenu::~GameplayMenu() {}
+GameplayMenu::~GameplayMenu() {
+
+}
 
 void GameplayMenu::DrawScorebox(Units &u, Assets &assets, float scoreY) {
     Rectangle scoreboxSrc {
@@ -165,9 +167,9 @@ void GameplayMenu::DrawGameplayStars(
     }
 }
 
-unsigned char BeatToCharViaTickThing(int tick, int MinBrightness, int MaxBrightness) {
-    float TickModulo = tick % 480;
-    return Remap(getEasingFunction(EaseOutQuad)(TickModulo / 480.0f), 0, 1.0f, MaxBrightness, MinBrightness);
+unsigned char BeatToCharViaTickThing(int tick, int MinBrightness, int MaxBrightness, int QuarterNoteLength) {
+    float TickModulo = tick % QuarterNoteLength;
+    return Remap(getEasingFunction(EaseInOutBack)(TickModulo / float(QuarterNoteLength)), 0, 1.0f, MaxBrightness, MinBrightness);
 }
 
 void GameplayMenu::Draw() {
@@ -183,7 +185,7 @@ void GameplayMenu::Draw() {
     ClearBackground(BLACK);
     unsigned char BackgroundColor = 128;
     if (ThePlayerManager.BandStats.PlayersInOverdrive > 0)
-        BackgroundColor = BeatToCharViaTickThing(TheGameRenderer.CurrentTick, 128, 96);
+        BackgroundColor = BeatToCharViaTickThing(TheGameRenderer.CurrentTick, 128, 108, 960);
     GameMenu::DrawAlbumArtBackground(TheSongList.curSong->albumArtBlur);
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color { 0, 0, 0, BackgroundColor });
 
@@ -215,7 +217,7 @@ void GameplayMenu::Draw() {
                     == stream.instrument) {
                     audioManager.SetAudioStreamVolume(
                         stream.handle,
-                        player.stats.Mute ? settings.MainVolume * settings.MissVolume
+                        player.stats->Mute ? settings.MainVolume * settings.MissVolume
                                            : settings.MainVolume * settings.PlayerVolume
                     );
                 } else {
@@ -474,8 +476,8 @@ void GameplayMenu::Draw() {
 
     if (!ThePlayerManager.BandStats.Multiplayer) {
         Player &player = ThePlayerManager.GetActivePlayer(0);
-        PlayerGameplayStats &stats = player.stats;
-        if (stats.Paused) {
+        PlayerGameplayStats *&stats = player.stats;
+        if (stats->Paused) {
             DrawRectangle(
                 0, 0, GetScreenWidth(), GetScreenHeight(), Color { 0, 0, 0, 80 }
             );
@@ -493,7 +495,7 @@ void GameplayMenu::Draw() {
             if (GuiButton(ResumeBox, "Resume")) {
                 audioManager.unpauseStreams();
                 TheSongTime.Resume();
-                stats.Paused = false;
+                stats->Paused = false;
             }
             if (GuiButton(RestartBox, "Restart")) {
                 TheSongTime.Reset();
@@ -505,9 +507,15 @@ void GameplayMenu::Draw() {
                 TheGameRenderer.highwayInEndAnim = false;
                 TheGameRenderer.songPlaying = false;
                 TheGameRenderer.Restart = true;
-                player.ResetGameplayStats();
+                for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
+                    delete ThePlayerManager.GetActivePlayer(playerNum).stats;
+                    ThePlayerManager.GetActivePlayer(playerNum).stats = new PlayerGameplayStats(
+                        ThePlayerManager.GetActivePlayer(playerNum).Difficulty,
+                        ThePlayerManager.GetActivePlayer(playerNum).Instrument
+                    );
+                }
                 ThePlayerManager.BandStats.ResetBandGameplayStats();
-                stats.Paused = false;
+                stats->Paused = false;
             }
             if (GuiButton(QuitBox, "Back to Music Library")) {
                 // notes =
@@ -523,7 +531,7 @@ void GameplayMenu::Draw() {
                     ->charts[player.Difficulty]
                     .resetNotes();
                 audioManager.unloadStreams();
-                stats.Quit = true;
+                stats->Quit = true;
                 TheGameRenderer.highwayInAnimation = false;
                 TheGameRenderer.highwayInEndAnim = false;
                 TheGameRenderer.songPlaying = false;
@@ -711,24 +719,24 @@ void GameplayMenu::Load() {
     if (ThePlayerManager.PlayersActive > 1) {
         ThePlayerManager.BandStats.Multiplayer = true;
         for (int player = 0; player < ThePlayerManager.PlayersActive; player++) {
-            ThePlayerManager.GetActivePlayer(player).stats.Multiplayer = true;
+            ThePlayerManager.GetActivePlayer(player).stats->Multiplayer = true;
         }
     } else {
         ThePlayerManager.BandStats.Multiplayer = false;
         for (int player = 0; player < ThePlayerManager.PlayersActive; player++) {
-            ThePlayerManager.GetActivePlayer(player).stats.Multiplayer = false;
+            ThePlayerManager.GetActivePlayer(player).stats->Multiplayer = false;
         }
     }
 
     for (int i = 0; i < ThePlayerManager.PlayersActive; i++) {
         Player &player = ThePlayerManager.GetActivePlayer(i);
-        player.stats.BaseScore = TheSongList.curSong->parts[player.Instrument]
+        player.stats->BaseScore = TheSongList.curSong->parts[player.Instrument]
                                       ->charts[player.Difficulty]
                                       .baseScore;
         if (i == 0) {
-            ThePlayerManager.BandStats.BaseScore = player.stats.BaseScore;
+            ThePlayerManager.BandStats.BaseScore = player.stats->BaseScore;
         } else {
-            ThePlayerManager.BandStats.BaseScore += player.stats.BaseScore;
+            ThePlayerManager.BandStats.BaseScore += player.stats->BaseScore;
         }
     }
 }

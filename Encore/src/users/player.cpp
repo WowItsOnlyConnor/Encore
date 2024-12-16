@@ -12,6 +12,15 @@
 #include <random>
 #include <nlohmann/json.hpp>
 
+PlayerGameplayStats::PlayerGameplayStats(int difficulty, int instrument)
+    : Quit(false), FC(false), Paused(false), Overdrive(false), Mute(false), Score(0),
+      Combo(0), MaxCombo(0), Overhits(0), Notes(0), NotesHit(0), GoodHit(0),
+      PerfectHit(0), NotesMissed(0), strummedNote(0), Health(0), overdriveFill(0),
+      overdriveActiveFill(0), overdriveActiveTime(0), overdriveActivateTime(0),
+      BaseScore(0) {
+    Difficulty = difficulty;
+    Instrument = instrument;
+}
 void PlayerGameplayStats::HitNote(bool perfect) {
     NotesHit += 1;
     Notes += 1;
@@ -282,57 +291,55 @@ Player::Player() {
     LeftyFlip = false;
     Online = false;
     ClassicMode = false;
-    stats.Difficulty = Difficulty;
-    stats.Instrument = Instrument;
 };
 
 void Player::ResetGameplayStats() {
-    stats.Quit = false;
-    stats.FC = true;
-    stats.Paused = false;
-    stats.Overdrive = false;
-    stats.FAS = false;
-    stats.Overstrum = false;
-    stats.UpStrum = false;
-    stats.DownStrum = false;
-    stats.StrumNoFretTime = -1.0;
+    stats->Quit = false;
+    stats->FC = true;
+    stats->Paused = false;
+    stats->Overdrive = false;
+    stats->FAS = false;
+    stats->Overstrum = false;
+    stats->UpStrum = false;
+    stats->DownStrum = false;
+    stats->StrumNoFretTime = -1.0;
 
-    stats.curFill = 0;
-    stats.curSolo = 0;
-    stats.curBeatLine = 0;
-    stats.curNoteInt = 0;
-    stats.curODPhrase = 0;
-    stats.curNoteIdx = { 0, 0, 0, 0, 0 };
-    stats.curBPM = 0;
-    stats.Mute = false;
-    stats.StartTime = 0.0;
-    stats.SongStartTime = 0.0;
+    stats->curFill = 0;
+    stats->curSolo = 0;
+    stats->curBeatLine = 0;
+    stats->curNoteInt = 0;
+    stats->curODPhrase = 0;
+    stats->curNoteIdx = { 0, 0, 0, 0, 0 };
+    stats->curBPM = 0;
+    stats->Mute = false;
+    stats->StartTime = 0.0;
+    stats->SongStartTime = 0.0;
 
-    stats.SustainScore = 0;
-    stats.MultiplierScore = 0;
-    stats.OverdriveScore = 0;
-    stats.PerfectScore = 0;
-    stats.NoteScore = 0;
+    stats->SustainScore = 0;
+    stats->MultiplierScore = 0;
+    stats->OverdriveScore = 0;
+    stats->PerfectScore = 0;
+    stats->NoteScore = 0;
 
-    stats.Score = 0;
-    stats.Combo = 0;
-    stats.MaxCombo = 0;
-    stats.Overhits = 0;
-    stats.Notes = 0;
-    stats.NotesHit = 0;
-    stats.NotesMissed = 0;
-    stats.PerfectHit = 0;
-    stats.Health = 100.0f;
+    stats->Score = 0;
+    stats->Combo = 0;
+    stats->MaxCombo = 0;
+    stats->Overhits = 0;
+    stats->Notes = 0;
+    stats->NotesHit = 0;
+    stats->NotesMissed = 0;
+    stats->PerfectHit = 0;
+    stats->Health = 100.0f;
 
-    stats.uvOffsetX = 0;
-    stats.uvOffsetY = 0;
+    stats->uvOffsetX = 0;
+    stats->uvOffsetY = 0;
 
-    stats.overdriveFill = 0.0f;
-    stats.overdriveActiveFill = 0.0f;
-    stats.overdriveActiveTime = 0.0;
-    stats.overdriveActivateTime = 0.0;
+    stats->overdriveFill = 0.0f;
+    stats->overdriveActiveFill = 0.0f;
+    stats->overdriveActiveTime = 0.0;
+    stats->overdriveActivateTime = 0.0;
 
-    stats.BaseScore = 0;
+    stats->BaseScore = 0;
 }
 
 BandGameplayStats::BandGameplayStats() {

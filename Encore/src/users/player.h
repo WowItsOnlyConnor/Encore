@@ -122,6 +122,7 @@ public:
     int Difficulty;
     int BaseScore;
 
+    PlayerGameplayStats(int difficulty, int instrument);
     void HitNote(bool perfect);
     void HitDrumsNote(bool perfect, bool cymbal);
     void HitPlasticNote(Note note);
@@ -178,7 +179,7 @@ public:
     std::string Name; // display name
     std::string PlayerID; // UUID
     // std::filesystem::path SettingsFile;
-    PlayerGameplayStats stats {};
+    PlayerGameplayStats *stats;
 
     Color AccentColor = { 255, 0, 255, 255 };
 #define SETTING_ACTION(type, name) type name;

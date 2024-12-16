@@ -93,7 +93,7 @@ public:
         { "", PartIcon::IconNone }
 
     };
-
+    bool AlbumArtLoaded = false;
     PartIcon iconFromString(const std::string &str) {
         auto it = stringToEnum.find(str);
         if (it != stringToEnum.end()) {

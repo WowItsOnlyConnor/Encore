@@ -1,3 +1,4 @@
+#include <array>
 //
 // Created by marie on 09/06/2024.
 //
@@ -419,33 +420,41 @@ void gameplayRenderer::LoadGameplayAssets() {
      */
 
     std::vector<std::vector<Vector3> > CameraDisplacement = {
-        { { 0, Height, Back } },
+        { { 0, Height1p, Back1p } },
+
         { { 0.75f, Height, Back }, { -0.75f, Height, Back } },
+
         { { 1.25f, Height, Back }, { 0, Height, Back }, { -1.25f, Height, Back } },
+
         { { 3.0f, Height4p, Back4p },
           { 1.0f, Height4p, Back4p },
           { -1.0f, Height4p, Back4p },
           { -3.0f, Height4p, Back4p } }
     };
     float TargetDistance = 20.0f;
-    std::vector<std::vector<Vector3> > CameraTargetDisplacement = {
-        { { 0, 0, TargetDistance } },
-        { { 0.75f, 0, TargetDistance }, { -0.75f, 0, TargetDistance } },
-        { { 1.25f, 0, TargetDistance },
-          { 0, 0, TargetDistance },
-          { -1.25f, 0, TargetDistance } },
-        { { 3.0f, 0, TargetDistance },
-          { 1.0f, 0, TargetDistance },
-          { -1.0f, 0, TargetDistance },
-          { -3.0f, 0, TargetDistance } }
-    };
+    std::array<std::array<Vector3, 4>, 4> CameraTargetDisplacement {
+        { { { { 0, 0, TargetDistance } } },
 
-    float FOV = 45.0f;
+          { { { 0.75f, 0, TargetDistance },
+              { -0.75f, 0, TargetDistance } } },
+
+          { { { 1.25f, 0, TargetDistance },
+              { 0, 0, TargetDistance },
+              { -1.25f, 0, TargetDistance } } },
+
+          { { { 3.0f, 0, TargetDistance },
+              { 1.0f, 0, TargetDistance },
+              { -1.0f, 0, TargetDistance },
+              { -3.0f, 0, TargetDistance } } } }
+    };
+    std::array CameraFOV { FOV1p, FOV, FOV, FOV };
     for (int cam = 0; cam < 4; cam++) {
         std::vector<Camera3D> cameraVec;
         for (int pos = 0; pos <= cam; pos++) {
             cameraVec.push_back(CreateCamera(
-                CameraDisplacement[cam][pos], CameraTargetDisplacement[cam][pos], FOV
+                CameraDisplacement.at(cam).at(pos),
+                CameraTargetDisplacement.at(cam).at(pos),
+                CameraFOV.at(cam)
             ));
         }
         cameraVectors.push_back(cameraVec);
@@ -556,8 +565,8 @@ void gameplayRenderer::LowerHighway() {
 Color MultiplierEffect(double curSongTime, Player &player) {
     double multiplierEffectTime = 1.0;
     Color RingDefault = ColorBrightness(player.AccentColor, -0.7);
-    double TimeHit = player.stats.MultiplierEffectTime;
-    bool miss = player.stats.Miss;
+    double TimeHit = player.stats->MultiplierEffectTime;
+    bool miss = player.stats->Miss;
     Color ColorForEffect = miss ? RED : WHITE;
     Color ColorToReturn = ColorBrightness(player.AccentColor, -0.7);
     if (curSongTime < TimeHit + multiplierEffectTime && curSongTime > TimeHit) {
@@ -588,8 +597,8 @@ Color MultiplierEffect(double curSongTime, Player &player) {
 }
 
 void gameplayRenderer::NoteMultiplierEffect(double curSongTime, Player &player) {
-    double TimeHit = player.stats.MultiplierEffectTime;
-    bool miss = player.stats.Miss;
+    double TimeHit = player.stats->MultiplierEffectTime;
+    bool miss = player.stats->Miss;
     if (curSongTime < TimeHit + multiplierEffectTime && curSongTime > TimeHit) {
         Color missColor = { 200, 0, 0, 255 };
         Color comboColor = { 200, 200, 200, 255 };
@@ -601,8 +610,8 @@ void gameplayRenderer::NoteMultiplierEffect(double curSongTime, Player &player) 
         unsigned char a = 255;
         double TimeSinceHit = curSongTime - TimeHit;
         if (!miss) {
-            if (player.stats.Combo <= player.stats.maxMultForMeter() * 10
-                && player.stats.Combo % 10 == 0) {
+            if (player.stats->Combo <= player.stats->maxMultForMeter() * 10
+                && player.stats->Combo % 10 == 0) {
                 r = Remap(
                     getEasingFunction(EaseOutQuart)(TimeSinceHit / multiplierEffectTime),
                     0,
@@ -626,7 +635,7 @@ void gameplayRenderer::NoteMultiplierEffect(double curSongTime, Player &player) 
                 );
             }
         } else {
-            if (player.stats.Combo != 0) {
+            if (player.stats->Combo != 0) {
                 r = Remap(
                     getEasingFunction(EaseOutQuart)(TimeSinceHit / multiplierEffectTime),
                     0,
@@ -698,20 +707,20 @@ void gameplayRenderer::ProcessSustainScoring(
     double heldTime,
     double lenTime,
     bool perfect,
-    PlayerGameplayStats &stats
+    PlayerGameplayStats *&stats
 ) {
-    stats.SustainScoreBuffer[lane] = Clamp(
-        float(heldTime / lenTime) * (12 * stats.multiplier() * (perfect + 1) * beatsLen),
+    stats->SustainScoreBuffer[lane] = Clamp(
+        float(heldTime / lenTime) * (12 * stats->multiplier() * (perfect + 1) * beatsLen),
         0,
-        beatsLen * 12 * stats.multiplier() * (perfect + 1)
+        beatsLen * 12 * stats->multiplier() * (perfect + 1)
     );
 }
 
-void gameplayRenderer::AddSustainPoints(int lane, PlayerGameplayStats &stats) {
-    stats.Score += stats.SustainScoreBuffer[lane];
-    stats.SustainScore += stats.SustainScoreBuffer[lane];
-    ThePlayerManager.BandStats.Score += stats.SustainScoreBuffer[lane];
-    stats.SustainScoreBuffer[lane] = 0;
+void gameplayRenderer::AddSustainPoints(int lane, PlayerGameplayStats *&stats) {
+    stats->Score += stats->SustainScoreBuffer[lane];
+    stats->SustainScore += stats->SustainScoreBuffer[lane];
+    ThePlayerManager.BandStats.Score += stats->SustainScoreBuffer[lane];
+    stats->SustainScoreBuffer[lane] = 0;
 }
 
 float gameplayRenderer::GetNoteXPosition(Player &player, float diffDistance, int lane) {
@@ -730,7 +739,7 @@ void gameplayRenderer::RenderPadNotes(
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
     for (int lane = 0; lane < (player.Difficulty == 3 ? 5 : 4); lane++) {
-        for (int i = player.stats.curNoteIdx[lane];
+        for (int i = player.stats->curNoteIdx[lane];
              i < curChart.notes_perlane[lane].size();
              i++) {
             Color NoteColor = player.AccentColor;
@@ -740,55 +749,55 @@ void gameplayRenderer::RenderPadNotes(
 
             Note &curNote = curChart.notes[curChart.notes_perlane[lane][i]];
             // if (curNote.hit) {
-            //	player.stats.totalOffset += curNote.HitOffset;
+            //	player.stats->totalOffset += curNote.HitOffset;
             // }
 
             if (!curNote.hit && !curNote.accounted
                 && curNote.time + goodBackend < curSongTime
                 && !TheSongTime.SongComplete()) {
                 curNote.miss = true;
-                player.stats.MissNote();
-                player.stats.Combo = 0;
+                player.stats->MissNote();
+                player.stats->Combo = 0;
                 curNote.accounted = true;
             } else if (player.Bot) {
                 if (!curNote.hit && !curNote.accounted && curNote.time < curSongTime
-                    && player.stats.curNoteInt < curChart.notes.size()
+                    && player.stats->curNoteInt < curChart.notes.size()
                     && !TheSongTime.SongComplete()) {
                     curNote.hit = true;
-                    player.stats.LastPerfectTime = curNote.hitTime;
-                    player.stats.HitNote(false);
+                    player.stats->LastPerfectTime = curNote.hitTime;
+                    player.stats->HitNote(false);
                     if (ThePlayerManager.BandStats.Multiplayer) {
                         ThePlayerManager.BandStats.AddNotePoint(
-                            curNote.perfect, player.stats.noODmultiplier()
+                            curNote.perfect, player.stats->noODmultiplier()
                         );
                     }
                     if (curNote.len > 0)
                         curNote.held = true;
                     curNote.accounted = true;
-                    // player.stats.Notes += 1;
-                    // player.stats.Combo++;
+                    // player.stats->Notes += 1;
+                    // player.stats->Combo++;
                     curNote.accounted = true;
                     curNote.hitTime = curSongTime;
                 }
             }
 
-            if (player.stats.Overdrive) {
-                player.stats.overdriveActiveFill +=
-                    curChart.overdrive.AddOverdrive(player.stats.curODPhrase);
-                if (player.stats.overdriveActiveFill > 1.0f)
-                    player.stats.overdriveActiveFill = 1.0f;
+            if (player.stats->Overdrive) {
+                player.stats->overdriveActiveFill +=
+                    curChart.overdrive.AddOverdrive(player.stats->curODPhrase);
+                if (player.stats->overdriveActiveFill > 1.0f)
+                    player.stats->overdriveActiveFill = 1.0f;
             } else {
-                player.stats.overdriveFill +=
-                    curChart.overdrive.AddOverdrive(player.stats.curODPhrase);
-                if (player.stats.overdriveFill > 1.0f)
-                    player.stats.overdriveFill = 1.0f;
+                player.stats->overdriveFill +=
+                    curChart.overdrive.AddOverdrive(player.stats->curODPhrase);
+                if (player.stats->overdriveFill > 1.0f)
+                    player.stats->overdriveFill = 1.0f;
             }
             double HighwayEnd = length + (smasherPos * 4);
 
-            curChart.solos.UpdateEventViaNote(curNote, player.stats.curSolo);
-            curChart.overdrive.UpdateEventViaNote(curNote, player.stats.curODPhrase);
-            curChart.sections.UpdateEventViaNote(curNote, player.stats.curSection);
-            curChart.fills.UpdateEventViaNote(curNote, player.stats.curFill);
+            curChart.solos.UpdateEventViaNote(curNote, player.stats->curSolo);
+            curChart.overdrive.UpdateEventViaNote(curNote, player.stats->curODPhrase);
+            curChart.sections.UpdateEventViaNote(curNote, player.stats->curSection);
+            curChart.fills.UpdateEventViaNote(curNote, player.stats->curFill);
             double NoteStartPositionWorld =
                 GetNotePos(curNote.time, curSongTime, player.NoteSpeed, HighwayEnd);
             double NoteEndPositionWorld = GetNotePos(
@@ -806,7 +815,7 @@ void gameplayRenderer::RenderPadNotes(
                 continue;
 
             nDrawPadNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
-            PlayerGameplayStats &stats = player.stats;
+            PlayerGameplayStats *&stats = player.stats;
             if ((curNote.len) > 0) {
                 if (curNote.held) {
                     NoteStartPositionWorld = smasherPos;
@@ -821,7 +830,7 @@ void gameplayRenderer::RenderPadNotes(
                         curNote.perfect,
                         stats
                     );
-                    if (!stats.HeldFrets[lane] && !stats.HeldFretsAlt[lane]) {
+                    if (!stats->HeldFrets[lane] && !stats->HeldFretsAlt[lane]) {
                         curNote.held = false;
                     }
                     if (curNote.len <= curNote.heldTime) {
@@ -846,9 +855,9 @@ void gameplayRenderer::RenderPadNotes(
             nDrawFiveLaneHitEffects(player, curNote, curSongTime, notePosX, lane);
 
             if (NoteEndPositionWorld < -1
-                && player.stats.curNoteIdx[lane]
+                && player.stats->curNoteIdx[lane]
                     < curChart.notes_perlane[lane].size() - 1)
-                player.stats.curNoteIdx[lane] = i + 1;
+                player.stats->curNoteIdx[lane] = i + 1;
         }
     }
     EndMode3D();
@@ -864,44 +873,45 @@ void gameplayRenderer::CheckPlasticNotes(
     double curSongTime,
     std::vector<Note>::value_type &curNote
 ) {
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     if (!curNote.hit && !curNote.accounted
         && curNote.time + goodBackend + player.InputCalibration < curSongTime
-        && !TheSongTime.SongComplete() && stats.curNoteInt < curChart.notes.size()
+        && !TheSongTime.SongComplete() && stats->curNoteInt < curChart.notes.size()
         && !player.Bot) {
         Encore::EncoreLog(
             LOG_INFO,
             TextFormat(
-                "Missed note at %f, note %01i", curSongTime, player.stats.curNoteInt
+                "Missed note at %f, note %01i", curSongTime, player.stats->curNoteInt
             )
         );
-        stats.MissNote();
+        stats->MissNote();
         curNote.miss = true;
         curNote.accounted = true;
-        stats.Miss = true;
-        player.stats.MultiplierEffectTime = curSongTime;
+        stats->Miss = true;
+        player.stats->MultiplierEffectTime = curSongTime;
     } else if (player.Bot) {
         if (!curNote.hit && !curNote.accounted
             && curNote.time + player.InputCalibration < curSongTime
-            && stats.curNoteInt < curChart.notes.size() && !TheSongTime.SongComplete()) {
+            && stats->curNoteInt < curChart.notes.size() && !TheSongTime.SongComplete()) {
             curNote.cHitNote(curSongTime, 0);
             ThePlayerManager.BandStats.AddClassicNotePoint(
-                curNote.perfect, stats.noODmultiplier(), curNote.chordSize
+                curNote.perfect, stats->noODmultiplier(), curNote.chordSize
             );
 
-            stats.HitPlasticNote(curNote);
+            stats->HitPlasticNote(curNote);
         }
     }
 
-    curChart.solos.UpdateEventViaNote(curNote, stats.curSolo);
-    curChart.sections.UpdateEventViaNote(curNote, stats.curSection);
-    curChart.fills.UpdateEventViaNote(curNote, stats.curFill);
-    curChart.overdrive.UpdateEventViaNote(curNote, stats.curODPhrase);
+    curChart.solos.UpdateEventViaNote(curNote, stats->curSolo);
+    curChart.sections.UpdateEventViaNote(curNote, stats->curSection);
+    curChart.fills.UpdateEventViaNote(curNote, stats->curFill);
+    curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
 
-    if (curNote.hit && curChart.overdrive.Perfect(stats.curODPhrase)) {
-        player.stats.overdriveFill += curChart.overdrive.AddOverdrive(stats.curODPhrase);
-        if (player.stats.overdriveFill > 1.0f)
-            player.stats.overdriveFill = 1.0f;
+    if (curNote.hit && curChart.overdrive.Perfect(stats->curODPhrase)) {
+        player.stats->overdriveFill +=
+            curChart.overdrive.AddOverdrive(stats->curODPhrase);
+        if (player.stats->overdriveFill > 1.0f)
+            player.stats->overdriveFill = 1.0f;
     }
 }
 void gameplayRenderer::RenderClassicNotes(
@@ -909,21 +919,26 @@ void gameplayRenderer::RenderClassicNotes(
 ) {
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     double PointsPerTick = double(SUSTAIN_POINTS_PER_BEAT) / 480.0;
 
     for (auto &curNote : curChart.notes) {
         // if (curNote.time < TheSongTime.GetFakeStartTime()) {
-        //     player.stats.curNoteInt++;
+        //     player.stats->curNoteInt++;
         //     continue;
         // }
         if (curNote.time > TheSongTime.GetSongLength())
             continue;
 
         if (TheSongList.curSong->BRE.IsNoteInCoda(curNote)) {
-            stats.curNoteInt++;
+            stats->curNoteInt++;
             continue;
         }
+        if (curNote.time + curNote.len < curSongTime - 2)
+            continue;
+
+        if (curNote.time > curSongTime + 15)
+            break;
 
         CheckPlasticNotes(player, curChart, curSongTime, curNote);
 
@@ -982,12 +997,13 @@ void gameplayRenderer::RenderClassicNotes(
                     if (cLane.heldTime >= cLane.length) {
                         cLane.heldTime = cLane.length;
                     }
-                    stats.SustainScore += (CurrentTick - stats.LastTick) * PointsPerTick;
+                    stats->SustainScore +=
+                        (CurrentTick - stats->LastTick) * PointsPerTick;
                     ThePlayerManager.BandStats.SustainScore +=
-                        (CurrentTick - stats.LastTick) * PointsPerTick;
-                    stats.Score += (CurrentTick - stats.LastTick) * PointsPerTick;
+                        (CurrentTick - stats->LastTick) * PointsPerTick;
+                    stats->Score += (CurrentTick - stats->LastTick) * PointsPerTick;
                     ThePlayerManager.BandStats.Score +=
-                        (CurrentTick - stats.LastTick) * PointsPerTick;
+                        (CurrentTick - stats->LastTick) * PointsPerTick;
                     /*
                     ProcessSustainScoring(
                         lane,
@@ -998,7 +1014,7 @@ void gameplayRenderer::RenderClassicNotes(
                         stats
                     );
 */
-                    if (!((stats.PressedMask >> lane) & 1) && !player.Bot) {
+                    if (!((stats->PressedMask >> lane) & 1) && !player.Bot) {
                         curNote.held = false;
                         if (cLane.heldTime > (cLane.length * 0.95)) {
                             /*
@@ -1124,20 +1140,20 @@ void gameplayRenderer::RenderHud(Player &player, float length) {
         gprAssets.odBar, Vector3 { 0, 0.0f, 0.8f }, { 0 }, 0, { 1.0, 1.0, 1.4 }, WHITE
     );
 
-    float FillPct = player.stats.comboFillCalc();
+    float FillPct = player.stats->comboFillCalc();
     Vector4 MultFillColor { 0.8, 0.8, 0.8, 1 };
     Vector4 GoldMultiplier { OverdriveColor.r / 255.0f,
                              OverdriveColor.g / 255.0f,
                              OverdriveColor.b / 255.0f,
                              OverdriveColor.a / 255.0f };
     Vector4 BlueMultiplier { 0.2, 0.6, 1, 1 };
-    if (player.stats.IsBassOrVox()) {
-        if (player.stats.noODmultiplier() >= 6) {
-            MultFillColor = player.stats.Overdrive ? GoldMultiplier : BlueMultiplier;
+    if (player.stats->IsBassOrVox()) {
+        if (player.stats->noODmultiplier() >= 6) {
+            MultFillColor = player.stats->Overdrive ? GoldMultiplier : BlueMultiplier;
         }
     } else {
-        if (player.stats.noODmultiplier() >= 4) {
-            MultFillColor = player.stats.Overdrive ? GoldMultiplier : BlueMultiplier;
+        if (player.stats->noODmultiplier() >= 4) {
+            MultFillColor = player.stats->Overdrive ? GoldMultiplier : BlueMultiplier;
         }
     }
 
@@ -1164,7 +1180,7 @@ void gameplayRenderer::RenderHud(Player &player, float length) {
 
     Vector4 FColor = { 0.5f, 0.4f, 0.1, 1.0f };
     float ForFCTime = GetTime();
-    int FCING = player.stats.FC ? 2 : 0;
+    int FCING = player.stats->FC ? 2 : 0;
     SetTextureWrap(gprAssets.MultFCTex1, TEXTURE_WRAP_REPEAT);
     SetTextureWrap(gprAssets.MultFCTex2, TEXTURE_WRAP_REPEAT);
     SetTextureWrap(gprAssets.MultFCTex3, TEXTURE_WRAP_REPEAT);
@@ -1229,38 +1245,38 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
         GenTextureMipmaps(&GameplayRenderTexture.texture);
         SetTextureFilter(GameplayRenderTexture.texture, TEXTURE_FILTER_BILINEAR);
     }
-    PlayerGameplayStats &stats = player.stats;
-    CurrentTick = TheSongList.curSong->bpms[stats.curBPM].tick
+    PlayerGameplayStats *&stats = player.stats;
+    CurrentTick = TheSongList.curSong->bpms[stats->curBPM].tick
         + TimeRangeToTickDelta(
-                      TheSongList.curSong->bpms[stats.curBPM].time,
+                      TheSongList.curSong->bpms[stats->curBPM].time,
                       curSongTime,
-                      TheSongList.curSong->bpms[stats.curBPM]
+                      TheSongList.curSong->bpms[stats->curBPM]
         );
     Chart &curChart = song.parts[player.Instrument]->charts[player.Difficulty];
     float highwayLength = 17.25 * player.HighwayLength;
-    player.stats.Difficulty = player.Difficulty;
-    player.stats.Instrument = player.Instrument;
-    // float multFill = (!player.stats.Overdrive ? (float)(player.stats.multiplier() -
-    // 1) : (!player.stats.Multiplayer ? ((float)(player.stats.multiplier() / 2) - 1)
-    // / (float)player.stats.maxMultForMeter() : (float)(player.stats.multiplier() -
+    player.stats->Difficulty = player.Difficulty;
+    player.stats->Instrument = player.Instrument;
+    // float multFill = (!player.stats->Overdrive ? (float)(player.stats->multiplier() -
+    // 1) : (!player.stats->Multiplayer ? ((float)(player.stats->multiplier() / 2) - 1)
+    // / (float)player.stats->maxMultForMeter() : (float)(player.stats->multiplier() -
     // 1)));
     SetShaderValue(
         gprAssets.multNumberShader,
         gprAssets.uvOffsetXLoc,
-        &stats.uvOffsetX,
+        &stats->uvOffsetX,
         SHADER_UNIFORM_FLOAT
     );
     SetShaderValue(
         gprAssets.multNumberShader,
         gprAssets.uvOffsetYLoc,
-        &stats.uvOffsetY,
+        &stats->uvOffsetY,
         SHADER_UNIFORM_FLOAT
     );
 
     float multFill =
-        (!player.stats.Overdrive ? (float)(player.stats.multiplier() - 1)
-                                 : ((float)(player.stats.multiplier() / 2) - 1))
-        / (float)player.stats.maxMultForMeter();
+        (!player.stats->Overdrive ? (float)(player.stats->multiplier() - 1)
+                                  : ((float)(player.stats->multiplier() / 2) - 1))
+        / (float)player.stats->maxMultForMeter();
 
     // float multFill = 0.0;
     float DiffMultiplier =
@@ -1277,7 +1293,7 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
         : 30;
     Color highwayColor = ColorContrast(
         player.AccentColor,
-        Clamp(Remap(player.stats.Combo, 0, PlayerComboMax, -0.6f, 0.0f), -0.6, 0.0f)
+        Clamp(Remap(player.stats->Combo, 0, PlayerComboMax, -0.6f, 0.0f), -0.6, 0.0f)
     );
 
     Vector4 ColorForHighway = Vector4 { highwayColor.r / 255.0f,
@@ -1306,16 +1322,16 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
     SetShaderValue(
         gprAssets.multNumberShader,
         gprAssets.uvOffsetXLoc,
-        &player.stats.uvOffsetX,
+        &player.stats->uvOffsetX,
         SHADER_UNIFORM_FLOAT
     );
     SetShaderValue(
         gprAssets.multNumberShader,
         gprAssets.uvOffsetYLoc,
-        &player.stats.uvOffsetY,
+        &player.stats->uvOffsetY,
         SHADER_UNIFORM_FLOAT
     );
-    float comboFill = player.stats.comboFillCalc();
+    float comboFill = player.stats->comboFillCalc();
     int isBassOrVocal = 0;
     if (player.Instrument == PartBass || player.Instrument == PartVocals
         || player.Instrument == PlasticBass) {
@@ -1333,7 +1349,7 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
     SetShaderValue(
         gprAssets.odMultShader,
         gprAssets.odLoc,
-        &player.stats.overdriveFill,
+        &player.stats->overdriveFill,
         SHADER_UNIFORM_FLOAT
     );
 
@@ -1412,13 +1428,13 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
         player.AccentColor;
 
     if (player.Bot)
-        player.stats.FC = false;
+        player.stats->FC = false;
 
     // if (player.Bot) player.Bot = true;
     // else player.Bot = false;
 
-    RaiseHighway();
-    if (highwayInEndAnim && !songPlaying) {
+    // RaiseHighway();
+    if (!songPlaying) {
         if (Restart) {
             gprAudioManager.restartStreams();
             Restart = false;
@@ -1433,35 +1449,35 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
         TheSongTime.Start(songEnd);
     }
     double OverdriveDrainPerTick = double(OVERDRIVE_DRAIN_PER_BEAT) / 480.0;
-    if (player.stats.Overdrive) {
+    if (player.stats->Overdrive) {
         // THIS IS LOGIC!
-        player.stats.overdriveFill -=
-            (CurrentTick - stats.LastTick) * OverdriveDrainPerTick;
+        player.stats->overdriveFill -=
+            (CurrentTick - stats->LastTick) * OverdriveDrainPerTick;
         /*
-        player.stats.overdriveFill = player.stats.overdriveActiveFill
-            - (float)((curSongTime - player.stats.overdriveActiveTime)
-                      / (1920 / song.bpms[player.stats.curBPM].bpm));
+        player.stats->overdriveFill = player.stats->overdriveActiveFill
+            - (float)((curSongTime - player.stats->overdriveActiveTime)
+                      / (1920 / song.bpms[player.stats->curBPM].bpm));
                       */
-        if (player.stats.overdriveFill <= 0) {
-            player.stats.overdriveActivateTime = curSongTime;
-            player.stats.Overdrive = false;
-            player.stats.overdriveFill = 0;
-            player.stats.overdriveActiveFill = 0;
-            player.stats.overdriveActiveTime = 0.0;
+        if (player.stats->overdriveFill <= 0) {
+            player.stats->overdriveActivateTime = curSongTime;
+            player.stats->Overdrive = false;
+            player.stats->overdriveFill = 0;
+            player.stats->overdriveActiveFill = 0;
+            player.stats->overdriveActiveTime = 0.0;
             ThePlayerManager.BandStats.PlayersInOverdrive -= 1;
             ThePlayerManager.BandStats.Overdrive = false;
         }
     }
 
-    for (int i = player.stats.curBPM; i < song.bpms.size(); i++) {
+    for (int i = player.stats->curBPM; i < song.bpms.size(); i++) {
         if (curSongTime > song.bpms[i].time && i < song.bpms.size() - 1)
-            player.stats.curBPM++;
+            player.stats->curBPM++;
     }
 
-    curChart.overdrive.CheckEvents(player.stats.curODPhrase, curSongTime);
-    curChart.solos.CheckEvents(player.stats.curSolo, curSongTime);
-    curChart.fills.CheckEvents(player.stats.curFill, curSongTime);
-    curChart.sections.CheckEvents(player.stats.curFill, curSongTime);
+    curChart.overdrive.CheckEvents(player.stats->curODPhrase, curSongTime);
+    curChart.solos.CheckEvents(player.stats->curSolo, curSongTime);
+    curChart.fills.CheckEvents(player.stats->curFill, curSongTime);
+    curChart.sections.CheckEvents(player.stats->curFill, curSongTime);
 
     // BeginShaderMode(gprAssets.HighwayFade);
 
@@ -1483,13 +1499,13 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
     }
     // EndShaderMode();
     // if (!player.Bot)
-    if (player.stats.LastPerfectTime != -2.0)
-        DrawPerfectText(player.stats.LastPerfectTime, curSongTime, player);
+    if (player.stats->LastPerfectTime != -2.0)
+        DrawPerfectText(player.stats->LastPerfectTime, curSongTime, player);
 
     if (!song.BRE.IsCodaActive(curSongTime)) {
         RenderHud(player, highwayLength);
     }
-    stats.LastTick = CurrentTick;
+    stats->LastTick = CurrentTick;
 }
 
 void gameplayRenderer::DrawHighwayMesh(
@@ -1554,7 +1570,7 @@ void gameplayRenderer::RenderExpertHighway(Player &player, Song song, double cur
     StartRenderTexture();
     rlSetBlendFactorsSeparate(0x0302, 0x0303, 1, 0x0303, 0x8006, 0x8006);
     BeginBlendMode(BLEND_CUSTOM_SEPARATE);
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
 
     float highwayLength =
         (defaultHighwayLength * 1.5f) * player.HighwayLength; //* player.HighwayLength;
@@ -1562,8 +1578,8 @@ void gameplayRenderer::RenderExpertHighway(Player &player, Song song, double cur
 
     DrawHighwayMesh(
         player.HighwayLength,
-        player.stats.Overdrive,
-        player.stats.overdriveActiveTime,
+        player.stats->Overdrive,
+        player.stats->overdriveActiveTime,
         curSongTime
     );
     int UseIn = 1;
@@ -1662,30 +1678,30 @@ void gameplayRenderer::RenderExpertHighway(Player &player, Song song, double cur
         float RandomRotationToSelect = GetRandomValue(-2, 2) / 10.0f;
         // constexpr float thing[4] {0.15, 0.1, -0.1, -0.15};
         Vector3 RotationAxis { 1, 0, RandomRotationToSelect };
-        // if (player.stats.HeldFrets[noteColor]
-        //     || player.stats.HeldFretsAlt[noteColor]) {
+        // if (player.stats->HeldFrets[noteColor]
+        //     || player.stats->HeldFretsAlt[noteColor]) {
         DrawModelEx(
             gprAssets.smasherInner,
             Vector3 { (float)diffDistance - (i),
-                      player.stats.fiveLaneSmasherHeights[i],
+                      player.stats->fiveLaneSmasherHeights[i],
                       smasherPos },
             RotationAxis,
-            player.stats.fiveLaneSmasherRotation[i],
+            player.stats->fiveLaneSmasherRotation[i],
             { 1.0f, 1.0f, 1.0f },
             WHITE
         );
         DrawModelEx(
             gprAssets.smasherOuter,
             Vector3 { (float)diffDistance - (i),
-                      player.stats.fiveLaneSmasherHeights[i],
+                      player.stats->fiveLaneSmasherHeights[i],
                       smasherPos },
             RotationAxis,
-            player.stats.fiveLaneSmasherRotation[i],
+            player.stats->fiveLaneSmasherRotation[i],
             { 1.0f, 1.0f, 1.0f },
             WHITE
         );
         smasherTopModel.materials[0].maps[MATERIAL_MAP_ALBEDO].color = NoteColor;
-        if (player.stats.HeldFrets[noteColor] || player.stats.HeldFretsAlt[noteColor]) {
+        if (player.stats->HeldFrets[noteColor] || player.stats->HeldFretsAlt[noteColor]) {
             smasherTopModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture =
                 gprAssets.smasherTopPressedTex;
         } else {
@@ -1696,10 +1712,10 @@ void gameplayRenderer::RenderExpertHighway(Player &player, Song song, double cur
         DrawModelEx(
             smasherTopModel,
             Vector3 { (float)diffDistance - (i),
-                      player.stats.fiveLaneSmasherHeights[i],
+                      player.stats->fiveLaneSmasherHeights[i],
                       smasherPos },
             RotationAxis,
-            player.stats.fiveLaneSmasherRotation[i],
+            player.stats->fiveLaneSmasherRotation[i],
             { 1.0f, 1.0f, 1.0f },
             WHITE
         );
@@ -1763,7 +1779,7 @@ void gameplayRenderer::RenderEmhHighway(Player &player, Song song, double curSon
             );
         }
     }
-    if (player.stats.Overdrive) {
+    if (player.stats->Overdrive) {
         DrawModel(gprAssets.odHighwayEMH, Vector3 { 0, 0.001f, 0 }, 1, WHITE);
     }
 
@@ -1790,7 +1806,7 @@ void gameplayRenderer::RenderEmhHighway(Player &player, Song song, double curSon
         gprAssets.smasherPressed.materials[0].maps[MATERIAL_MAP_ALBEDO].color = NoteColor;
         // gprAssets.smasherReg.materials[0].maps[MATERIAL_MAP_ALBEDO].color = NoteColor;
 
-        if (player.stats.HeldFrets[i] || player.stats.HeldFretsAlt[i]) {
+        if (player.stats->HeldFrets[i] || player.stats->HeldFretsAlt[i]) {
             DrawModel(
                 gprAssets.smasherPressed, Vector3 { (float)(i), 0.01f, 0 }, 1.0f, WHITE
             );
@@ -1857,7 +1873,8 @@ void gameplayRenderer::DrawBeatlines(
             );
             if (NotePos < 0)
                 continue;
-            if (i > 0) {
+            // disabled due to too much visual clutter
+            if (i > 0 && false) {
                 float minorPos = GetNotePos(
                     ((song.beatLines[i - 1].Time + song.beatLines[i].Time) / 2),
                     musicTime,
@@ -1867,22 +1884,16 @@ void gameplayRenderer::DrawBeatlines(
 
                 if (minorPos > HighwayEnd)
                     break;
-
-                Color BeatLineColor2 = { 255, 255, 255, 255 };
-                Vector3 SecondaryBeatlinePos =
-                    Vector3 { 0, yPos, minorPos - AddToFrontPos };
-                beatline.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = BeatLineColor2;
-                beatline.meshes[0].colors = (unsigned char *)ColorToInt(BeatLineColor2);
-                DrawModelEx(
-                    beatline, SecondaryBeatlinePos, { 0 }, 0, { 1, 1, 0.5 }, BeatLineColor2
-                );
-                /*DrawCylinderEx(Vector3{ -diffDistance - 0.5f,yPos,smasherPos +
-                   (length * (float)secondLine) + 0.02f }, Vector3{ diffDistance +
-                   0.5f,yPos,smasherPos + (length * (float)secondLine) + 0.02f },
-                               0.01f,
-                               0.01f,
-                               4,
-                               BeatLineColor);*/
+                if (NotePos - minorPos > 3) {
+                    Color BeatLineColor2 = { 255, 255, 255, 255 };
+                    Vector3 SecondaryBeatlinePos =
+                        Vector3 { 0, yPos, minorPos - AddToFrontPos };
+                    beatline.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = BeatLineColor2;
+                    beatline.meshes[0].colors = (unsigned char *)ColorToInt(BeatLineColor2);
+                    DrawModelEx(
+                        beatline, SecondaryBeatlinePos, { 0 }, 0, { 1, 1, 0.5 }, BeatLineColor2
+                    );
+                }
             }
 
             if (NotePos > HighwayEnd)
@@ -1915,8 +1926,8 @@ void gameplayRenderer::DrawOverdrive(
 ) {
     float DiffMultiplier =
         Remap(player.Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
-    float start = curChart.overdrive[player.stats.curODPhrase].StartSec;
-    float end = curChart.overdrive[player.stats.curODPhrase].EndSec;
+    float start = curChart.overdrive[player.stats->curODPhrase].StartSec;
+    float end = curChart.overdrive[player.stats->curODPhrase].EndSec;
     /* for unisons
         eDrawSides((player.NoteSpeed * DiffMultiplier), musicTime, start, end, length,
        0.1, WHITE);
@@ -1928,20 +1939,20 @@ void gameplayRenderer::DrawSolo(
 ) {
     float DiffMultiplier =
         Remap(player.Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
-    float start = curChart.solos[player.stats.curSolo].StartSec;
-    float end = curChart.solos[player.stats.curSolo].EndSec;
+    float start = curChart.solos[player.stats->curSolo].StartSec;
+    float end = curChart.solos[player.stats->curSolo].EndSec;
     nDrawSoloSides(length, start, end, musicTime, player.NoteSpeed, player.Difficulty);
     eDrawSides(
         (player.NoteSpeed * DiffMultiplier), musicTime, start, end, length, 0.09, SKYBLUE
     );
 
     if (!curChart.solos.events.empty()
-        && musicTime >= curChart.solos[player.stats.curSolo].StartSec - 1
-        && musicTime <= curChart.solos[player.stats.curSolo].EndSec + 2.5) {
+        && musicTime >= curChart.solos[player.stats->curSolo].StartSec - 1
+        && musicTime <= curChart.solos[player.stats->curSolo].EndSec + 2.5) {
         int solopctnum = Remap(
-            curChart.solos[player.stats.curSolo].NotesHit,
+            curChart.solos[player.stats->curSolo].NotesHit,
             0,
-            curChart.solos[player.stats.curSolo].NoteCount,
+            curChart.solos[player.stats->curSolo].NoteCount,
             0,
             100
         );
@@ -1958,8 +1969,8 @@ void gameplayRenderer::DrawSolo(
 
         const char *soloHit = TextFormat(
             "%i/%i",
-            curChart.solos[player.stats.curSolo].NotesHit,
-            curChart.solos[player.stats.curSolo].NoteCount
+            curChart.solos[player.stats->curSolo].NotesHit,
+            curChart.solos[player.stats->curSolo].NoteCount
         );
 
         // DrawTextEx(gprAssets.josefinSansItalic, soloHit, SoloHitPos,
@@ -1999,7 +2010,7 @@ void gameplayRenderer::DrawSolo(
             1,
             accColor
         );
-        if (musicTime <= curChart.solos[player.stats.curSolo].EndSec)
+        if (musicTime <= curChart.solos[player.stats->curSolo].EndSec)
             DrawText3D(
                 gprAssets.josefinSansItalic,
                 soloHit,
@@ -2011,8 +2022,8 @@ void gameplayRenderer::DrawSolo(
                 accColor
             );
         rlPopMatrix();
-        if (musicTime >= curChart.solos[player.stats.curSolo].EndSec
-            && musicTime <= curChart.solos[player.stats.curSolo].EndSec + 2.5) {
+        if (musicTime >= curChart.solos[player.stats->curSolo].EndSec
+            && musicTime <= curChart.solos[player.stats->curSolo].EndSec + 2.5) {
             const char *PraiseText = "";
             if (solopctnum == 100) {
                 PraiseText = "Perfect Solo!";
@@ -2060,8 +2071,8 @@ void gameplayRenderer::DrawFill(
     float DiffMultiplier =
         Remap(player.Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
 
-    float start = curChart.fills[player.stats.curFill].StartSec;
-    float end = curChart.fills[player.stats.curFill].EndSec;
+    float start = curChart.fills[player.stats->curFill].StartSec;
+    float end = curChart.fills[player.stats->curFill].EndSec;
     eDrawSides(
         (player.NoteSpeed * DiffMultiplier), musicTime, start, end, length, 0.075, GREEN
     );
@@ -2160,12 +2171,12 @@ void gameplayRenderer::DrawPerfectText(double noteTime, double songTime, Player 
 
     Color InnerBoxColor = { 255, 255, 255, static_cast<unsigned char>(HitAlpha / 2) };
     Color OuterBoxColor = { 255, 255, 255, HitAlpha };
-    Color BackgroundColor = {GOLD.r, GOLD.g, GOLD.b, HitAlpha};
+    Color BackgroundColor = { GOLD.r, GOLD.g, GOLD.b, HitAlpha };
     float Width = 1.0f;
     float Height = 0.01f;
     float Offset = u.hinpct(0.0025f);
     float FontSize = u.hinpct(0.025f);
-    Vector2 PerfectTextPos = { (PerfectTextScreenPos.x + ScreenYPos)-renderPos,
+    Vector2 PerfectTextPos = { (PerfectTextScreenPos.x + ScreenYPos) - renderPos,
                                PerfectTextScreenPos.y };
     Vector3 CenterlineWorld = { 0.0f, 0, 1.275f };
     Vector2 CenterlinePos = GetWorldToScreen(CenterlineWorld, WorldCamera);
@@ -2177,12 +2188,7 @@ void gameplayRenderer::DrawPerfectText(double noteTime, double songTime, Player 
     float BoxWidth = (CenterlinePos.x - BoxLeft);
     float BoxLeftTwo = CenterlinePos.x - BoxWidth;
     DrawRectangleGradientH(
-        BoxLeft,
-        PerfectTextPos.y,
-        BoxWidth,
-        TextHeight,
-        { 0 },
-        BackgroundColor
+        BoxLeft, PerfectTextPos.y, BoxWidth, TextHeight, { 0 }, BackgroundColor
     );
     // GameMenu::mhDrawText(
     //     gprAssets.rubikBold,
@@ -2227,74 +2233,74 @@ void gameplayRenderer::RenderPDrumsNotes(
         Remap(player.Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
 
     for (auto &curNote : curChart.notes) {
         if (!curNote.hit && !curNote.accounted
             && curNote.time + goodBackend + player.InputCalibration < curSongTime
-            && !TheSongTime.SongComplete() && stats.curNoteInt < curChart.notes.size()
+            && !TheSongTime.SongComplete() && stats->curNoteInt < curChart.notes.size()
             && !TheSongTime.SongComplete() && !player.Bot) {
             Encore::EncoreLog(
                 LOG_INFO,
-                TextFormat("Missed note at %f, note %01i", curSongTime, stats.curNoteInt)
+                TextFormat("Missed note at %f, note %01i", curSongTime, stats->curNoteInt)
             );
             curNote.miss = true;
             FAS = false;
-            stats.MissNote();
-            stats.Combo = 0;
+            stats->MissNote();
+            stats->Combo = 0;
             curNote.accounted = true;
-            stats.curNoteInt++;
+            stats->curNoteInt++;
         } else if (player.Bot) {
             if (!curNote.hit && !curNote.accounted && curNote.time < curSongTime
-                && stats.curNoteInt < curChart.notes.size()
+                && stats->curNoteInt < curChart.notes.size()
                 && !TheSongTime.SongComplete()) {
                 curNote.hit = true;
-                player.stats.HitDrumsNote(true, !curNote.pDrumTom);
+                player.stats->HitDrumsNote(true, !curNote.pDrumTom);
                 ThePlayerManager.BandStats.DrumNotePoint(
-                    true, player.stats.noODmultiplier(), !curNote.pDrumTom
+                    true, player.stats->noODmultiplier(), !curNote.pDrumTom
                 );
 
-                stats.LastPerfectTime = curNote.hitTime;
+                stats->LastPerfectTime = curNote.hitTime;
                 if (curNote.len > 0)
                     curNote.held = true;
                 curNote.accounted = true;
-                // stats.Combo++;
+                // stats->Combo++;
                 curNote.accounted = true;
                 curNote.hitTime = curSongTime;
-                stats.curNoteInt++;
-                if (player.stats.overdriveFill >= 0.25 && curNote.pDrumAct
-                    && !player.stats.Overdrive) {
-                    stats.overdriveActiveTime = curSongTime;
-                    stats.overdriveActiveFill = stats.overdriveFill;
-                    stats.Overdrive = true;
-                    stats.overdriveHitAvailable = true;
-                    stats.overdriveHitTime = curSongTime;
+                stats->curNoteInt++;
+                if (player.stats->overdriveFill >= 0.25 && curNote.pDrumAct
+                    && !player.stats->Overdrive) {
+                    stats->overdriveActiveTime = curSongTime;
+                    stats->overdriveActiveFill = stats->overdriveFill;
+                    stats->Overdrive = true;
+                    stats->overdriveHitAvailable = true;
+                    stats->overdriveHitTime = curSongTime;
                     ThePlayerManager.BandStats.PlayersInOverdrive += 1;
                     ThePlayerManager.BandStats.Overdrive = true;
                 }
             }
         }
 
-        if (stats.StrumNoFretTime > curSongTime + fretAfterStrumTime && stats.FAS) {
-            stats.FAS = false;
+        if (stats->StrumNoFretTime > curSongTime + fretAfterStrumTime && stats->FAS) {
+            stats->FAS = false;
         }
 
-        if (player.stats.Overdrive) {
-            player.stats.overdriveActiveFill +=
-                curChart.overdrive.AddOverdrive(player.stats.curODPhrase);
-            if (player.stats.overdriveActiveFill > 1.0f)
-                player.stats.overdriveActiveFill = 1.0f;
+        if (player.stats->Overdrive) {
+            player.stats->overdriveActiveFill +=
+                curChart.overdrive.AddOverdrive(player.stats->curODPhrase);
+            if (player.stats->overdriveActiveFill > 1.0f)
+                player.stats->overdriveActiveFill = 1.0f;
         } else {
-            player.stats.overdriveFill +=
-                curChart.overdrive.AddOverdrive(player.stats.curODPhrase);
-            if (player.stats.overdriveFill > 1.0f)
-                player.stats.overdriveFill = 1.0f;
+            player.stats->overdriveFill +=
+                curChart.overdrive.AddOverdrive(player.stats->curODPhrase);
+            if (player.stats->overdriveFill > 1.0f)
+                player.stats->overdriveFill = 1.0f;
         }
 
-        curChart.solos.UpdateEventViaNote(curNote, player.stats.curSolo);
-        curChart.overdrive.UpdateEventViaNote(curNote, player.stats.curODPhrase);
-        curChart.sections.UpdateEventViaNote(curNote, player.stats.curSection);
-        curChart.fills.UpdateEventViaNote(curNote, player.stats.curFill);
+        curChart.solos.UpdateEventViaNote(curNote, player.stats->curSolo);
+        curChart.overdrive.UpdateEventViaNote(curNote, player.stats->curODPhrase);
+        curChart.sections.UpdateEventViaNote(curNote, player.stats->curSection);
+        curChart.fills.UpdateEventViaNote(curNote, player.stats->curFill);
 
         double HighwayEnd = length + (smasherPos * 4);
         double NoteStartPositionWorld =
@@ -2336,8 +2342,8 @@ void gameplayRenderer::RenderPDrumsNotes(
                 OuterColor = RED;
                 BottomColor = RED;
             }
-            if (curNote.pDrumAct && player.stats.overdriveFill >= 0.25
-                && !player.stats.Overdrive) {
+            if (curNote.pDrumAct && player.stats->overdriveFill >= 0.25
+                && !player.stats->Overdrive) {
                 NoteScale.y = 2.0f;
                 OuterColor = GREEN;
                 InnerColor = GREEN;
@@ -2392,8 +2398,8 @@ void gameplayRenderer::RenderPDrumsNotes(
                 BaseColor = RED;
                 SideColor = RED;
             }
-            if (curNote.pDrumAct && player.stats.overdriveFill >= 0.25
-                && !player.stats.Overdrive) {
+            if (curNote.pDrumAct && player.stats->overdriveFill >= 0.25
+                && !player.stats->Overdrive) {
                 NoteScale.y = 2.0f;
                 InnerColor = GREEN;
                 BaseColor = RED;
@@ -2422,15 +2428,15 @@ void gameplayRenderer::RenderPDrumsHighway(Player &player, Song song, double cur
     StartRenderTexture();
     BeginBlendModeSeparate();
 
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
 
     float highwayLength = (defaultHighwayLength * 1.5f) * player.HighwayLength;
     float highwayPosShit = ((20) * (1 - gprSettings.highwayLengthMult));
 
     DrawHighwayMesh(
         player.HighwayLength,
-        player.stats.Overdrive,
-        player.stats.overdriveActiveTime,
+        player.stats->Overdrive,
+        player.stats->overdriveActiveTime,
         curSongTime
     );
 
@@ -2466,7 +2472,7 @@ void gameplayRenderer::RenderPDrumsHighway(Player &player, Song song, double cur
         );
     }
     if (!song.parts[player.Instrument]->charts[player.Difficulty].fills.events.empty()
-        && player.stats.overdriveFill >= 0.25 && !player.stats.Overdrive) {
+        && player.stats->overdriveFill >= 0.25 && !player.stats->Overdrive) {
         DrawFill(
             player,
             song.parts[player.Instrument]->charts[player.Difficulty],
@@ -2537,25 +2543,25 @@ void gameplayRenderer::RenderPDrumsHighway(Player &player, Song song, double cur
         DrawModelEx(
             InnerTomSmasher,
             Vector3 { ((float)diffDistance - (float)(i * 1.25)) - 0.125f,
-                      player.stats.drumSmasherHeights.at(i),
+                      player.stats->drumSmasherHeights.at(i),
                       smasherPos },
             RotationAxis,
-            player.stats.drumSmasherRotations[i],
+            player.stats->drumSmasherRotations[i],
             { 1.25, 1.0, 1.0 },
             WHITE
         );
         DrawModelEx(
             OuterTomSmasher,
             Vector3 { ((float)diffDistance - (float)(i * 1.25)) - 0.125f,
-                      player.stats.drumSmasherHeights.at(i),
+                      player.stats->drumSmasherHeights.at(i),
                       smasherPos },
             RotationAxis,
-            player.stats.drumSmasherRotations[i],
+            player.stats->drumSmasherRotations[i],
             { 1.25, 1.0, 1.0 },
             WHITE
         );
         smasherTopModel.materials[0].maps[MATERIAL_MAP_ALBEDO].color = NoteColor;
-        if (player.stats.HeldFrets[i] || player.stats.HeldFretsAlt[i]) {
+        if (player.stats->HeldFrets[i] || player.stats->HeldFretsAlt[i]) {
             smasherTopModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture =
                 gprAssets.smasherTopPressedTex;
         } else {
@@ -2566,10 +2572,10 @@ void gameplayRenderer::RenderPDrumsHighway(Player &player, Song song, double cur
         DrawModelEx(
             smasherTopModel,
             Vector3 { ((float)diffDistance - (float)(i * 1.25)) - 0.125f,
-                      player.stats.drumSmasherHeights.at(i),
+                      player.stats->drumSmasherHeights.at(i),
                       smasherPos },
             RotationAxis,
-            player.stats.drumSmasherRotations[i],
+            player.stats->drumSmasherRotations[i],
             { 1.25, 1.0, 1.0 },
             WHITE
         );
@@ -2602,10 +2608,10 @@ void gameplayRenderer::nDrawDrumsHitEffects(
         float RotationDirection = note.perfect ? -10 : 10;
         if (curSongTime < note.hitTime + HitShakerIntroDuration) {
             double TimeSinceHit = curSongTime - (note.hitTime);
-            player.stats.drumSmasherRotations.at(note.lane - 1) = Remap(
+            player.stats->drumSmasherRotations.at(note.lane - 1) = Remap(
                 TimeSinceHit / HitShakerIntroDuration, 0, 1.0, 0, -RotationDirection
             );
-            player.stats.drumSmasherHeights.at(note.lane - 1) = Remap(
+            player.stats->drumSmasherHeights.at(note.lane - 1) = Remap(
                 getEasingFunction(EaseInOutQuart)(TimeSinceHit / HitShakerIntroDuration),
                 0,
                 1.0,
@@ -2614,14 +2620,14 @@ void gameplayRenderer::nDrawDrumsHitEffects(
             );
         } else {
             double TimeSinceHit = curSongTime - (note.hitTime + HitShakerIntroDuration);
-            player.stats.drumSmasherRotations.at(note.lane - 1) = Remap(
+            player.stats->drumSmasherRotations.at(note.lane - 1) = Remap(
                 getEasingFunction(EaseInOutBounce)(TimeSinceHit / HitShakerOutroDuration),
                 1.0,
                 0,
                 0,
                 RotationDirection
             );
-            player.stats.drumSmasherHeights.at(note.lane - 1) = Remap(
+            player.stats->drumSmasherHeights.at(note.lane - 1) = Remap(
                 getEasingFunction(EaseOutBounce)(TimeSinceHit / HitShakerOutroDuration),
                 1.0,
                 0,
@@ -2683,10 +2689,10 @@ void gameplayRenderer::nDrawFiveLaneHitEffects(
             // HAVE IT GO THE OTHER WAY FOR PERFECTS.
             // SAME WITH DRUMS
 
-            player.stats.fiveLaneSmasherRotation.at(lane) = Remap(
+            player.stats->fiveLaneSmasherRotation.at(lane) = Remap(
                 TimeSinceHit / HitShakerIntroDuration, 0, 1.0, 0, RotationDirection
             );
-            player.stats.fiveLaneSmasherHeights.at(lane) = Remap(
+            player.stats->fiveLaneSmasherHeights.at(lane) = Remap(
                 getEasingFunction(EaseInOutElastic)(TimeSinceHit / HitShakerIntroDuration),
                 0,
                 1.0,
@@ -2695,14 +2701,14 @@ void gameplayRenderer::nDrawFiveLaneHitEffects(
             );
         } else {
             double TimeSinceHit = curSongTime - (note.hitTime + HitShakerIntroDuration);
-            player.stats.fiveLaneSmasherRotation.at(lane) = Remap(
+            player.stats->fiveLaneSmasherRotation.at(lane) = Remap(
                 getEasingFunction(EaseOutBounce)(TimeSinceHit / HitShakerOutroDuration),
                 1.0,
                 0,
                 0,
                 -RotationDirection
             );
-            player.stats.fiveLaneSmasherHeights.at(lane) = Remap(
+            player.stats->fiveLaneSmasherHeights.at(lane) = Remap(
                 getEasingFunction(EaseOutBack)(TimeSinceHit / HitShakerOutroDuration),
                 1.0,
                 0,
@@ -2725,8 +2731,6 @@ void gameplayRenderer::nDrawFiveLaneHitEffects(
         DrawCube(Vector3 { notePosX, 0.125, smasherPos }, 1.0f, 0.25f, 0.5f, BoxColor);
     }
     DisableFadeShaderForSmallObjectsThatUseRaylibMeshFuncs();
-
-
 }
 
 void gameplayRenderer::nDrawPlasticNote(

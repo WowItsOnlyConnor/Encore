@@ -16,9 +16,9 @@ class gameplayRenderer {
         double heldTime,
         double lenTime,
         bool perfect,
-        PlayerGameplayStats &stats
+        PlayerGameplayStats *&stats
     );
-    void AddSustainPoints(int lane, PlayerGameplayStats &stats);
+    void AddSustainPoints(int lane, PlayerGameplayStats *&stats);
     float GetNoteXPosition(Player &player, float diffDistance, int lane);
     void RenderPadNotes(Player &player, Chart &curChart, double curSongTime, float length);
     void RenderHud(Player &player, float length);
@@ -127,7 +127,10 @@ public:
     float Height4p = 10.0f;
     float Height = 7.25f;
     float Back = -10.0f;
-
+    float Height1p = 7.0f;
+    float Back1p = -11.0f;
+    float FOV1p = 40.0f;
+    float FOV = 45.0f;
     bool extendedSustainActive = false;
     float textureOffset = 0;
     float renderPos = 0;

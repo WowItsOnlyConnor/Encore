@@ -464,8 +464,6 @@ void ReadyUpMenu::Draw() {
                 )) {
                 player.instSelection = true;
                 player.ReadyUpMenu = false;
-                player.stats.Difficulty = player.Difficulty;
-                player.stats.Instrument = player.Instrument;
                 // TheGameRenderer.highwayInAnimation = false;
                 // TheGameRenderer.songStartTime = GetTime();
                 TheMenuManager.SwitchScreen(CHART_LOADING_SCREEN);

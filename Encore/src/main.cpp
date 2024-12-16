@@ -114,7 +114,7 @@ std::string scoreCommaFormatter(int value) {
 // released? what time? what window? were any modifiers pressed?)
 static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int mods) {
     Player &player = ThePlayerManager.GetActivePlayer(0);
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     if (!TheGameRenderer.streamsLoaded) {
         return;
     }
@@ -122,8 +122,8 @@ static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int
         // if the key action is NOT repeat (release is 0, press is 1)
         int lane = -2;
         if (key == settingsMain.keybindPause && action == GLFW_PRESS) {
-            stats.Paused = !stats.Paused;
-            if (stats.Paused && !ThePlayerManager.BandStats.Multiplayer) {
+            stats->Paused = !stats->Paused;
+            if (stats->Paused && !ThePlayerManager.BandStats.Multiplayer) {
                 audioManager.pauseStreams();
                 TheSongTime.Pause();
             } else if (!ThePlayerManager.BandStats.Multiplayer) {
@@ -141,20 +141,20 @@ static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int
                 if (player.Difficulty == 3 || player.ClassicMode) {
                     for (int i = 0; i < 5; i++) {
                         if (key == settingsMain.keybinds5K[i]
-                            && !stats.HeldFretsAlt[i]) {
+                            && !stats->HeldFretsAlt[i]) {
                             if (action == GLFW_PRESS) {
-                                stats.HeldFrets[i] = true;
+                                stats->HeldFrets[i] = true;
                             } else if (action == GLFW_RELEASE) {
-                                stats.HeldFrets[i] = false;
-                                stats.OverhitFrets[i] = false;
+                                stats->HeldFrets[i] = false;
+                                stats->OverhitFrets[i] = false;
                             }
                             lane = i;
-                        } else if (key == settingsMain.keybinds5KAlt[i] && !stats.HeldFrets[i]) {
+                        } else if (key == settingsMain.keybinds5KAlt[i] && !stats->HeldFrets[i]) {
                             if (action == GLFW_PRESS) {
-                                stats.HeldFretsAlt[i] = true;
+                                stats->HeldFretsAlt[i] = true;
                             } else if (action == GLFW_RELEASE) {
-                                stats.HeldFretsAlt[i] = false;
-                                stats.OverhitFrets[i] = false;
+                                stats->HeldFretsAlt[i] = false;
+                                stats->OverhitFrets[i] = false;
                             }
                             lane = i;
                         }
@@ -162,20 +162,20 @@ static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int
                 } else {
                     for (int i = 0; i < 4; i++) {
                         if (key == settingsMain.keybinds4K[i]
-                            && !stats.HeldFretsAlt[i]) {
+                            && !stats->HeldFretsAlt[i]) {
                             if (action == GLFW_PRESS) {
-                                stats.HeldFrets[i] = true;
+                                stats->HeldFrets[i] = true;
                             } else if (action == GLFW_RELEASE) {
-                                stats.HeldFrets[i] = false;
-                                stats.OverhitFrets[i] = false;
+                                stats->HeldFrets[i] = false;
+                                stats->OverhitFrets[i] = false;
                             }
                             lane = i;
-                        } else if (key == settingsMain.keybinds4KAlt[i] && !stats.HeldFrets[i]) {
+                        } else if (key == settingsMain.keybinds4KAlt[i] && !stats->HeldFrets[i]) {
                             if (action == GLFW_PRESS) {
-                                stats.HeldFretsAlt[i] = true;
+                                stats->HeldFretsAlt[i] = true;
                             } else if (action == GLFW_RELEASE) {
-                                stats.HeldFretsAlt[i] = false;
-                                stats.OverhitFrets[i] = false;
+                                stats->HeldFretsAlt[i] = false;
+                                stats->OverhitFrets[i] = false;
                             }
                             lane = i;
                         }
@@ -185,19 +185,19 @@ static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int
                     if (key == settingsMain.keybindStrumUp) {
                         if (action == GLFW_PRESS) {
                             lane = 8008135;
-                            stats.UpStrum = true;
+                            stats->UpStrum = true;
                         } else if (action == GLFW_RELEASE) {
-                            stats.UpStrum = false;
-                            stats.Overstrum = false;
+                            stats->UpStrum = false;
+                            stats->Overstrum = false;
                         }
                     }
                     if (key == settingsMain.keybindStrumDown) {
                         if (action == GLFW_PRESS) {
                             lane = 8008135;
-                            stats.DownStrum = true;
+                            stats->DownStrum = true;
                         } else if (action == GLFW_RELEASE) {
-                            stats.DownStrum = false;
-                            stats.Overstrum = false;
+                            stats->DownStrum = false;
+                            stats->Overstrum = false;
                         }
                     }
                 }
@@ -220,7 +220,7 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
 
     if (!IsGamepadAvailable(player.joypadID))
         return;
-    PlayerGameplayStats &stats = player.stats;
+    PlayerGameplayStats *&stats = player.stats;
     if (!TheGameRenderer.streamsLoaded) {
         return;
     }
@@ -228,12 +228,12 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
     double eventTime = TheSongTime.GetSongTime();
     if (settingsMain.controllerPause >= 0) {
         if (state.buttons[settingsMain.controllerPause]
-            != stats.buttonValues[settingsMain.controllerPause]) {
-            stats.buttonValues[settingsMain.controllerPause] =
+            != stats->buttonValues[settingsMain.controllerPause]) {
+            stats->buttonValues[settingsMain.controllerPause] =
                 state.buttons[settingsMain.controllerPause];
             if (state.buttons[settingsMain.controllerPause] == 1) {
-                stats.Paused = !stats.Paused;
-                if (stats.Paused && !ThePlayerManager.BandStats.Multiplayer) {
+                stats->Paused = !stats->Paused;
+                if (stats->Paused && !ThePlayerManager.BandStats.Multiplayer) {
                     audioManager.pauseStreams();
                     TheSongTime.Pause();
                 } else if (!ThePlayerManager.BandStats.Multiplayer) {
@@ -247,8 +247,8 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
         }
     } else if (!player.Bot) {
         if (state.axes[-(settingsMain.controllerPause + 1)]
-            != stats.axesValues[-(settingsMain.controllerPause + 1)]) {
-            stats.axesValues[-(settingsMain.controllerPause + 1)] =
+            != stats->axesValues[-(settingsMain.controllerPause + 1)]) {
+            stats->axesValues[-(settingsMain.controllerPause + 1)] =
                 state.axes[-(settingsMain.controllerPause + 1)];
             if (state.axes[-(settingsMain.controllerPause + 1)]
                 == 1.0f * (float)settingsMain.controllerPauseAxisDirection) {
@@ -257,8 +257,8 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
     } //  && !player.Bot
     if (settingsMain.controllerOverdrive >= 0) {
         if (state.buttons[settingsMain.controllerOverdrive]
-            != stats.buttonValues[settingsMain.controllerOverdrive]) {
-            stats.buttonValues[settingsMain.controllerOverdrive] =
+            != stats->buttonValues[settingsMain.controllerOverdrive]) {
+            stats->buttonValues[settingsMain.controllerOverdrive] =
                 state.buttons[settingsMain.controllerOverdrive];
             inputHandler.handleInputs(
                 player, -1, state.buttons[settingsMain.controllerOverdrive]
@@ -266,8 +266,8 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
         } // // if (!player.Bot)
     } else {
         if (state.axes[-(settingsMain.controllerOverdrive + 1)]
-            != stats.axesValues[-(settingsMain.controllerOverdrive + 1)]) {
-            stats.axesValues[-(settingsMain.controllerOverdrive + 1)] =
+            != stats->axesValues[-(settingsMain.controllerOverdrive + 1)]) {
+            stats->axesValues[-(settingsMain.controllerOverdrive + 1)] =
                 state.axes[-(settingsMain.controllerOverdrive + 1)];
             if (state.axes[-(settingsMain.controllerOverdrive + 1)]
                 == 1.0f * (float)settingsMain.controllerOverdriveAxisDirection) {
@@ -283,35 +283,35 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
         for (int i = 0; i < 5; i++) {
             if (settingsMain.controller5K[i] >= 0) {
                 if (state.buttons[settingsMain.controller5K[i]]
-                    != stats.buttonValues[settingsMain.controller5K[i]]) {
+                    != stats->buttonValues[settingsMain.controller5K[i]]) {
                     if (state.buttons[settingsMain.controller5K[i]] == 1
-                        && !stats.HeldFrets[i])
-                        stats.HeldFrets[i] = true;
-                    else if (stats.HeldFrets[i]) {
-                        stats.HeldFrets[i] = false;
-                        stats.OverhitFrets[i] = false;
+                        && !stats->HeldFrets[i])
+                        stats->HeldFrets[i] = true;
+                    else if (stats->HeldFrets[i]) {
+                        stats->HeldFrets[i] = false;
+                        stats->OverhitFrets[i] = false;
                     }
                     inputHandler.handleInputs(
                         player, i, state.buttons[settingsMain.controller5K[i]]
                     );
-                    stats.buttonValues[settingsMain.controller5K[i]] =
+                    stats->buttonValues[settingsMain.controller5K[i]] =
                         state.buttons[settingsMain.controller5K[i]];
                     lane = i;
                 }
             } else {
                 if (state.axes[-(settingsMain.controller5K[i] + 1)]
-                    != stats.axesValues[-(settingsMain.controller5K[i] + 1)]) {
+                    != stats->axesValues[-(settingsMain.controller5K[i] + 1)]) {
                     if (state.axes[-(settingsMain.controller5K[i] + 1)]
                             == 1.0f * (float)settingsMain.controller5KAxisDirection[i]
-                        && !stats.HeldFrets[i]) {
-                        stats.HeldFrets[i] = true;
+                        && !stats->HeldFrets[i]) {
+                        stats->HeldFrets[i] = true;
                         inputHandler.handleInputs(player, i, GLFW_PRESS);
-                    } else if (stats.HeldFrets[i]) {
-                        stats.HeldFrets[i] = false;
-                        stats.OverhitFrets[i] = false;
+                    } else if (stats->HeldFrets[i]) {
+                        stats->HeldFrets[i] = false;
+                        stats->OverhitFrets[i] = false;
                         inputHandler.handleInputs(player, i, GLFW_RELEASE);
                     }
-                    stats.axesValues[-(settingsMain.controller5K[i] + 1)] =
+                    stats->axesValues[-(settingsMain.controller5K[i] + 1)] =
                         state.axes[-(settingsMain.controller5K[i] + 1)];
                     lane = i;
                 }
@@ -319,57 +319,57 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
         }
 
         if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_PRESS
-            && player.ClassicMode && !stats.UpStrum) {
-            stats.UpStrum = true;
-            stats.Overstrum = false;
+            && player.ClassicMode && !stats->UpStrum) {
+            stats->UpStrum = true;
+            stats->Overstrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_PRESS);
         } else if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_RELEASE
                    && player.ClassicMode
-                   && stats.UpStrum) {
-            stats.UpStrum = false;
+                   && stats->UpStrum) {
+            stats->UpStrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_RELEASE);
         }
         if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == GLFW_PRESS
-            && player.ClassicMode && !stats.DownStrum) {
-            stats.DownStrum = true;
-            stats.Overstrum = false;
+            && player.ClassicMode && !stats->DownStrum) {
+            stats->DownStrum = true;
+            stats->Overstrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_PRESS);
         } else if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == GLFW_RELEASE
                    && player.ClassicMode
-                   && stats.DownStrum) {
-            stats.DownStrum = false;
+                   && stats->DownStrum) {
+            stats->DownStrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_RELEASE);
         }
     } else if (!player.Bot) {
         for (int i = 0; i < 4; i++) {
             if (settingsMain.controller4K[i] >= 0) {
                 if (state.buttons[settingsMain.controller4K[i]]
-                    != stats.buttonValues[settingsMain.controller4K[i]]) {
+                    != stats->buttonValues[settingsMain.controller4K[i]]) {
                     if (state.buttons[settingsMain.controller4K[i]] == 1)
-                        stats.HeldFrets[i] = true;
+                        stats->HeldFrets[i] = true;
                     else {
-                        stats.HeldFrets[i] = false;
-                        stats.OverhitFrets[i] = false;
+                        stats->HeldFrets[i] = false;
+                        stats->OverhitFrets[i] = false;
                     }
                     inputHandler.handleInputs(
                         player, i, state.buttons[settingsMain.controller4K[i]]
                     );
-                    stats.buttonValues[settingsMain.controller4K[i]] =
+                    stats->buttonValues[settingsMain.controller4K[i]] =
                         state.buttons[settingsMain.controller4K[i]];
                 }
             } else {
                 if (state.axes[-(settingsMain.controller4K[i] + 1)]
-                    != stats.axesValues[-(settingsMain.controller4K[i] + 1)]) {
+                    != stats->axesValues[-(settingsMain.controller4K[i] + 1)]) {
                     if (state.axes[-(settingsMain.controller4K[i] + 1)]
                         == 1.0f * (float)settingsMain.controller4KAxisDirection[i]) {
-                        stats.HeldFrets[i] = true;
+                        stats->HeldFrets[i] = true;
                         inputHandler.handleInputs(player, i, GLFW_PRESS);
                     } else {
-                        stats.HeldFrets[i] = false;
-                        stats.OverhitFrets[i] = false;
+                        stats->HeldFrets[i] = false;
+                        stats->OverhitFrets[i] = false;
                         inputHandler.handleInputs(player, i, GLFW_RELEASE);
                     }
-                    stats.axesValues[-(settingsMain.controller4K[i] + 1)] =
+                    stats->axesValues[-(settingsMain.controller4K[i] + 1)] =
                         state.axes[-(settingsMain.controller4K[i] + 1)];
                 }
             }
@@ -569,6 +569,7 @@ int main(int argc, char *argv[]) {
         u.calcUnits();
         double curTime = GetTime();
         float bgTime = curTime / 5.0f;
+        SetShaderValue(assets.bgShader, assets.bgTimeLoc, &bgTime, SHADER_UNIFORM_FLOAT);
         if (IsKeyPressed(KEY_F11)
             || (IsKeyPressed(KEY_LEFT_ALT) && IsKeyPressed(KEY_ENTER))) {
             settingsMain.fullscreen = !settingsMain.fullscreen;
@@ -593,7 +594,7 @@ int main(int argc, char *argv[]) {
 
         BeginDrawing();
         ClearBackground(DARKGRAY);
-        SetShaderValue(assets.bgShader, assets.bgTimeLoc, &bgTime, SHADER_UNIFORM_FLOAT);
+
 
         if (TheMenuManager.onNewMenu) {
             TheMenuManager.onNewMenu = false;

@@ -12,7 +12,11 @@
 #include "OvershellHelper.h"
 #include "MenuManager.h"
 
-resultsMenu::~resultsMenu() {}
+resultsMenu::~resultsMenu() {
+    for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
+        delete ThePlayerManager.GetActivePlayer(playerNum).stats;
+    }
+}
 resultsMenu::resultsMenu() {}
 
 void resultsMenu::Load() {
@@ -52,13 +56,13 @@ void resultsMenu::Load() {
 
     for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
         Player &player = ThePlayerManager.GetActivePlayer(playerNum);
-        PlayerGameplayStats &stats = ThePlayerManager.GetActivePlayer(playerNum).stats;
-        std::cout << player.Name << " Score: " << stats.Score << std::endl;
-        std::cout << player.Name << " Sustain Score: " << stats.SustainScore << std::endl;
-        std::cout << player.Name << " Multiplier Score: " << stats.MultiplierScore << std::endl;
-        std::cout << player.Name << " Overdrive Score: " << stats.OverdriveScore << std::endl;
-        std::cout << player.Name << " Perfect Score: " << stats.PerfectScore << std::endl;
-        std::cout << player.Name << " Note Score: " << stats.NoteScore << std::endl;
+        PlayerGameplayStats *&stats = ThePlayerManager.GetActivePlayer(playerNum).stats;
+        std::cout << player.Name << " Score: " << stats->Score << std::endl;
+        std::cout << player.Name << " Sustain Score: " << stats->SustainScore << std::endl;
+        std::cout << player.Name << " Multiplier Score: " << stats->MultiplierScore << std::endl;
+        std::cout << player.Name << " Overdrive Score: " << stats->OverdriveScore << std::endl;
+        std::cout << player.Name << " Perfect Score: " << stats->PerfectScore << std::endl;
+        std::cout << player.Name << " Note Score: " << stats->NoteScore << std::endl;
 
     }
 }
@@ -191,17 +195,17 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
 
 
     Color bottomColorForStatus = backgroundColor;
-    bool rendAsFC = player.stats.FC && !player.stats.Quit && !player.Bot;
+    bool rendAsFC = player.stats->FC && !player.stats->Quit && !player.Bot;
     if (player.Bot) {
         bottomColorForStatus = ColorContrast(ColorBrightness(SKYBLUE, -0.5f), -0.25f);
     }
-    if (player.stats.Quit && !player.Bot) {
+    if (player.stats->Quit && !player.Bot) {
         bottomColorForStatus = ColorBrightness(RED, -0.5f);
     }
     if (rendAsFC && !player.Bot) {
         bottomColorForStatus = ColorContrast(ColorBrightness(GOLD, -0.5f), -0.25f);
     }
-    if (player.stats.PerfectHit == player.stats.Notes && rendAsFC && !player.Bot) {
+    if (player.stats->PerfectHit == player.stats->Notes && rendAsFC && !player.Bot) {
         bottomColorForStatus = ColorBrightness(WHITE, -0.5f);
     }
     DrawRectangleGradientV(
@@ -227,10 +231,10 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
         cardTop + u.hinpct(0.4f),
         WHITE
     );
-    std::string scoreString = GameMenu::scoreCommaFormatter(player.stats.Score);
+    std::string scoreString = GameMenu::scoreCommaFormatter(player.stats->Score);
     float scorePos = (cardPos + cardHalfWidth);
     float Percent =
-        floorf(((float)player.stats.NotesHit / (float)player.stats.Notes) * 100.0f);
+        floorf(((float)player.stats->NotesHit / (float)player.stats->Notes) * 100.0f);
 
     GameMenu::mhDrawText(
         assets.redHatDisplayItalic,
@@ -255,7 +259,7 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
     if (rendAsFC) {
         ImportantInfoText = "Flawless!";
     }
-    if (player.stats.Quit && !player.Bot) {
+    if (player.stats->Quit && !player.Bot) {
         ImportantInfoText = "Quit";
         ImportantInfoTextColor = RED;
     }
@@ -356,25 +360,25 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
         WHITE
     );
 
-    float hitpct = ((float)player.stats.PerfectHit / (float)player.stats.Notes);
+    float hitpct = ((float)player.stats->PerfectHit / (float)player.stats->Notes);
     float pHitPercent = floorf(hitpct * 100.0f);
     std::string PerfectDisplay =
-        TextFormat("%01i (%3.0f%%)", player.stats.PerfectHit, pHitPercent);
+        TextFormat("%01i (%3.0f%%)", player.stats->PerfectHit, pHitPercent);
 
     float gpct =
-        ((float)(player.stats.NotesHit - player.stats.PerfectHit)
-         / (float)player.stats.Notes);
+        ((float)(player.stats->NotesHit - player.stats->PerfectHit)
+         / (float)player.stats->Notes);
     float gHitPercent = floorf(gpct * 100.0f);
     std::string GoodDisplay = TextFormat(
-        "%01i (%3.0f%%)", player.stats.NotesHit - player.stats.PerfectHit, gHitPercent
+        "%01i (%3.0f%%)", player.stats->NotesHit - player.stats->PerfectHit, gHitPercent
     );
 
-    float mpct = ((float)player.stats.NotesMissed / (float)player.stats.Notes);
+    float mpct = ((float)player.stats->NotesMissed / (float)player.stats->Notes);
     float mHitPercent = floorf(mpct * 100.0f);
     std::string MissDisplay =
-        TextFormat("%01i (%3.0f%%)", player.stats.NotesMissed, mHitPercent);
+        TextFormat("%01i (%3.0f%%)", player.stats->NotesMissed, mHitPercent);
 
-    std::string NotesDisplay = TextFormat("%01i", player.stats.Notes);
+    std::string NotesDisplay = TextFormat("%01i", player.stats->Notes);
 
     int MaxNotes =
         song.parts[player.Instrument]->charts[player.Difficulty].notes.size();
@@ -408,10 +412,10 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
     );
     DrawTextEx(
         assets.rubik,
-        TextFormat("%01i", player.stats.Overhits, player.stats.Notes),
+        TextFormat("%01i", player.stats->Overhits, player.stats->Notes),
         { statsRight
               - MeasureTextEx(
-                    assets.rubik, TextFormat("%01i", player.stats.Overhits), u.hinpct(0.03f), 0
+                    assets.rubik, TextFormat("%01i", player.stats->Overhits), u.hinpct(0.03f), 0
               )
                     .x,
           statsHeight + u.hinpct(0.105f) },
@@ -421,11 +425,11 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
     );
     DrawTextEx(
         assets.rubik,
-        TextFormat("%01i/%01i", player.stats.MaxCombo, player.stats.Notes),
+        TextFormat("%01i/%01i", player.stats->MaxCombo, player.stats->Notes),
         { statsRight
               - MeasureTextEx(
                     assets.rubik,
-                    TextFormat("%01i/%01i", player.stats.MaxCombo, player.stats.Notes),
+                    TextFormat("%01i/%01i", player.stats->MaxCombo, player.stats->Notes),
                     u.hinpct(0.03f),
                     0
               )
@@ -451,9 +455,9 @@ void resultsMenu::drawPlayerResults(Player &player, Song song, int playerslot) {
 };
 
 void resultsMenu::renderPlayerStars(
-    PlayerGameplayStats &stats, float xPos, float yPos, float scale, bool left
+    PlayerGameplayStats *&stats, float xPos, float yPos, float scale, bool left
 ) {
-    int starsval = stats.Stars();
+    int starsval = stats->Stars();
 
     float starX = left ? 0 : scale * 2.5f;
     for (int i = 0; i < 5; i++) {
@@ -469,7 +473,7 @@ void resultsMenu::renderPlayerStars(
     for (int i = 0; i < starsval; i++) {
 
         DrawTexturePro(
-            stats.GoldStars() ? GoldStar : Star,
+            stats->GoldStars() ? GoldStar : Star,
             { 0, 0, (float)EmptyStar.width, (float)EmptyStar.height },
             { (xPos + ((i) * scale) - starX), yPos, scale, scale },
             { 0, 0 },

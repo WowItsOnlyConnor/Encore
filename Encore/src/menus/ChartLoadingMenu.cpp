@@ -69,8 +69,16 @@ void LoadCharts() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     FinishedLoading = true;
 }
-
+/**
+ * @brief Load chart, create new player
+ */
 void ChartLoadingMenu::Load() {
+    for (int playerNum = 0; playerNum < ThePlayerManager.PlayersActive; playerNum++) {
+        ThePlayerManager.GetActivePlayer(playerNum).stats = new PlayerGameplayStats(
+            ThePlayerManager.GetActivePlayer(playerNum).Difficulty,
+            ThePlayerManager.GetActivePlayer(playerNum).Instrument
+        );
+    }
     TheSongList.curSong->LoadAlbumArt();
     std::thread ChartLoader(LoadCharts);
     ChartLoader.detach();

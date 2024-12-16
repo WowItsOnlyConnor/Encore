@@ -165,11 +165,13 @@ void SongSelectMenu::Draw() {
                 WHITE
             );
         } else if (!TheSongList.listMenuEntries[i].hiddenEntry) {
+
             bool isCurSong = i == TheSongList.curSong->songListPos - 1;
             Font &artistFont =
                 isCurSong ? assets.josefinSansItalic : assets.josefinSansItalic;
             Song &songi = TheSongList.songs[TheSongList.listMenuEntries[i].songListID];
             int songID = TheSongList.listMenuEntries[i].songListID;
+
 
             // float buttonX =
             // ((float)GetScreenWidth()/2)-(((float)GetScreenWidth()*0.86f)/2);
@@ -200,6 +202,14 @@ void SongSelectMenu::Draw() {
                 // selSong = true;
                 // albumArtLoaded = false;
                 TheSongList.curSong = &TheSongList.songs[songID];
+                if (!TheSongList.songs[songID].AlbumArtLoaded) {
+                    try {
+                        TheSongList.songs[songID].LoadAlbumArt();
+                        TheSongList.songs[songID].AlbumArtLoaded = true;
+                    } catch (const std::exception &e) {
+                        Encore::EncoreLog(LOG_ERROR, e.what());
+                    }
+                }
             }
             GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, 0x181827FF);
             EndScissorMode();
