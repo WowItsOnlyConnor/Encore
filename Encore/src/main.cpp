@@ -7,6 +7,7 @@
 #include "menus/sndTestMenu.h"
 #include "menus/cacheLoadingScreen.h"
 #include "menus/resultsMenu.h"
+#include "util/discord.h"
 #include "util/enclog.h"
 #include "gameplay/enctime.h"
 
@@ -149,7 +150,8 @@ static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int
                                 stats->OverhitFrets[i] = false;
                             }
                             lane = i;
-                        } else if (key == settingsMain.keybinds5KAlt[i] && !stats->HeldFrets[i]) {
+                        } else if (key == settingsMain.keybinds5KAlt[i]
+                                   && !stats->HeldFrets[i]) {
                             if (action == GLFW_PRESS) {
                                 stats->HeldFretsAlt[i] = true;
                             } else if (action == GLFW_RELEASE) {
@@ -170,7 +172,8 @@ static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int
                                 stats->OverhitFrets[i] = false;
                             }
                             lane = i;
-                        } else if (key == settingsMain.keybinds4KAlt[i] && !stats->HeldFrets[i]) {
+                        } else if (key == settingsMain.keybinds4KAlt[i]
+                                   && !stats->HeldFrets[i]) {
                             if (action == GLFW_PRESS) {
                                 stats->HeldFretsAlt[i] = true;
                             } else if (action == GLFW_RELEASE) {
@@ -216,7 +219,6 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
         return;
 
     Player &player = ThePlayerManager.GetPlayerGamepad(joypadID);
-
 
     if (!IsGamepadAvailable(player.joypadID))
         return;
@@ -318,14 +320,13 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
             }
         }
 
-        if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_PRESS
-            && player.ClassicMode && !stats->UpStrum) {
+        if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_PRESS && player.ClassicMode
+            && !stats->UpStrum) {
             stats->UpStrum = true;
             stats->Overstrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_PRESS);
         } else if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_RELEASE
-                   && player.ClassicMode
-                   && stats->UpStrum) {
+                   && player.ClassicMode && stats->UpStrum) {
             stats->UpStrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_RELEASE);
         }
@@ -335,8 +336,7 @@ static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
             stats->Overstrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_PRESS);
         } else if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == GLFW_RELEASE
-                   && player.ClassicMode
-                   && stats->DownStrum) {
+                   && player.ClassicMode && stats->DownStrum) {
             stats->DownStrum = false;
             inputHandler.handleInputs(player, 8008135, GLFW_RELEASE);
         }
@@ -419,13 +419,11 @@ static void gamepadStateCallbackSetControls(int jid, GLFWgamepadstate state) {
 int minWidth = 640;
 int minHeight = 480;
 
-
 bool firstInit = true;
 int loadedAssets;
 bool albumArtLoaded = false;
 
 Menu *ActiveMenu = nullptr;
-
 
 bool doRenderThingToLowerHighway = false;
 
@@ -538,7 +536,7 @@ int main(int argc, char *argv[]) {
         );
         SET_WINDOW_FULLSCREEN_BORDERLESS();
     }
-
+    Encore::DiscordInitialize();
     Encore::EncoreLog(LOG_INFO, TextFormat("Target FPS: %d", targetFPS));
 
     audioManager.Init();
@@ -595,7 +593,6 @@ int main(int argc, char *argv[]) {
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-
         if (TheMenuManager.onNewMenu) {
             TheMenuManager.onNewMenu = false;
             delete ActiveMenu;
@@ -610,26 +607,31 @@ int main(int argc, char *argv[]) {
                 // add its case to the `ActiveMenu->Draw();`
                 // cases.
             case MAIN_MENU: {
+                Encore::DiscordUpdatePresence("Main menu", "In the menus");
                 ActiveMenu = new MainMenu;
                 ActiveMenu->Load();
                 break;
             }
             case SETTINGS: {
+                Encore::DiscordUpdatePresence("Configuring", "In the menus");
                 ActiveMenu = new SettingsMenu;
                 ActiveMenu->Load();
                 break;
             }
             case RESULTS: {
+                Encore::DiscordUpdatePresence("Viewing results", "In the menus");
                 ActiveMenu = new resultsMenu;
                 ActiveMenu->Load();
                 break;
             }
             case SONG_SELECT: {
+                Encore::DiscordUpdatePresence("Viewing songs", "In the menus");
                 ActiveMenu = new SongSelectMenu;
                 ActiveMenu->Load();
                 break;
             }
             case READY_UP: {
+                Encore::DiscordUpdatePresence("Readying up", "In the menus");
                 ActiveMenu = new ReadyUpMenu;
                 ActiveMenu->Load();
                 break;
@@ -640,16 +642,22 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case CACHE_LOADING_SCREEN: {
+                Encore::DiscordUpdatePresence("Loading game", "In the menus");
                 ActiveMenu = new cacheLoadingScreen;
                 ActiveMenu->Load();
                 break;
             }
             case CHART_LOADING_SCREEN: {
+                Encore::DiscordUpdatePresence("Loading a song", "In the menus");
                 ActiveMenu = new ChartLoadingMenu;
                 ActiveMenu->Load();
                 break;
             }
             case GAMEPLAY: {
+                Encore::DiscordUpdatePresence(
+                    "Playing a song",
+                    TheSongList.curSong->title + " - " + TheSongList.curSong->artist
+                );
                 glfwSetKeyCallback(glfwGetCurrentContext(), keyCallback);
                 glfwSetGamepadStateCallback(gamepadStateCallback);
                 ActiveMenu = new GameplayMenu;
@@ -825,7 +833,7 @@ int main(int argc, char *argv[]) {
             previousTime = currentTime;
         }
     }
-
+    Encore::DiscordShutdown();
     CloseWindow();
     return 0;
 }

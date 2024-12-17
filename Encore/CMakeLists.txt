@@ -49,7 +49,11 @@ file(GLOB_RECURSE SRC_FILES "src/*.cpp" "include/*.cpp" "include/*.c")
 file(GLOB_RECURSE INC_FILES "include/*.h" "include/*.h*" "src/*.h")
 # Add source files to the executable
 add_executable(Encore ${SRC_FILES} ${INC_FILES}
-        src/song/scoring.h)
+        src/song/scoring.h
+        src/util/discord.cpp
+        src/util/discord.h
+        src/util/json-helper.h
+)
 # Temp player file
 
 file(COPY "Songs" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
@@ -58,12 +62,16 @@ file(COPY "Assets" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
 target_include_directories(Encore PRIVATE "include" "src")
 if(WIN32)
   if (CMAKE_SIZEOF_VOID_P EQUAL 4) 
+    find_library(DISCORD-RPC NAMES discord-rpc PATHS "lib/discord-rpc/windows/x86/")
+    file(COPY "lib/discord-rpc/windows/x86/discord-rpc.dll" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
     find_library(BASS NAMES bass PATHS "lib/bass/windows/x86/")
     file(COPY "lib/bass/windows/x86/bass.dll" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
     find_library(BASSOPUS NAMES bassopus PATHS "lib/bass/windows/x86/")
     file(COPY "lib/bass/windows/x86/bassopus.dll" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
   endif() 
   if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    find_library(DISCORD-RPC NAMES discord-rpc PATHS "lib/discord-rpc/windows/x64/")
+    file(COPY "lib/discord-rpc/windows/x64/discord-rpc.dll" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
     find_library(BASS NAMES bass PATHS "lib/bass/windows/x64/")
     file(COPY "lib/bass/windows/x64/bass.dll" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
     find_library(BASSOPUS NAMES bassopus PATHS "lib/bass/windows/x64/")
@@ -72,6 +80,8 @@ if(WIN32)
 endif()
 if(UNIX AND NOT APPLE)
   if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    find_library(DISCORD-RPC NAMES discord-rpc PATHS "lib/discord-rpc/linux/x64")
+    file(COPY "lib/discord-rpc/linux/x64/discord-rpc.so" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
     find_library(BASS NAMES bass PATHS "lib/bass/linux/x86_64")
     file(COPY "lib/bass/linux/x86_64/libbass.so" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
     find_library(BASSOPUS NAMES bassopus PATHS "lib/bass/linux/x86_64")
@@ -80,6 +90,8 @@ if(UNIX AND NOT APPLE)
   endif()
 endif()
 if(APPLE)
+  find_library(DISCORD-RPC NAMES discord-rpc PATHS "lib/discord-rpc/macos")
+  file(COPY "lib/discord-rpc/macos/discord-rpc.dylib" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
   find_library(BASS NAMES bass PATHS "lib/bass/macos")
   file(COPY "lib/bass/macos/libbass.dylib" DESTINATION ${CMAKE_BINARY_DIR}/Encore)
   find_library(BASSOPUS NAMES bassopus PATHS "lib/bass/macos")
@@ -117,4 +129,4 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 set_property(TARGET Encore PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(Encore raylib nlohmann_json::nlohmann_json ${BASS} ${BASSOPUS})
+target_link_libraries(Encore raylib nlohmann_json::nlohmann_json ${BASS} ${BASSOPUS} ${DISCORD-RPC})
