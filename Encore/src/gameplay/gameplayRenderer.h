@@ -177,6 +177,7 @@ public:
     std::vector<Model> StrumParts;
     std::vector<Model> TapParts;
     std::vector<Model> DrumParts;
+    std::vector<Model> CymbalParts;
 
     Model InnerKickSmasher;
     Model OuterKickSmasher;

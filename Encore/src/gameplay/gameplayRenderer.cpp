@@ -389,6 +389,20 @@ void gameplayRenderer::LoadGameplayAssets() {
     DrumParts.push_back(std::move(TomColor));
     DrumParts.push_back(std::move(TomSides));
 
+    // Crash
+    Texture2D CymbalBaseTex = LoadTexture((noteModelPath / "CymbalBase.png").string().c_str());
+    Texture2D CymbalColorTex = LoadTexture((noteModelPath / "CymbalColor.png").string().c_str());
+    Texture2D CymbalSidesTex = LoadTexture((noteModelPath / "CymbalWhite.png").string().c_str());
+    Model CymbalBase = LoadModel((noteModelPath / "cymbal/base.obj").string().c_str());
+    CymbalBase.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = CymbalBaseTex;
+    Model CymbalColor = LoadModel((noteModelPath / "cymbal/color.obj").string().c_str());
+    CymbalColor.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = CymbalColorTex;
+    Model CymbalSides = LoadModel((noteModelPath / "cymbal/sides.obj").string().c_str());
+    CymbalSides.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = CymbalSidesTex;
+    CymbalParts.push_back(std::move(CymbalBase));
+    CymbalParts.push_back(std::move(CymbalColor));
+    CymbalParts.push_back(std::move(CymbalSides));
+
     InnerKickSmasher =
         LoadModel((highwayModelPath / "DrumSmasherInner.obj").string().c_str());
     OuterKickSmasher =
@@ -2330,36 +2344,34 @@ void gameplayRenderer::RenderPDrumsNotes(
         Vector3 NotePos = { notePosX, notePosY, float(NoteStartPositionWorld) };
         if (!curNote.pDrumTom && !curNote.pSnare && !curNote.hit && curNote.lane != KICK
             && player.ProDrums) { // render cymbals
-            Color OuterColor = ColorBrightness(NoteColor, -0.15);
-            Color InnerColor = RAYWHITE;
-            Color BottomColor = DARKGRAY;
+            Color BaseColor = GRAY;
+            Color ColorColor = NoteColor;
+            Color WhiteColor = WHITE;
             if (curNote.renderAsOD) {
-                InnerColor = WHITE;
-                OuterColor = RAYWHITE;
-                BottomColor = ColorBrightness(GOLD, -0.5);
+                BaseColor = ColorBrightness(GOLD, -0.75);
+                ColorColor = GOLD;
             } else if (curNote.miss) {
-                InnerColor = RED;
-                OuterColor = RED;
-                BottomColor = RED;
+                BaseColor = RED;
+                ColorColor = RED;
+                WhiteColor = RED;
             }
             if (curNote.pDrumAct && player.stats->overdriveFill >= 0.25
                 && !player.stats->Overdrive) {
-                NoteScale.y = 2.0f;
-                OuterColor = GREEN;
-                InnerColor = GREEN;
+                NoteScale.z = 2.0f;
+                BaseColor = ColorBrightness(GREEN, -0.25);;
+                ColorColor = GREEN;
+                WhiteColor = GREEN;
             }
-            gprAssets.CymbalInner.materials[0].maps[MATERIAL_MAP_DIFFUSE].color =
-                InnerColor;
-            gprAssets.CymbalOuter.materials[0].maps[MATERIAL_MAP_DIFFUSE].color =
-                OuterColor;
-            gprAssets.CymbalBottom.materials[0].maps[MATERIAL_MAP_DIFFUSE].color =
-                BottomColor;
-            gprAssets.CymbalInner.materials[0].shader = gprAssets.HighwayFade;
-            gprAssets.CymbalOuter.materials[0].shader = gprAssets.HighwayFade;
-            gprAssets.CymbalBottom.materials[0].shader = gprAssets.HighwayFade;
-            DrawModelEx(gprAssets.CymbalInner, NotePos, { 0 }, 0, NoteScale, InnerColor);
-            DrawModelEx(gprAssets.CymbalOuter, NotePos, { 0 }, 0, NoteScale, OuterColor);
-            DrawModelEx(gprAssets.CymbalBottom, NotePos, { 0 }, 0, NoteScale, BottomColor);
+            CymbalParts[mBASE].materials[0].maps[MATERIAL_MAP_DIFFUSE].color = BaseColor;
+            CymbalParts[mCOLOR].materials[0].maps[MATERIAL_MAP_DIFFUSE].color = ColorColor;
+            CymbalParts[mSIDES].materials[0].maps[MATERIAL_MAP_DIFFUSE].color = WhiteColor;
+            CymbalParts[mBASE].materials[0].shader = gprAssets.HighwayFade;
+            CymbalParts[mCOLOR].materials[0].shader = gprAssets.HighwayFade;
+            CymbalParts[mSIDES].materials[0].shader = gprAssets.HighwayFade;
+
+            DrawModelEx(CymbalParts[mBASE], NotePos, { 0 }, 0, NoteScale, BaseColor);
+            DrawModelEx(CymbalParts[mCOLOR], NotePos, { 0 }, 0, NoteScale, ColorColor);
+            DrawModelEx(CymbalParts[mSIDES], NotePos, { 0 }, 0, NoteScale, WhiteColor);
         } else if (!curNote.hit && curNote.lane == KICK) {
             Model TopModel = gprAssets.KickBottomModel;
             Model BottomModel = gprAssets.KickSideModel;
