@@ -12,6 +12,7 @@
 #include "styles.h"
 #include "uiUnits.h"
 #include "gameplay/enctime.h"
+#include "util/json-helper.h"
 
 bool changingKey = false;
 bool changing4k = false;
@@ -54,9 +55,7 @@ void SettingsMenu::Draw() {
     GameMenu::DrawAlbumArtBackground(TheSongList.curSong->albumArtBlur);
 
     // Create Default Values
-#define OPTION(type, value, default) type value = TheGameSettings.value;
-    SETTINGS_OPTIONS;
-#undef OPTION
+
 
     std::filesystem::path directory = settingsMain.getDirectory();
     // if (settingsMain.controllerType == -1 && controllerID != -1) {
@@ -132,6 +131,7 @@ void SettingsMenu::Draw() {
         // player.InputOffset = settingsMain.inputOffsetMS / 1000.0f;
         // player.VideoOffset = settingsMain.avOffsetMS / 1000.0f;
         enctime.SetOffset(AudioOffset / 1000.0);
+        Encore::WriteJsonFile(directory/"settings.json", TheGameSettings);
         settingsMain.saveSettings(directory / "settings-old.json");
 
         TheMenuManager.SwitchScreen(MAIN_MENU);
@@ -815,4 +815,9 @@ void SettingsMenu::Draw() {
          break;*/
     }
     }
+}
+void SettingsMenu::Load() {
+#define OPTION(type, value, default) value = TheGameSettings.value;
+    SETTINGS_OPTIONS;
+#undef OPTION
 }
