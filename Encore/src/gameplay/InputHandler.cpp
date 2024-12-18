@@ -108,7 +108,6 @@ void InputHandler::CheckPlasticInputs(
             && stats->Combo % 10 == 0) {
             stats->MultiplierEffectTime = eventTime;
         }
-
         return;
     }
     if (!curNote.hit && frettingInput)

@@ -948,12 +948,23 @@ void gameplayRenderer::CalculateSustainScore(PlayerGameplayStats *&stats) {
     stats->Score += (CurrentTick - stats->LastTick) * PointsPerTick;
     ThePlayerManager.BandStats.Score += (CurrentTick - stats->LastTick) * PointsPerTick;
 }
+
+float HealthToBrutalPosition(float health, float highwayLength) {
+    return Remap(Clamp(health, 0.1f, 0.9f), 0.0f, 1.0f, 0, highwayLength * 0.7);
+}
+
 void gameplayRenderer::RenderClassicNotes(
     Player &player, Chart &curChart, double curSongTime, float length
 ) {
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
     PlayerGameplayStats *&stats = player.stats;
+
+    double HighwayEnd = length + (smasherPos * 4);
+    if (player.BrutalMode) {
+        Vector3 BeatlinePos = Vector3 { 0, 0, HealthToBrutalPosition(stats->Health, HighwayEnd) };
+        DrawModelEx(gprAssets.beatline, BeatlinePos, { 0 }, 0, { 1, 1, 4 }, WHITE);
+    }
 
     for (auto &curNote : curChart.notes) {
         // if (curNote.time < TheSongTime.GetFakeStartTime()) {
@@ -975,7 +986,6 @@ void gameplayRenderer::RenderClassicNotes(
 
         CheckPlasticNotes(player, curChart, curSongTime, curNote);
 
-        double HighwayEnd = length + (smasherPos * 4);
 
         double NoteStartPositionWorld =
             GetNotePos(curNote.time, curSongTime, player.NoteSpeed, HighwayEnd);
@@ -993,6 +1003,14 @@ void gameplayRenderer::RenderClassicNotes(
         if (NoteEndPositionWorld < -1)
             SkipShit = true;
 
+
+        bool BrutalSkip = false;
+        if (NoteStartPositionWorld < HealthToBrutalPosition(stats->Health, HighwayEnd) && player.BrutalMode) {
+            BrutalSkip = true;
+        }
+
+
+
         for (ClassicLane cLane : curNote.pLanes) {
             int lane = cLane.lane;
             int noteLane = player.LeftyFlip ? 4 - lane : lane;
@@ -1005,7 +1023,7 @@ void gameplayRenderer::RenderClassicNotes(
             float notePosX = diffDistance - (1.0f * noteLane);
 
             // float NoteScroll = smasherPos + (length * (float)relTime);
-            if (!SkipShit) {
+            if (!SkipShit && !BrutalSkip) {
                 nDrawPlasticNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
             }
             // note: WE'RE GETTING CLOSE CHAT. HOLY SHIT CHAT WE'RE GETTING THERE
@@ -1080,6 +1098,9 @@ void gameplayRenderer::RenderClassicNotes(
                 }
 
                 if (!SkipShit) {
+                    if (BrutalSkip) {
+                        NoteStartPositionWorld = HealthToBrutalPosition(stats->Health, HighwayEnd);
+                    }
                     nDrawSustain(
                         curNote,
                         NoteColor,
@@ -1173,7 +1194,10 @@ void gameplayRenderer::RenderHud(Player &player, float length) {
                              OverdriveColor.g / 255.0f,
                              OverdriveColor.b / 255.0f,
                              OverdriveColor.a / 255.0f };
-    Vector4 BlueMultiplier { 0.2, 0.6, 1, 1 };
+    Vector4 BlueMultiplier;
+    if (player.BrutalMode) BlueMultiplier = { 1, 0, 0, 1 };
+    else BlueMultiplier = { 0.2, 0.6, 1, 1 };
+
     if (player.stats->IsBassOrVox()) {
         if (player.stats->noODmultiplier() >= 6) {
             MultFillColor = player.stats->Overdrive ? GoldMultiplier : BlueMultiplier;

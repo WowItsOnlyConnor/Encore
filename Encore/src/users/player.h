@@ -108,7 +108,7 @@ public:
 
     std::vector<int> curNoteIdx = { 0, 0, 0, 0, 0 };
 
-    float Health;
+    float Health = 0.75f;
     Chart CurPlayingChart;
     bool Multiplayer = false;
     float overdriveFill;
@@ -120,6 +120,8 @@ public:
     int Difficulty;
     int BaseScore;
 
+    void AddHealth();
+    void LoseHealth();
     PlayerGameplayStats(int difficulty, int instrument);
     void HitNote(bool perfect);
     void HitDrumsNote(bool perfect, bool cymbal);
@@ -154,7 +156,8 @@ public:
     SETTING_ACTION(bool, Bot, "bot")                                                     \
     SETTING_ACTION(float, HighwayLength, "length")                                       \
     SETTING_ACTION(bool, ClassicMode, "classic")                                         \
-    SETTING_ACTION(bool, LeftyFlip, "lefty")
+    SETTING_ACTION(bool, LeftyFlip, "lefty")                                             \
+    SETTING_ACTION(bool, BrutalMode, "BrutalMode")
 
 #define PLAYER_CONFIG_LIST                                                               \
     SETTING_ACTION(int, Difficulty)                                                      \
@@ -165,8 +168,8 @@ public:
     SETTING_ACTION(bool, Bot)                                                            \
     SETTING_ACTION(float, HighwayLength)                                                 \
     SETTING_ACTION(bool, ClassicMode)                                                    \
-    SETTING_ACTION(bool, LeftyFlip)
-
+    SETTING_ACTION(bool, LeftyFlip)                                                      \
+    SETTING_ACTION(bool, BrutalMode)
 class Player {
     /**
      * @brief Player information. What else could be said?

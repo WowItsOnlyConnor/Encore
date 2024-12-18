@@ -281,8 +281,15 @@ void GameplayMenu::Draw() {
                               0
         )
                               .x;
-        Color headerUsernameColor =
-            ThePlayerManager.GetActivePlayer(pnum).Bot ? SKYBLUE : WHITE;
+        Color headerUsernameColor;
+        if (ThePlayerManager.GetActivePlayer(pnum).Bot)
+            headerUsernameColor = SKYBLUE;
+        else {
+            if (ThePlayerManager.GetActivePlayer(pnum).BrutalMode)
+                headerUsernameColor = RED;
+            else
+                headerUsernameColor = WHITE;
+        }
         DrawTextEx(
             assets.rubikBold,
             ThePlayerManager.GetActivePlayer(pnum).Name.c_str(),

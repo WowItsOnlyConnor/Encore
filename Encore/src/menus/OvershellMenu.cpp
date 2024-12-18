@@ -107,11 +107,18 @@ void OvershellMenu::DrawOvershell() {
             break;
         }
         case OS_OPTIONS: {
-            Color headerUsernameColor =
-                playerManager.GetActivePlayer(i).Bot ? SKYBLUE : WHITE;
+            Color headerUsernameColor;
+            if (playerManager.GetActivePlayer(i).Bot)
+                headerUsernameColor = SKYBLUE;
+            else {
+                if (playerManager.GetActivePlayer(i).BrutalMode)
+                    headerUsernameColor = RED;
+                else
+                    headerUsernameColor = WHITE;
+            }
             if (DrawOvershellRectangleHeader(
                     OvershellLeftLoc,
-                    OvershellTopLoc - (ButtonHeight * 6),
+                    OvershellTopLoc - (ButtonHeight * 7),
                     unit.winpct(0.2f),
                     unit.winpct(0.05f),
                     playerManager.GetActivePlayer(i).Name,
@@ -125,7 +132,7 @@ void OvershellMenu::DrawOvershell() {
             if (!BNSetting) {
                 if (OvershellButton(
                         i,
-                        5,
+                        6,
                         TextFormat(
                             "Breakneck Speed - %4.2fx",
                             playerManager.GetActivePlayer(i).NoteSpeed
@@ -138,7 +145,7 @@ void OvershellMenu::DrawOvershell() {
             if (BNSetting) {
                 if (OvershellSlider(
                         i,
-                        5,
+                        6,
                         TextFormat(
                             "Breakneck Speed - %4.2fx",
                             playerManager.GetActivePlayer(i).NoteSpeed
@@ -152,10 +159,12 @@ void OvershellMenu::DrawOvershell() {
                     continue;
                 };
             }
-            if (OvershellButton(i, 4, "Instrument Type")) {
+            if (OvershellButton(i, 5, "Instrument Type")) {
                 OvershellState[i] = OS_INSTRUMENT_SELECTIONS;
                 break;
             }
+            playerManager.GetActivePlayer(i).BrutalMode =
+                OvershellCheckbox(i, 4, "Brutal Mode", playerManager.GetActivePlayer(i).BrutalMode);
             playerManager.GetActivePlayer(i).Bot =
                 OvershellCheckbox(i, 3, "Bot", playerManager.GetActivePlayer(i).Bot);
             playerManager.GetActivePlayer(i).LeftyFlip = OvershellCheckbox(

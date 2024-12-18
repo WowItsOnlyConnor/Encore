@@ -12,10 +12,31 @@
 #include <random>
 #include <nlohmann/json.hpp>
 
+void PlayerGameplayStats::AddHealth() {
+    if (Overdrive) {
+        Health += (healthGainPerNote * healthOverdriveGainMult);
+    } else {
+        Health += healthGainPerNote;
+    }
+    if (Health > 1.0f)
+        Health = 1.0f;
+    Encore::EncoreLog(LOG_INFO, "Health gained");
+    Encore::EncoreLog(LOG_INFO, TextFormat("Health: %4.2f", Health));
+}
+
+void PlayerGameplayStats::LoseHealth() {
+    Health -= healthLossPerNote;
+
+    if (Health < 0.0f)
+        Health = 0.0f;
+    Encore::EncoreLog(LOG_INFO, "Health lost");
+    Encore::EncoreLog(LOG_INFO, TextFormat("Health: %4.2f", Health));
+}
+
 PlayerGameplayStats::PlayerGameplayStats(int difficulty, int instrument)
     : Quit(false), FC(false), Paused(false), Overdrive(false), Mute(false), Score(0),
       Combo(0), MaxCombo(0), Overhits(0), Notes(0), NotesHit(0), GoodHit(0),
-      PerfectHit(0), NotesMissed(0), strummedNote(0), Health(0), overdriveFill(0),
+      PerfectHit(0), NotesMissed(0), strummedNote(0), overdriveFill(0),
       overdriveActiveFill(0), overdriveActiveTime(0), overdriveActivateTime(0),
       BaseScore(0) {
     Difficulty = difficulty;
@@ -31,6 +52,7 @@ void PlayerGameplayStats::HitNote(bool perfect) {
     Score += (int)((BASE_NOTE_POINT * (multiplier()) * perfectMult));
     PerfectHit += perfect ? 1 : 0;
     GoodHit += perfect ? 0 : 1;
+    AddHealth();
     Mute = false;
     if (Combo >= 3)
         Miss = false;
@@ -47,6 +69,7 @@ void PlayerGameplayStats::HitDrumsNote(bool perfect, bool cymbal) {
     Score += int(BASE_NOTE_POINT * multiplier() * perfectMult) * cymbMult;
     PerfectHit += perfect ? 1 : 0;
     GoodHit += perfect ? 0 : 1;
+    AddHealth();
     Mute = false;
     if (Combo >= 3)
         Miss = false;
@@ -70,6 +93,7 @@ void PlayerGameplayStats::HitPlasticNote(Note note) {
     Score += (note.chordSize * (BASE_NOTE_POINT * multiplier() * perfectMult));
     PerfectHit += note.perfect ? 1 : 0;
     GoodHit += note.perfect ? 0 : 1;
+    AddHealth();
     curNoteInt++;
     Mute = false;
 }
@@ -86,6 +110,7 @@ void PlayerGameplayStats::MissNote() {
     curNoteInt++;
     Mute = true;
     Miss = true;
+    LoseHealth();
 }
 void PlayerGameplayStats::OverHit() {
     // if (combo != 0)
@@ -99,6 +124,7 @@ void PlayerGameplayStats::OverHit() {
     FC = false;
     Mute = true;
     Miss = true;
+    LoseHealth();
 }
 int PlayerGameplayStats::maxMultForMeter() {
     if (Instrument == PartBass || Instrument == PartVocals || Instrument == PlasticBass)
@@ -136,8 +162,7 @@ int PlayerGameplayStats::Stars() {
 int PlayerGameplayStats::multiplier() {
     int od = Overdrive ? 2 : 1;
 
-    if (Instrument == PartBass || Instrument == PartDrums
-        || Instrument == PlasticBass) {
+    if (Instrument == PartBass || Instrument == PartDrums || Instrument == PlasticBass) {
         if (Combo < 10) {
             uvOffsetX = 0;
             uvOffsetY = 0 + (Overdrive ? 0.5f : 0);
@@ -189,8 +214,7 @@ int PlayerGameplayStats::multiplier() {
 }
 
 int PlayerGameplayStats::noODmultiplier() {
-    if (Instrument == PartBass || Instrument == PartDrums
-        || Instrument == PlasticBass) {
+    if (Instrument == PartBass || Instrument == PartDrums || Instrument == PlasticBass) {
         if (Combo < 10) {
             return 1;
         } else if (Combo < 20) {
@@ -206,25 +230,24 @@ int PlayerGameplayStats::noODmultiplier() {
         } else {
             return 1;
         };
+    } else {
+        if (Combo < 10) {
+            return 1;
+        } else if (Combo < 20) {
+            return 2;
+        } else if (Combo < 30) {
+            return 3;
+        } else if (Combo >= 30) {
+            return 4;
         } else {
-            if (Combo < 10) {
-                return 1;
-            } else if (Combo < 20) {
-                return 2;
-            } else if (Combo < 30) {
-                return 3;
-            } else if (Combo >= 30) {
-                return 4;
-            } else {
-                return 1;
-            }
-        };
+            return 1;
+        }
+    };
     return 4;
 }
 
 bool PlayerGameplayStats::IsBassOrVox() {
-    if (Instrument == PartBass || Instrument == PartVocals
-        || Instrument == PlasticBass) {
+    if (Instrument == PartBass || Instrument == PartVocals || Instrument == PlasticBass) {
         return true;
     }
     return false;
@@ -275,7 +298,7 @@ Player::Player() {
     NoteSpeed = 1;
     ProDrums = false;
     HighwayLength = 1;
-
+    BrutalMode = false;
     // gen stuff, move to own function (thanks https://github.com/mariusbancila/stduuid)
     std::random_device rd;
     auto seed_data = std::array<int, std::mt19937::state_size> {};
@@ -419,7 +442,8 @@ void BandGameplayStats::AddNotePoint(bool perfect, int playerMult) {
         MaxCombo = Combo;
     float perfectMult = perfect ? PERFECT_MULTIPLIER : 1.0f;
     Score += (int)((
-        BASE_NOTE_POINT * playerMult * perfectMult * OverdriveMultiplier[PlayersInOverdrive]
+        BASE_NOTE_POINT * playerMult * perfectMult
+        * OverdriveMultiplier[PlayersInOverdrive]
     ));
     // mute = false;
 }
@@ -432,9 +456,13 @@ void BandGameplayStats::AddClassicNotePoint(bool perfect, int playerMult, int ch
     double BaseNoteScore = (chordSize * BASE_NOTE_POINT);
     NoteScore += BaseNoteScore;
     MultiplierScore += (BaseNoteScore * playerMult) - BaseNoteScore;
-    OverdriveScore += (BaseNoteScore * OverdriveMultiplier[PlayersInOverdrive]) - BaseNoteScore;
+    OverdriveScore +=
+        (BaseNoteScore * OverdriveMultiplier[PlayersInOverdrive]) - BaseNoteScore;
     PerfectScore += (BaseNoteScore * perfectMult) - BaseNoteScore;
-    Score += (chordSize * (BASE_NOTE_POINT * playerMult * OverdriveMultiplier[PlayersInOverdrive] * perfectMult ));
+    Score +=
+        (chordSize
+         * (BASE_NOTE_POINT * playerMult * OverdriveMultiplier[PlayersInOverdrive]
+            * perfectMult));
     // mute = false;
 }
 
@@ -445,8 +473,8 @@ void BandGameplayStats::DrumNotePoint(bool perfect, int playerMult, bool cymbal)
     float perfectMult = perfect ? PERFECT_MULTIPLIER : 1.0f;
     // used to be a 25% multiplier, just add 5 points instead lol
     float cymbMult = cymbal ? CYMBAL_MULTIPLIER : 1;
-    Score +=
-        int(BASE_NOTE_POINT * playerMult * perfectMult * OverdriveMultiplier[PlayersInOverdrive])
+    Score += int(BASE_NOTE_POINT * playerMult * perfectMult
+                 * OverdriveMultiplier[PlayersInOverdrive])
         * cymbMult;
     // mute = false;
 }
@@ -466,7 +494,6 @@ PlayerGameplayStats::PlayerGameplayStats() {
     NotesHit = 0;
     NotesMissed = 0;
     PerfectHit = 0;
-    Health = 100.0f;
 
     overdriveFill = 0.0f;
     overdriveActiveFill = 0.0f;
