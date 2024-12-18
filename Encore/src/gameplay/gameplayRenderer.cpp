@@ -747,21 +747,35 @@ void gameplayRenderer::RenderPadNotes(
     Player &player, Chart &curChart, double curSongTime, float length
 ) {
     float diffDistance = player.Difficulty == 3 ? 2.0f : 1.5f;
-    float lineDistance = player.Difficulty == 3 ? 1.5f : 1.0f;
-    float DiffMultiplier =
-        Remap(player.Difficulty, 0, 3, MinHighwaySpeed, MaxHighwaySpeed);
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
     for (int lane = 0; lane < (player.Difficulty == 3 ? 5 : 4); lane++) {
-        for (int i = player.stats->curNoteIdx[lane];
-             i < curChart.notes_perlane[lane].size();
-             i++) {
+        for (auto i : curChart.notes_perlane[lane])
+            {
+        //for (int i = player.stats->curNoteIdx[lane] - 1;
+        //     i < curChart.notes_perlane[lane].size();
+        //     i++) {
+            Note &curNote = curChart.notes[i];
+
+            if (curNote.time > TheSongTime.GetSongLength())
+                continue;
+
+            if (TheSongList.curSong->BRE.IsNoteInCoda(curNote)) {
+                player.stats->curNoteInt++;
+                continue;
+            }
+            if (curNote.time + curNote.len < curSongTime - 2)
+                continue;
+
+            if (curNote.time > curSongTime + 15)
+                break;
+
             Color NoteColor = player.AccentColor;
             // TheGameMenu.hehe && player.Difficulty == 3
             //? TRANS[lane]
             //: player.AccentColor;
 
-            Note &curNote = curChart.notes[curChart.notes_perlane[lane][i]];
+
             // if (curNote.hit) {
             //	player.stats->totalOffset += curNote.HitOffset;
             // }
@@ -773,6 +787,7 @@ void gameplayRenderer::RenderPadNotes(
                 player.stats->MissNote();
                 player.stats->Combo = 0;
                 curNote.accounted = true;
+                player.stats->curNoteIdx[lane]++;
             } else if (player.Bot) {
                 if (!curNote.hit && !curNote.accounted && curNote.time < curSongTime
                     && player.stats->curNoteInt < curChart.notes.size()
@@ -799,9 +814,10 @@ void gameplayRenderer::RenderPadNotes(
             double HighwayEnd = length + (smasherPos * 4);
 
             curChart.solos.UpdateEventViaNote(curNote, player.stats->curSolo);
-            curChart.overdrive.UpdateEventViaNote(curNote, player.stats->curODPhrase);
             curChart.sections.UpdateEventViaNote(curNote, player.stats->curSection);
             curChart.fills.UpdateEventViaNote(curNote, player.stats->curFill);
+            curChart.overdrive.UpdateEventViaNote(curNote, player.stats->curODPhrase);
+
             if (curNote.hit && curChart.overdrive.Perfect(player.stats->curODPhrase)) {
                 player.stats->overdriveFill +=
                     curChart.overdrive.AddOverdrive(player.stats->curODPhrase);

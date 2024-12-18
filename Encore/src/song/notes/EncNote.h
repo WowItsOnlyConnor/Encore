@@ -91,31 +91,24 @@ public:
         this->accounted = true;
     }
 
-    bool padHitNote(double eventTime, double offset) {
-        if (isGood(eventTime, offset))
-        {
-            hit = true;
+    void padHitNote(double eventTime, double offset) {
+        hit = true;
 
-            HitOffset = time - eventTime;
-            hitTime = eventTime;
+        HitOffset = time - eventTime;
+        hitTime = eventTime;
 
-            if ((len) > 0) {
-                held = true;
-            }
-            if (isPerfect(eventTime, offset)) {
-                perfect = true;
-            }
-
-            accounted = true;
+        if ((len) > 0) {
+            held = true;
         }
-        return hit;
+        if (isPerfect(eventTime, offset)) {
+            perfect = true;
+        }
+
+        accounted = true;
     }
 
     bool pTap = false;
     bool pOpen = false;
 };
 
-
-
-
-#endif //ENCNOTE_H
+#endif // ENCNOTE_H

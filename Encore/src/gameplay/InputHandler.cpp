@@ -101,7 +101,6 @@ void InputHandler::CheckPlasticInputs(
         curNote.cHitNote(eventTime, player.InputCalibration);
         // TODO: fix for plastic
         stats->HitPlasticNote(curNote);
-        std::cout << stats->noODmultiplier() << std::endl;
         playerManager.BandStats.AddClassicNotePoint(
             curNote.perfect, stats->noODmultiplier(), curNote.chordSize
         );
@@ -155,9 +154,7 @@ void InputHandler::handleInputs(Player &player, int lane, int action) {
         }
     }
 }
-void InputHandler::CheckPadInputs(
-    Player &player, int lane, int action, double eventTime
-) {
+void InputHandler::CheckPadInputs(Player &player, int lane, int action, double eventTime) {
     PlayerGameplayStats *&stats = player.stats;
     PlayerManager &playerManager = ThePlayerManager;
     SongList &songList = TheSongList;
@@ -165,6 +162,54 @@ void InputHandler::CheckPadInputs(
         songList.curSong->parts[player.Instrument]->charts[player.Difficulty];
     SettingsOld &settings = SettingsOld::getInstance();
 
+
+
+    // do overdrive hitting logic here lol
+    if (lane == OVERDRIVE_ACT)
+        return;
+    // first, get the current note in the lane
+    int CurrentNoteInLane = stats->curNoteIdx[lane];
+    Note &curNote = curChart.notes[curChart.notes_perlane[lane][CurrentNoteInLane]];
+
+    // check note logic here.
+    // was it hit with overdrive?
+    bool HitWithOverdrive = (lane == OVERDRIVE_ACT);
+    // was it hit with overdrive but released?
+    bool OverdriveRelease = (HitWithOverdrive && action == GLFW_RELEASE);
+    // was it hit with overdrive but pressed?
+    bool OverdrivePress = (HitWithOverdrive && action == GLFW_PRESS);
+
+    // was this a tap?
+    bool NotePressed = (action == GLFW_PRESS);
+    // was the lift released?
+    bool NoteLifted = (curNote.lift && action == GLFW_RELEASE);
+    // was the lift pressed?
+    bool LiftPressed = (curNote.lift && action == GLFW_PRESS);
+
+    // is it in the hitwindow?
+    bool InHitwindow = curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit
+        && !curNote.accounted;
+
+    if (InHitwindow && (NotePressed || NoteLifted) && lane == curNote.lane) {
+        curNote.padHitNote(eventTime, player.InputCalibration);
+        stats->HitNote(curNote.perfect);
+        playerManager.BandStats.AddNotePoint(curNote.perfect, stats->noODmultiplier());
+        if (stats->Combo <= stats->maxMultForMeter() * 10 && stats->Combo != 0
+            && stats->Combo % 10 == 0) {
+            stats->MultiplierEffectTime = eventTime;
+        }
+        stats->curNoteIdx[lane]++;
+        return;
+    }
+
+    if (!curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit
+        && NotePressed) {
+        stats->OverHit();
+        curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
+    }
+}
+
+/*
     if (lane == OVERDRIVE_ACT) {
         if ((action == GLFW_PRESS && !stats->overdriveHitAvailable)
             || (action == GLFW_RELEASE && !stats->overdriveLiftAvailable))
@@ -223,45 +268,58 @@ void InputHandler::CheckPadInputs(
         }
         return;
     }
-    for (int i = stats->curNoteIdx[lane]; i < curChart.notes_perlane[lane].size(); i++) {
-        Note &curNote = curChart.notes[curChart.notes_perlane[lane][i]];
 
-        if (lane != curNote.lane)
-            continue;
-        bool LiftHit = (curNote.lift && action == GLFW_RELEASE);
-        bool TapHit = action == GLFW_PRESS;
+    Note &curNote = curChart.notes[curChart.notes_perlane[lane][stats->curNoteIdx[lane]]];
 
-        if ((LiftHit || TapHit) && !curNote.accounted) {
-            if (!curNote.padHitNote(eventTime, player.InputCalibration))
-                break;
-            if (LiftHit) {
-                stats->lastHitLifts[lane] = curChart.notes_perlane[lane][i];
-            }
-            if (curNote.perfect)
-                stats->LastPerfectTime = curNote.perfect;
-            stats->HitNote(curNote.perfect);
-            playerManager.BandStats.AddNotePoint(curNote.perfect, stats->multiplier());
+    if (lane != curNote.lane)
+        return;
+    bool LiftHit = (curNote.lift && action == GLFW_RELEASE);
+    bool TapHit = action == GLFW_PRESS;
+    /*
+     * this is me trying to make sense of this code
+     * its been horribly adapted and well. it aint mine, its narriks
+     * i might accidentally rewrite it all but im just gonna give it my best shot
+
+    if ((LiftHit || TapHit) && !curNote.accounted) {
+        // if its not hit, return???
+        if (!curNote.padHitNote(eventTime, player.InputCalibration))
             return;
+        if (LiftHit) {
+            stats->lastHitLifts[lane] =
+curChart.notes_perlane[lane][stats->curNoteIdx[lane]];
         }
-        if ((!stats->HeldFrets[curNote.lane] && !stats->HeldFretsAlt[curNote.lane])
-            && curNote.held && (curNote.len) > 0) {
-            curNote.held = false;
-            stats->Mute = true;
-            return;
+        if (curNote.perfect)
+            stats->LastPerfectTime = curNote.perfect;
+        stats->HitNote(curNote.perfect);
+        if (curNote.perfect)
+            stats->LastPerfectTime = curNote.hitTime;
+        playerManager.BandStats.AddNotePoint(curNote.perfect, stats->multiplier());
+        if (stats->Combo <= stats->maxMultForMeter() * 10 && stats->Combo != 0
+            && stats->Combo % 10 == 0) {
+            stats->MultiplierEffectTime = eventTime;
         }
-        bool AfterSongStart = eventTime > songList.curSong->music_start;
-
-        if (TapHit && AfterSongStart
-            && !curNote.isGood(eventTime, player.InputCalibration) && !curNote.accounted
-            && eventTime > stats->overdriveHitTime + 0.05 && !stats->OverhitFrets[lane]) {
-            if (stats->lastHitLifts[lane] != -1) {
-                if (eventTime > curChart.notes[stats->lastHitLifts[lane]].time - 0.05
-                    && eventTime < curChart.notes[stats->lastHitLifts[lane]].time + 0.05)
-                    continue;
-            }
-            stats->OverHit();
-            curChart.overdrive.MissCurrentEvent(eventTime, stats->curODPhrase);
-            stats->OverhitFrets[lane] = true;
+        return;
+    }
+    if ((!stats->HeldFrets[curNote.lane] && !stats->HeldFretsAlt[curNote.lane])
+        && curNote.held && (curNote.len) > 0) {
+        curNote.held = false;
+        stats->Mute = true;
+        return;
+    }
+    if (action == GLFW_PRESS && !curNote.accounted
+        && !curNote.isGood(eventTime, player.InputCalibration)
+        && eventTime > stats->overdriveHitTime + 0.05 && !stats->OverhitFrets[lane]) {
+        // if the last hit lift doesnt exist
+        // and its within the lift's time
+        // cancel
+        if (stats->lastHitLifts[lane] != -1) {
+            if (eventTime > curChart.notes[stats->lastHitLifts[lane]].time - 0.05
+                && eventTime < curChart.notes[stats->lastHitLifts[lane]].time + 0.05)
+                return;
         }
+        stats->OverHit();
+        curChart.overdrive.MissCurrentEvent(eventTime, stats->curODPhrase);
+        stats->OverhitFrets[lane] = true;
     }
 }
+*/
