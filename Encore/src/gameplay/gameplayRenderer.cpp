@@ -787,7 +787,8 @@ void gameplayRenderer::RenderPadNotes(
                 player.stats->MissNote();
                 player.stats->Combo = 0;
                 curNote.accounted = true;
-                player.stats->curNoteIdx[lane]++;
+                if (player.stats->curNoteIdx[lane] < curChart.notes_perlane[lane].size() - 1)
+                    player.stats->curNoteIdx[lane]++;
             } else if (player.Bot) {
                 if (!curNote.hit && !curNote.accounted && curNote.time < curSongTime
                     && player.stats->curNoteInt < curChart.notes.size()

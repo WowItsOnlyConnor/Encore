@@ -172,14 +172,6 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     Note &curNote = curChart.notes[curChart.notes_perlane[lane][CurrentNoteInLane]];
     int &lastLiftNote = stats->lastHitLifts[lane];
 
-    // check note logic here.
-    // was it hit with overdrive?
-    bool HitWithOverdrive = (lane == OVERDRIVE_ACT);
-    // was it hit with overdrive but released?
-    bool OverdriveRelease = (HitWithOverdrive && action == GLFW_RELEASE);
-    // was it hit with overdrive but pressed?
-    bool OverdrivePress = (HitWithOverdrive && action == GLFW_PRESS);
-
     // was this a tap?
     bool NotePressed = (action == GLFW_PRESS);
     // was the lift released?
@@ -207,7 +199,11 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
             && stats->Combo % 10 == 0) {
             stats->MultiplierEffectTime = eventTime;
         }
-        stats->curNoteIdx[lane]++;
+        if (curNote.perfect) {
+            stats->LastPerfectTime = eventTime;
+        }
+        if (stats->curNoteIdx[lane] < curChart.notes_perlane[lane].size() - 1)
+            stats->curNoteIdx[lane]++;
         return;
     }
 
@@ -217,6 +213,9 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
         curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
     }
 }
+
+
+
 
 /*
     if (lane == OVERDRIVE_ACT) {
