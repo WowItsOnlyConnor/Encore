@@ -217,12 +217,12 @@ void GameplayMenu::Draw() {
                     == stream.instrument) {
                     audioManager.SetAudioStreamVolume(
                         stream.handle,
-                        player.stats->Mute ? TheGameSettings.MainVolume * TheGameSettings.MuteVolume
-                                           : TheGameSettings.MainVolume * TheGameSettings.ActiveInstrumentVolume
+                        player.stats->Mute ? TheGameSettings.avMainVolume * TheGameSettings.avMuteVolume
+                                           : TheGameSettings.avMainVolume * TheGameSettings.avActiveInstrumentVolume
                     );
                 } else {
                     audioManager.SetAudioStreamVolume(
-                        stream.handle, TheGameSettings.MainVolume * TheGameSettings.InactiveInstrumentVolume
+                        stream.handle, TheGameSettings.avMainVolume * TheGameSettings.avInactiveInstrumentVolume
                     );
                 }
             }

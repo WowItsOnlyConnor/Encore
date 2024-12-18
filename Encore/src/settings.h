@@ -13,12 +13,12 @@
 #include <nlohmann/json.hpp>
 
 #define SETTINGS_OPTIONS                                                                 \
-    OPTION(float, MainVolume, 0.5f)                                                      \
-    OPTION(float, ActiveInstrumentVolume, 0.75f)                                         \
-    OPTION(float, InactiveInstrumentVolume, 0.5f)                                        \
-    OPTION(float, SoundEffectVolume, 0.5f)                                               \
-    OPTION(float, MuteVolume, 0.15f)                                                     \
-    OPTION(float, MenuMusicVolume, 0.15f)                                                \
+    OPTION(float, avMainVolume, 0.5f)                                                      \
+    OPTION(float, avActiveInstrumentVolume, 0.75f)                                         \
+    OPTION(float, avInactiveInstrumentVolume, 0.5f)                                        \
+    OPTION(float, avSoundEffectVolume, 0.5f)                                               \
+    OPTION(float, avMuteVolume, 0.15f)                                                     \
+    OPTION(float, avMenuMusicVolume, 0.15f)                                                \
     OPTION(bool, Fullscreen, false)                                                      \
     OPTION(int, AudioOffset, 0)                                                          \
     OPTION(bool, DiscordRichPresence, true)
@@ -34,12 +34,12 @@ namespace Encore {
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
         Settings,
-        MainVolume,
-        ActiveInstrumentVolume,
-        InactiveInstrumentVolume,
-        SoundEffectVolume,
-        MuteVolume,
-        MenuMusicVolume,
+        avMainVolume,
+        avActiveInstrumentVolume,
+        avInactiveInstrumentVolume,
+        avSoundEffectVolume,
+        avMuteVolume,
+        avMenuMusicVolume,
         Fullscreen,
         AudioOffset,
         DiscordRichPresence,

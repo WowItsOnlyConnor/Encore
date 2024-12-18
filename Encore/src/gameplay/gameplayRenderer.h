@@ -48,6 +48,7 @@ class gameplayRenderer {
         double curSongTime,
         std::vector<Note>::value_type &curNote
     );
+    void CalculateSustainScore(PlayerGameplayStats *&stats);
     void RenderClassicNotes(Player &player, Chart &curChart, double curSongTime, float length);
     void DrawHitwindow(Player &player, float length);
     void RenderPDrumsNotes(Player &player, Chart &curChart, double curSongTime, float length);

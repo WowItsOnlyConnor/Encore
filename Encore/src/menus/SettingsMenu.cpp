@@ -315,23 +315,23 @@ void SettingsMenu::Draw() {
             WHITE
         );
 
-        MainVolume =
-            sor.sliderEntry(MainVolume, 0, 1, 1, "Main Volume", 0.05f);
+        avMainVolume =
+            sor.sliderEntry(avMainVolume, 0, 1, 1, "Main Volume", 0.05f);
 
-        ActiveInstrumentVolume =
-            sor.sliderEntry(ActiveInstrumentVolume, 0, 1, 2, "Active Instrument Volume", 0.05f);
+        avActiveInstrumentVolume =
+            sor.sliderEntry(avActiveInstrumentVolume, 0, 1, 2, "Active Instrument Volume", 0.05f);
 
-        InactiveInstrumentVolume =
-            sor.sliderEntry(InactiveInstrumentVolume, 0, 1, 3, "Inactive Instrument Volume", 0.05f);
+        avInactiveInstrumentVolume =
+            sor.sliderEntry(avInactiveInstrumentVolume, 0, 1, 3, "Inactive Instrument Volume", 0.05f);
 
-        SoundEffectVolume =
-            sor.sliderEntry(SoundEffectVolume, 0, 1, 4, "SFX Volume", 0.05f);
+        avSoundEffectVolume =
+            sor.sliderEntry(avSoundEffectVolume, 0, 1, 4, "SFX Volume", 0.05f);
 
-        MuteVolume =
-            sor.sliderEntry(MuteVolume, 0, 1, 5, "Miss Volume", 0.05f);
+        avMuteVolume =
+            sor.sliderEntry(avMuteVolume, 0, 1, 5, "Miss Volume", 0.05f);
 
-        MenuMusicVolume =
-            sor.sliderEntry(MenuMusicVolume, 0, 1, 6, "Menu Music Volume", 0.05f);
+        avMenuMusicVolume =
+            sor.sliderEntry(avMenuMusicVolume, 0, 1, 6, "Menu Music Volume", 0.05f);
 
         // player.selInstVolume = settingsMain.MainVolume *
         // settingsMain.PlayerVolume; player.otherInstVolume =

@@ -206,7 +206,7 @@ void MainMenu::Load() {
         streamsLoaded = true;
         for (auto &stream : menuAudioManager.loadedStreams) {
             menuAudioManager.SetAudioStreamVolume(
-                stream.handle, TheGameSettings.MainVolume * 0.15f
+                stream.handle, TheGameSettings.avMainVolume * 0.15f
             );
         }
         menuAudioManager.BeginPlayback(menuAudioManager.loadedStreams[0].handle);
@@ -434,7 +434,7 @@ void MainMenu::Draw() {
 
         for (auto &stream : menuAudioManager.loadedStreams) {
             menuAudioManager.SetAudioStreamVolume(
-                stream.handle, TheGameSettings.MainVolume * TheGameSettings.MenuMusicVolume
+                stream.handle, TheGameSettings.avMainVolume * TheGameSettings.avMenuMusicVolume
             );
         }
         float played = menuAudioManager.GetMusicTimePlayed();
