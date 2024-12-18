@@ -36,7 +36,7 @@ float settingsOptionRenderer::sliderEntry(
 
     float lengthTop = EntryTop + (EntryHeight * (entryNum - 1));
     float lengthTextTop = EntryTextTop + (EntryHeight * (entryNum - 1));
-    float lengthFloat = value;
+    float *lengthFloat = &value;
     DrawTextEx(
         soreAss.rubikBold,
         Label.c_str(),
@@ -54,11 +54,11 @@ float settingsOptionRenderer::sliderEntry(
               EntryHeight },
             "",
             "",
-            &lengthFloat,
+            lengthFloat,
             min,
             max
         )) {
-        value = lengthFloat;
+        value = *lengthFloat;
     }
     // slider side buttons
     if (GuiButton({ OptionLeft, lengthTop, EntryHeight, EntryHeight }, "<")) {

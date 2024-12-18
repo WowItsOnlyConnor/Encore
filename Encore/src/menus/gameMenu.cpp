@@ -18,7 +18,6 @@
 #include "../menus/menu.h"
 #include "overshellRenderer.h"
 #include "uiUnits.h"
-#include "../settings-old.h"
 #include "../song/songlist.h"
 #include "gameplay/gameplayRenderer.h"
 
@@ -26,6 +25,7 @@
 #define GIT_COMMIT_HASH
 #endif
 #include "MenuManager.h"
+#include "settings.h"
 
 #ifndef ENCORE_VERSION
 #define ENCORE_VERSION
@@ -39,7 +39,6 @@ std::string menuCommitHash = GIT_COMMIT_HASH;
 std::string menuVersion = ENCORE_VERSION;
 std::string gitBranch = GIT_BRANCH;
 Assets &menuAss = Assets::getInstance();
-SettingsOld &settings = SettingsOld::getInstance();
 SongList &songListMenu = TheSongList;
 Units u = Units::getInstance();
 
@@ -207,7 +206,7 @@ void MainMenu::Load() {
         streamsLoaded = true;
         for (auto &stream : menuAudioManager.loadedStreams) {
             menuAudioManager.SetAudioStreamVolume(
-                stream.handle, settings.MainVolume * 0.15f
+                stream.handle, TheGameSettings.MainVolume * 0.15f
             );
         }
         menuAudioManager.BeginPlayback(menuAudioManager.loadedStreams[0].handle);
@@ -318,7 +317,7 @@ void MainMenu::Draw() {
             { u.wpct(0.02f), u.hpct(0.3f), u.winpct(0.2f), u.hinpct(0.08f) },
             "Invalid song cache!"
         );
-        songList.ScanSongs(settings.songPaths);
+        songList.ScanSongs(TheGameSettings.SongPaths);
         songsLoaded = false;
         DrawRectanglePro(
             { ((float)GetScreenWidth() / 2) - 125,
@@ -332,7 +331,7 @@ void MainMenu::Draw() {
         GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, 0x181827FF);
     }
     if (GuiButton(
-            { u.wpct(0.02f), u.hpct(0.39f), u.winpct(0.2f), u.hinpct(0.08f) }, "Options"
+            { u.wpct(0.02f), u.hpct(0.39f), u.winpct(0.5), u.hinpct(0.08f) }, "Options - out of order"
         )) {
         // glfwSetGamepadStateCallback(gamepadStateCallbackSetControls);
         TheMenuManager.SwitchScreen(SETTINGS);
@@ -435,7 +434,7 @@ void MainMenu::Draw() {
 
         for (auto &stream : menuAudioManager.loadedStreams) {
             menuAudioManager.SetAudioStreamVolume(
-                stream.handle, settings.MainVolume * settings.MenuVolume
+                stream.handle, TheGameSettings.MainVolume * TheGameSettings.MenuMusicVolume
             );
         }
         float played = menuAudioManager.GetMusicTimePlayed();

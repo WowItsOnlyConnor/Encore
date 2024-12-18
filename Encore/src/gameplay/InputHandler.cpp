@@ -118,7 +118,6 @@ void InputHandler::CheckPlasticInputs(
 
 void InputHandler::handleInputs(Player &player, int lane, int action) {
     PlayerGameplayStats *&stats = player.stats;
-    SettingsOld &settings = SettingsOld::getInstance();
     SongTime &enctime = TheSongTime;
     SongList &songList = TheSongList;
     PlayerManager &playerManager = ThePlayerManager;
@@ -127,7 +126,7 @@ void InputHandler::handleInputs(Player &player, int lane, int action) {
         return;
     if (lane == -2)
         return;
-    if (settings.mirrorMode && lane != -1 && !player.ClassicMode) {
+    if (player.LeftyFlip && lane != -1 && !player.ClassicMode) {
         lane = (player.Difficulty == 3 ? 4 : 3) - lane;
     }
     if (!enctime.Running()) {

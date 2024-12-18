@@ -4,6 +4,8 @@
 
 #include "playerManager.h"
 
+#include "util/json-helper.h"
+
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -114,9 +116,7 @@ void PlayerManager::SaveSpecificPlayer(const int slot) {
             player.AccentColor.b;
     }
 
-    std::ofstream o(PlayerListSaveFile, std::ios::out | std::ios::trunc);
-    o << PlayerListJson.dump(2, ' ', false, nlohmann::detail::error_handler_t::strict);
-    o.close();
+    Encore::WriteJsonFile(PlayerListSaveFile, PlayerListJson);
 }
 
 void PlayerManager::CreatePlayer(const std::string &name) {

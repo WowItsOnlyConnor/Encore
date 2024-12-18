@@ -9,11 +9,11 @@
 
 #include "gameMenu.h"
 #include "raymath.h"
-#include "settings-old.h"
 #include "uiUnits.h"
 #include "song/songlist.h"
 #include "raygui.h"
 #include "MenuManager.h"
+#include "settings.h"
 
 std::vector<std::string> CacheSplash = {
     "Want a break from the cache?",
@@ -44,8 +44,7 @@ bool started = false;
 
 void LoadCache() {
     SongList &list = TheSongList;
-    SettingsOld &settings = SettingsOld::getInstance();
-    list.LoadCache(settings.songPaths);
+    list.LoadCache(TheGameSettings.SongPaths);
     finished = true;
 }
 

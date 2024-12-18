@@ -7,7 +7,7 @@
 #include "MenuManager.h"
 #include "gameMenu.h"
 #include "raygui.h"
-#include "settings-old.h"
+#include "settings.h"
 #include "settingsOptionRenderer.h"
 #include "styles.h"
 #include "uiUnits.h"
@@ -25,7 +25,6 @@ bool ShowGeneralSettings = true;
 
 enum OptionsCategories {
     MAIN,
-    HIGHWAY,
     VOLUME,
     KEYBOARD,
     GAMEPAD
@@ -53,6 +52,11 @@ void SettingsMenu::Draw() {
     SongTime &enctime = TheSongTime;
     settingsOptionRenderer sor;
     GameMenu::DrawAlbumArtBackground(TheSongList.curSong->albumArtBlur);
+
+    // Create Default Values
+#define OPTION(type, value, default) type value = TheGameSettings.value;
+    SETTINGS_OPTIONS;
+#undef OPTION
 
     std::filesystem::path directory = settingsMain.getDirectory();
     // if (settingsMain.controllerType == -1 && controllerID != -1) {
@@ -99,40 +103,6 @@ void SettingsMenu::Draw() {
         )
         && !(changingKey || changingOverdrive || changingPause)) {
         // glfwSetGamepadStateCallback(origGamepadCallback);
-        settingsMain.keybinds4K = settingsMain.prev4K;
-        settingsMain.keybinds5K = settingsMain.prev5K;
-        settingsMain.keybinds4KAlt = settingsMain.prev4KAlt;
-        settingsMain.keybinds5KAlt = settingsMain.prev5KAlt;
-        settingsMain.keybindOverdrive = settingsMain.prevOverdrive;
-        settingsMain.keybindOverdriveAlt = settingsMain.prevOverdriveAlt;
-        settingsMain.keybindPause = settingsMain.prevKeybindPause;
-
-        settingsMain.controller4K = settingsMain.prevController4K;
-        settingsMain.controller4KAxisDirection =
-            settingsMain.prevController4KAxisDirection;
-        settingsMain.controller5K = settingsMain.prevController5K;
-        settingsMain.controller5KAxisDirection =
-            settingsMain.prevController5KAxisDirection;
-        settingsMain.controllerOverdrive = settingsMain.prevControllerOverdrive;
-        settingsMain.controllerOverdriveAxisDirection =
-            settingsMain.prevControllerOverdriveAxisDirection;
-        settingsMain.controllerType = settingsMain.prevControllerType;
-        settingsMain.controllerPause = settingsMain.prevControllerPause;
-
-        settingsMain.highwayLengthMult = settingsMain.prevHighwayLengthMult;
-        settingsMain.trackSpeed = settingsMain.prevTrackSpeed;
-        settingsMain.inputOffsetMS = settingsMain.prevInputOffsetMS;
-        settingsMain.avOffsetMS = settingsMain.prevAvOffsetMS;
-        settingsMain.missHighwayColor = settingsMain.prevMissHighwayColor;
-        settingsMain.mirrorMode = settingsMain.prevMirrorMode;
-        settingsMain.fullscreen = settingsMain.fullscreenPrev;
-
-        settingsMain.MainVolume = settingsMain.prevMainVolume;
-        settingsMain.PlayerVolume = settingsMain.prevPlayerVolume;
-        settingsMain.BandVolume = settingsMain.prevBandVolume;
-        settingsMain.SFXVolume = settingsMain.prevSFXVolume;
-        settingsMain.MissVolume = settingsMain.prevMissVolume;
-        settingsMain.MenuVolume = settingsMain.prevMenuVolume;
         enctime.SetOffset(settingsMain.avOffsetMS / 1000.0);
         TheMenuManager.SwitchScreen(MAIN_MENU);
     }
@@ -145,7 +115,7 @@ void SettingsMenu::Draw() {
         )
         && !(changingKey || changingOverdrive || changingPause)) {
         // glfwSetGamepadStateCallback(origGamepadCallback);
-        if (settingsMain.fullscreen) {
+        if (Fullscreen) {
             SET_WINDOW_FULLSCREEN_BORDERLESS();
             // SetWindowState(FLAG_WINDOW_UNDECORATED);
             // SetWindowState(FLAG_MSAA_4X_HINT);
@@ -156,45 +126,13 @@ void SettingsMenu::Draw() {
         } else {
             SET_WINDOW_WINDOWED();
         }
-        settingsMain.prev4K = settingsMain.keybinds4K;
-        settingsMain.prev5K = settingsMain.keybinds5K;
-        settingsMain.prev4KAlt = settingsMain.keybinds4KAlt;
-        settingsMain.prev5KAlt = settingsMain.keybinds5KAlt;
-        settingsMain.prevOverdrive = settingsMain.keybindOverdrive;
-        settingsMain.prevOverdriveAlt = settingsMain.keybindOverdriveAlt;
-        settingsMain.prevKeybindPause = settingsMain.keybindPause;
-
-        settingsMain.prevController4K = settingsMain.controller4K;
-        settingsMain.prevController4KAxisDirection =
-            settingsMain.controller4KAxisDirection;
-        settingsMain.prevController5K = settingsMain.controller5K;
-        settingsMain.prevController5KAxisDirection =
-            settingsMain.controller5KAxisDirection;
-        settingsMain.prevControllerOverdrive = settingsMain.controllerOverdrive;
-        settingsMain.prevControllerPause = settingsMain.controllerPause;
-        settingsMain.prevControllerOverdriveAxisDirection =
-            settingsMain.controllerOverdriveAxisDirection;
-        settingsMain.prevControllerType = settingsMain.controllerType;
-
-        settingsMain.prevHighwayLengthMult = settingsMain.highwayLengthMult;
-        settingsMain.prevTrackSpeed = settingsMain.trackSpeed;
-        settingsMain.prevInputOffsetMS = settingsMain.inputOffsetMS;
-        settingsMain.prevAvOffsetMS = settingsMain.avOffsetMS;
-        settingsMain.prevMissHighwayColor = settingsMain.missHighwayColor;
-        settingsMain.prevMirrorMode = settingsMain.mirrorMode;
-        settingsMain.fullscreenPrev = settingsMain.fullscreen;
-
-        settingsMain.prevMainVolume = settingsMain.MainVolume;
-        settingsMain.prevPlayerVolume = settingsMain.PlayerVolume;
-        settingsMain.prevBandVolume = settingsMain.BandVolume;
-        settingsMain.prevSFXVolume = settingsMain.SFXVolume;
-        settingsMain.prevMissVolume = settingsMain.MissVolume;
-        settingsMain.prevMenuVolume = settingsMain.MenuVolume;
-
+#define OPTION(type, value, default) TheGameSettings.value = value;
+        SETTINGS_OPTIONS;
+#undef OPTION
         // player.InputOffset = settingsMain.inputOffsetMS / 1000.0f;
         // player.VideoOffset = settingsMain.avOffsetMS / 1000.0f;
-        enctime.SetOffset(settingsMain.avOffsetMS / 1000.0);
-        settingsMain.saveSettings(directory / "settings.json");
+        enctime.SetOffset(AudioOffset / 1000.0);
+        settingsMain.saveSettings(directory / "settings-old.json");
 
         TheMenuManager.SwitchScreen(MAIN_MENU);
     }
@@ -207,9 +145,9 @@ void SettingsMenu::Draw() {
     GuiToggleGroup(
         { u.LeftSide + u.winpct(0.005f),
           OvershellBottom,
-          (u.winpct(0.985f) / 5),
+          (u.winpct(0.985f) / 3),
           u.hinpct(0.05) },
-        "Main;Highway;Volume;Keyboard Controls;Gamepad Controls",
+        "Main;Volume;Keyboard Controls",
         &selectedTab
     );
     if (!changingKey && !changingOverdrive && !changingPause) {
@@ -275,12 +213,12 @@ void SettingsMenu::Draw() {
 
         // av offset
 
-        settingsMain.avOffsetMS = sor.sliderEntry(
-            settingsMain.avOffsetMS,
+        AudioOffset = sor.sliderEntry(
+            AudioOffset,
             -500.0f,
             500.0f,
             calibrationMenuOffset + 1,
-            "Audio/Visual Offset",
+            "Audio Offset",
             1
         );
 
@@ -291,14 +229,6 @@ void SettingsMenu::Draw() {
             OptionWidth * 2,
             EntryHeight,
             Color { 0, 0, 0, 64 }
-        );
-        settingsMain.inputOffsetMS = sor.sliderEntry(
-            settingsMain.inputOffsetMS,
-            -500.0f,
-            500.0f,
-            calibrationMenuOffset + 2,
-            "Input Offset",
-            1
         );
 
         float calibrationTop = EntryTop + (EntryHeight * (calibrationMenuOffset + 2));
@@ -340,8 +270,8 @@ void SettingsMenu::Draw() {
 
         // fullscreen
 
-        settingsMain.fullscreen =
-            sor.toggleEntry(settingsMain.fullscreen, generalOffset + 1, "Fullscreen");
+        Fullscreen =
+            sor.toggleEntry(Fullscreen, generalOffset + 1, "Fullscreen");
 
         DrawRectangle(
             u.wpct(0.005f),
@@ -362,74 +292,9 @@ void SettingsMenu::Draw() {
             WHITE
         );
         if (GuiButton({ OptionLeft, scanTop, OptionWidth, EntryHeight }, "Scan")) {
-            TheSongList.ScanSongs(settingsMain.songPaths);
+            TheSongList.ScanSongs(TheGameSettings.SongPaths);
         }
 
-        break;
-    }
-    case HIGHWAY: {
-        DrawRectangle(
-            u.wpct(0.005f),
-            OvershellBottom + u.hinpct(0.05f),
-            OptionWidth * 2,
-            EntryHeight,
-            Color { 0, 0, 0, 128 }
-        );
-        DrawTextEx(
-            assets.rubikBoldItalic,
-            "Highway",
-            { HeaderTextLeft, OvershellBottom + u.hinpct(0.055f) },
-            u.hinpct(0.04f),
-            0,
-            WHITE
-        );
-        settingsMain.trackSpeed = sor.sliderEntry(
-            settingsMain.trackSpeed,
-            0,
-            settingsMain.trackSpeedOptions.size() - 1,
-            1,
-            "Track Speed",
-            1.0f
-        );
-        // highway length
-
-        DrawRectangle(
-            u.wpct(0.005f),
-            underTabsHeight + (EntryHeight * 2),
-            OptionWidth * 2,
-            EntryHeight,
-            Color { 0, 0, 0, 64 }
-        );
-        settingsMain.highwayLengthMult = sor.sliderEntry(
-            settingsMain.highwayLengthMult,
-            0.25f,
-            2.5f,
-            2,
-            "Highway Length Multiplier",
-            0.25f
-        );
-
-        // miss color
-        settingsMain.missHighwayDefault =
-            sor.toggleEntry(settingsMain.missHighwayDefault, 3, "Highway Miss Color");
-
-        // lefty flip
-        DrawRectangle(
-            u.wpct(0.005f),
-            underTabsHeight + (EntryHeight * 4),
-            OptionWidth * 2,
-            EntryHeight,
-            Color { 0, 0, 0, 64 }
-        );
-        settingsMain.mirrorMode =
-            sor.toggleEntry(settingsMain.mirrorMode, 4, "Mirror/Lefty Mode");
-
-        // menu.hehe = sor.toggleEntry(menu.hehe, 5, "Super Cool Highway Colors");
-
-        // TheGameRenderer.bot = sor.toggleEntry(TheGameRenderer.bot, 6, "Bot");
-
-        // TheGameRenderer.showHitwindow = sor.toggleEntry(
-        // TheGameRenderer.showHitwindow, 7, "Show Hitwindow");
         break;
     }
     case VOLUME: {
@@ -450,23 +315,23 @@ void SettingsMenu::Draw() {
             WHITE
         );
 
-        settingsMain.MainVolume =
-            sor.sliderEntry(settingsMain.MainVolume, 0, 1, 1, "Main Volume", 0.05f);
+        MainVolume =
+            sor.sliderEntry(MainVolume, 0, 1, 1, "Main Volume", 0.05f);
 
-        settingsMain.PlayerVolume =
-            sor.sliderEntry(settingsMain.PlayerVolume, 0, 1, 2, "Player Volume", 0.05f);
+        ActiveInstrumentVolume =
+            sor.sliderEntry(ActiveInstrumentVolume, 0, 1, 2, "Active Instrument Volume", 0.05f);
 
-        settingsMain.BandVolume =
-            sor.sliderEntry(settingsMain.BandVolume, 0, 1, 3, "Band Volume", 0.05f);
+        InactiveInstrumentVolume =
+            sor.sliderEntry(InactiveInstrumentVolume, 0, 1, 3, "Inactive Instrument Volume", 0.05f);
 
-        settingsMain.SFXVolume =
-            sor.sliderEntry(settingsMain.SFXVolume, 0, 1, 4, "SFX Volume", 0.05f);
+        SoundEffectVolume =
+            sor.sliderEntry(SoundEffectVolume, 0, 1, 4, "SFX Volume", 0.05f);
 
-        settingsMain.MissVolume =
-            sor.sliderEntry(settingsMain.MissVolume, 0, 1, 5, "Miss Volume", 0.05f);
+        MuteVolume =
+            sor.sliderEntry(MuteVolume, 0, 1, 5, "Miss Volume", 0.05f);
 
-        settingsMain.MenuVolume =
-            sor.sliderEntry(settingsMain.MenuVolume, 0, 1, 6, "Menu Music Volume", 0.05f);
+        MenuMusicVolume =
+            sor.sliderEntry(MenuMusicVolume, 0, 1, 6, "Menu Music Volume", 0.05f);
 
         // player.selInstVolume = settingsMain.MainVolume *
         // settingsMain.PlayerVolume; player.otherInstVolume =

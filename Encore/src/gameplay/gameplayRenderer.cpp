@@ -9,7 +9,6 @@ float lineDistance = 1.5f;
 
 #include "assets.h"
 #include "enctime.h"
-#include "settings-old.h"
 #include "menus/gameMenu.h"
 #include "raymath.h"
 #include "menus/uiUnits.h"
@@ -20,7 +19,6 @@ float lineDistance = 1.5f;
 #include "util/enclog.h"
 
 Assets &gprAssets = Assets::getInstance();
-SettingsOld &gprSettings = SettingsOld::getInstance();
 AudioManager &gprAudioManager = AudioManager::getInstance();
 Units &gprU = Units::getInstance();
 
@@ -51,7 +49,7 @@ enum DrumNotes {
 bool SHOW_LETTER_BOUNDRY = false;
 bool SHOW_TEXT_BOUNDRY = false;
 
-// code from examples lol
+// code from raylib examples lol
 static void DrawTextCodepoint3D(
     Font font, int codepoint, Vector3 position, float fontSize, bool backface, Color tint
 ) {
@@ -976,7 +974,7 @@ void gameplayRenderer::RenderClassicNotes(
 
         for (ClassicLane cLane : curNote.pLanes) {
             int lane = cLane.lane;
-            int noteLane = gprSettings.mirrorMode ? 4 - lane : lane;
+            int noteLane = player.LeftyFlip ? 4 - lane : lane;
 
             Color NoteColor = GRYBO[lane];
             // TheGameMenu.hehe ? TRANS[lane] : GRYBO[lane];
@@ -1588,7 +1586,7 @@ void gameplayRenderer::RenderExpertHighway(Player &player, Song song, double cur
 
     float highwayLength =
         (defaultHighwayLength * 1.5f) * player.HighwayLength; //* player.HighwayLength;
-    float highwayPosShit = ((20) * (1 - gprSettings.highwayLengthMult));
+    float highwayPosShit = ((20) * (1 - player.HighwayLength));
 
     DrawHighwayMesh(
         player.HighwayLength,
@@ -1672,7 +1670,7 @@ void gameplayRenderer::RenderExpertHighway(Player &player, Song song, double cur
     for (int i = 0; i < 5; i++) {
         Color NoteColor; // = TheGameMenu.hehe && player.Difficulty == 3 ? i == 0 || i ==
         // 4 ? SKYBLUE : i == 1 || i == 3 ? PINK : WHITE : accentColor;
-        int noteColor = gprSettings.mirrorMode ? 4 - i : i;
+        int noteColor = player.LeftyFlip ? 4 - i : i;
         if (player.ClassicMode) {
             NoteColor = GRYBO[i];
             // TheGameMenu.hehe ? TRANS[i] : GRYBO[i];
@@ -1745,13 +1743,13 @@ void gameplayRenderer::RenderEmhHighway(Player &player, Song song, double curSon
     float lineDistance = player.Difficulty == 3 ? 1.5f : 1.0f;
 
     float highwayLength = (defaultHighwayLength * 1.5f) * player.HighwayLength;
-    float highwayPosShit = ((20) * (1 - gprSettings.highwayLengthMult));
+    float highwayPosShit = ((20) * (1 - player.HighwayLength));
 
     DrawModel(
         gprAssets.emhHighwaySides,
         Vector3 { 0,
                   0,
-                  gprSettings.highwayLengthMult < 1.0f ? -(highwayPosShit * (0.875f))
+                  player.HighwayLength < 1.0f ? -(highwayPosShit * (0.875f))
                                                        : 0 },
         1.0f,
         WHITE
@@ -1760,12 +1758,12 @@ void gameplayRenderer::RenderEmhHighway(Player &player, Song song, double curSon
         gprAssets.emhHighway,
         Vector3 { 0,
                   0,
-                  gprSettings.highwayLengthMult < 1.0f ? -(highwayPosShit * (0.875f))
+                  player.HighwayLength < 1.0f ? -(highwayPosShit * (0.875f))
                                                        : 0 },
         1.0f,
         WHITE
     );
-    if (gprSettings.highwayLengthMult > 1.0f) {
+    if (player.HighwayLength > 1.0f) {
         DrawModel(
             gprAssets.emhHighway,
             Vector3 { 0, 0, ((highwayLength * 1.5f) + smasherPos) - 20 },
@@ -2443,7 +2441,7 @@ void gameplayRenderer::RenderPDrumsHighway(Player &player, Song song, double cur
     PlayerGameplayStats *&stats = player.stats;
 
     float highwayLength = (defaultHighwayLength * 1.5f) * player.HighwayLength;
-    float highwayPosShit = ((20) * (1 - gprSettings.highwayLengthMult));
+    float highwayPosShit = ((20) * (1 - player.HighwayLength));
 
     DrawHighwayMesh(
         player.HighwayLength,
