@@ -170,6 +170,7 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     // first, get the current note in the lane
     int CurrentNoteInLane = stats->curNoteIdx[lane];
     Note &curNote = curChart.notes[curChart.notes_perlane[lane][CurrentNoteInLane]];
+    int &lastLiftNote = stats->lastHitLifts[lane];
 
     // check note logic here.
     // was it hit with overdrive?
@@ -185,7 +186,12 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     bool NoteLifted = (curNote.lift && action == GLFW_RELEASE);
     // was the lift pressed?
     bool LiftPressed = (curNote.lift && action == GLFW_PRESS);
-
+    bool LiftLeniencyUsedUp;
+    if (lastLiftNote != -1) {
+        LiftLeniencyUsedUp = curChart.notes[lastLiftNote].hitTime + liftLeniencyTime > eventTime;
+    } else {
+        LiftLeniencyUsedUp = true;
+    }
     // is it in the hitwindow?
     bool InHitwindow = curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit
         && !curNote.accounted;
@@ -193,6 +199,9 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     if (InHitwindow && (NotePressed || NoteLifted) && lane == curNote.lane) {
         curNote.padHitNote(eventTime, player.InputCalibration);
         stats->HitNote(curNote.perfect);
+        if (curNote.lift && action == GLFW_RELEASE) {
+            stats->lastHitLifts[lane] = curChart.notes_perlane[lane][stats->curNoteIdx[lane]];
+        }
         playerManager.BandStats.AddNotePoint(curNote.perfect, stats->noODmultiplier());
         if (stats->Combo <= stats->maxMultForMeter() * 10 && stats->Combo != 0
             && stats->Combo % 10 == 0) {
@@ -203,7 +212,7 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     }
 
     if (!curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit
-        && NotePressed) {
+        && NotePressed && LiftLeniencyUsedUp) {
         stats->OverHit();
         curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
     }
