@@ -191,7 +191,10 @@ int main(int argc, char *argv[]) {
 #endif
     // todo: move to Encore::SettingsHelper
     TheGameSettings.SongPaths = { directory / "Songs" };
-
+    if (exists(directory/"settings.json")
+        && !exists(directory/"settings-old.json")) {
+        rename(directory/"settings.json", directory/"settings-old.json");
+    }
     // check to see if settings exists
     // todo: move to own init helper
     if (exists((directory / "settings.json"))) {
