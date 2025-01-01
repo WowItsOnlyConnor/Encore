@@ -9,7 +9,10 @@
 namespace Encore {
     void DiscordInitialize();
     void DiscordShutdown();
-    void DiscordUpdatePresence(const std::string &title, const std::string &details);
+    void DiscordUpdatePresence(
+        const std::string &title, const std::string &details
+    );
+    void DiscordUpdatePresenceSong(const std::string &title, const std::string &details, int instrument);
 };
 
 

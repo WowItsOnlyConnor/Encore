@@ -368,9 +368,10 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case GAMEPLAY: {
-                Encore::DiscordUpdatePresence(
+                Encore::DiscordUpdatePresenceSong(
                     "Playing a song",
-                    TheSongList.curSong->title + " - " + TheSongList.curSong->artist
+                    TheSongList.curSong->title + " - " + TheSongList.curSong->artist,
+                    ThePlayerManager.GetActivePlayer(0).Instrument
                 );
                 glfwSetKeyCallback(glfwGetCurrentContext(), keyCallback);
                 glfwSetGamepadStateCallback(gamepadStateCallback);
