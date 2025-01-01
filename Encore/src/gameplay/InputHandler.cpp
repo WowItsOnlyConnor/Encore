@@ -168,6 +168,8 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
         return;
     // first, get the current note in the lane
     int CurrentNoteInLane = stats->curNoteIdx[lane];
+    if (curChart.notes_perlane[lane].empty())
+        return;
     Note &curNote = curChart.notes[curChart.notes_perlane[lane][CurrentNoteInLane]];
     int &lastLiftNote = stats->lastHitLifts[lane];
 
