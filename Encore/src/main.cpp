@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
         );
         SET_WINDOW_FULLSCREEN_BORDERLESS();
     }
-    Encore::DiscordInitialize();
+    Encore::Discord TheGameRPC;
     Encore::EncoreLog(LOG_INFO, TextFormat("Target FPS: %d", targetFPS));
 
     audioManager.Init();
@@ -276,7 +276,7 @@ int main(int argc, char *argv[]) {
     Menu::onNewMenu = true;
     TheSongTime.SetOffset(TheGameSettings.AudioOffset / 1000.0);
 
-    audioManager.loadSample("Assets/highway/clap.mp3", "clap");
+    // audioManager.loadSample("Assets/highway/clap.mp3", "clap");
     while (!WindowShouldClose()) {
         u.calcUnits();
         double curTime = GetTime();
@@ -321,31 +321,31 @@ int main(int argc, char *argv[]) {
                 // add its case to the `ActiveMenu->Draw();`
                 // cases.
             case MAIN_MENU: {
-                Encore::DiscordUpdatePresence("Main menu", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Main menu", "In the menus");
                 ActiveMenu = new MainMenu;
                 ActiveMenu->Load();
                 break;
             }
             case SETTINGS: {
-                Encore::DiscordUpdatePresence("Configuring", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Configuring", "In the menus");
                 ActiveMenu = new SettingsMenu;
                 ActiveMenu->Load();
                 break;
             }
             case RESULTS: {
-                Encore::DiscordUpdatePresence("Viewing results", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Viewing results", "In the menus");
                 ActiveMenu = new resultsMenu;
                 ActiveMenu->Load();
                 break;
             }
             case SONG_SELECT: {
-                Encore::DiscordUpdatePresence("Viewing songs", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Viewing songs", "In the menus");
                 ActiveMenu = new SongSelectMenu;
                 ActiveMenu->Load();
                 break;
             }
             case READY_UP: {
-                Encore::DiscordUpdatePresence("Readying up", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Readying up", "In the menus");
                 ActiveMenu = new ReadyUpMenu;
                 ActiveMenu->Load();
                 break;
@@ -356,19 +356,19 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case CACHE_LOADING_SCREEN: {
-                Encore::DiscordUpdatePresence("Loading game", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Loading game", "In the menus");
                 ActiveMenu = new cacheLoadingScreen;
                 ActiveMenu->Load();
                 break;
             }
             case CHART_LOADING_SCREEN: {
-                Encore::DiscordUpdatePresence("Loading a song", "In the menus");
+                TheGameRPC.DiscordUpdatePresence("Loading a song", "In the menus");
                 ActiveMenu = new ChartLoadingMenu;
                 ActiveMenu->Load();
                 break;
             }
             case GAMEPLAY: {
-                Encore::DiscordUpdatePresenceSong(
+                TheGameRPC.DiscordUpdatePresenceSong(
                     "Playing a song",
                     TheSongList.curSong->title + " - " + TheSongList.curSong->artist,
                     ThePlayerManager.GetActivePlayer(0).Instrument
@@ -548,7 +548,6 @@ int main(int argc, char *argv[]) {
             previousTime = currentTime;
         }
     }
-    Encore::DiscordShutdown();
     CloseWindow();
     return 0;
 }
