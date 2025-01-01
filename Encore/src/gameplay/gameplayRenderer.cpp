@@ -433,13 +433,13 @@ void gameplayRenderer::LoadGameplayAssets() {
      * basically this is just. a vector for the vectors. its really nasty as is, but you
      * know. its much more compact than whatever was here before though
      */
-
+    float CameraPos = 0.75f;
     std::vector<std::vector<Vector3> > CameraDisplacement = {
         { { 0, Height1p, Back1p } },
 
         { { 0.75f, Height, Back }, { -0.75f, Height, Back } },
 
-        { { 1.25f, Height, Back }, { 0, Height, Back }, { -1.25f, Height, Back } },
+        { { CameraPos, Height, Back }, { 0, Height, Back }, { -CameraPos, Height, Back } },
 
         { { 3.0f, Height4p, Back4p },
           { 1.0f, Height4p, Back4p },
@@ -452,9 +452,9 @@ void gameplayRenderer::LoadGameplayAssets() {
 
           { { { 0.75f, 0, TargetDistance }, { -0.75f, 0, TargetDistance } } },
 
-          { { { 1.25f, 0, TargetDistance },
+          { { { CameraPos * 3, 0, TargetDistance },
               { 0, 0, TargetDistance },
-              { -1.25f, 0, TargetDistance } } },
+              { -CameraPos * 3, 0, TargetDistance } } },
 
           { { { 3.0f, 0, TargetDistance },
               { 1.0f, 0, TargetDistance },
@@ -2380,26 +2380,26 @@ void gameplayRenderer::RenderPDrumsNotes(
 
         Vector3 NoteScale = { 1.0f, 1.0f, 1.0f };
         Vector3 NotePos = { notePosX, notePosY, float(NoteStartPositionWorld) };
+        float Factor = 1.0f;
         if (!curNote.pDrumTom && !curNote.pSnare && !curNote.hit && curNote.lane != KICK
             && player.ProDrums) { // render cymbals
-            Color BaseColor = GRAY;
+            Color BaseColor = WHITE;
             Color ColorColor = NoteColor;
-            Color WhiteColor = WHITE;
+            Color WhiteColor = ColorBrightness(NoteColor, Factor);
             if (curNote.renderAsOD) {
-                BaseColor = ColorBrightness(GOLD, -0.75);
-                ColorColor = GOLD;
+                BaseColor = GOLD;
+                ColorColor = WHITE;
+                WhiteColor = GOLD;
             } else if (curNote.miss) {
                 BaseColor = RED;
                 ColorColor = RED;
-                WhiteColor = RED;
+                WhiteColor = ColorBrightness(RED, Factor);
             }
             if (curNote.pDrumAct && player.stats->overdriveFill >= 0.25
                 && !player.stats->Overdrive) {
                 NoteScale.z = 2.0f;
-                BaseColor = ColorBrightness(GREEN, -0.25);
-                ;
                 ColorColor = GREEN;
-                WhiteColor = GREEN;
+                WhiteColor = ColorBrightness(GREEN, Factor);
             }
             CymbalParts[mBASE].materials[0].maps[MATERIAL_MAP_DIFFUSE].color = BaseColor;
             CymbalParts[mCOLOR].materials[0].maps[MATERIAL_MAP_DIFFUSE].color =
