@@ -134,6 +134,7 @@ public:
     int maxComboForMeter();
 
     int Stars();
+    void MultiplierUVCalculation();
 
     float uvOffsetX = 0;
     float uvOffsetY = 0;

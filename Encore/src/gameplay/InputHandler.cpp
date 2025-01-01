@@ -162,7 +162,6 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     SettingsOld &settings = SettingsOld::getInstance();
 
 
-
     // do overdrive hitting logic here lol
     if (lane == OVERDRIVE_ACT)
         return;
@@ -181,7 +180,8 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
     bool LiftPressed = (curNote.lift && action == GLFW_PRESS);
     bool LiftLeniencyUsedUp;
     if (lastLiftNote != -1) {
-        LiftLeniencyUsedUp = curChart.notes[lastLiftNote].hitTime + liftLeniencyTime > eventTime;
+        LiftLeniencyUsedUp =
+            curChart.notes[lastLiftNote].hitTime + liftLeniencyTime > eventTime;
     } else {
         LiftLeniencyUsedUp = true;
     }
@@ -193,7 +193,8 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
         curNote.padHitNote(eventTime, player.InputCalibration);
         stats->HitNote(curNote.perfect);
         if (curNote.lift && action == GLFW_RELEASE) {
-            stats->lastHitLifts[lane] = curChart.notes_perlane[lane][stats->curNoteIdx[lane]];
+            stats->lastHitLifts[lane] =
+                curChart.notes_perlane[lane][stats->curNoteIdx[lane]];
         }
         playerManager.BandStats.AddNotePoint(curNote.perfect, stats->noODmultiplier());
         if (stats->Combo <= stats->maxMultForMeter() * 10 && stats->Combo != 0
@@ -208,15 +209,12 @@ void InputHandler::CheckPadInputs(Player &player, int lane, int action, double e
         return;
     }
 
-    if (!curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit
-        && NotePressed && LiftLeniencyUsedUp) {
+    if (!curNote.isGood(eventTime, player.InputCalibration) && !curNote.hit && NotePressed
+        && LiftLeniencyUsedUp) {
         stats->OverHit();
         curChart.overdrive.UpdateEventViaNote(curNote, stats->curODPhrase);
     }
 }
-
-
-
 
 /*
     if (lane == OVERDRIVE_ACT) {

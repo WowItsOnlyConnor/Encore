@@ -159,91 +159,71 @@ int PlayerGameplayStats::Stars() {
 
     return 0;
 }
-int PlayerGameplayStats::multiplier() {
-    int od = Overdrive ? 2 : 1;
 
-    if (Instrument == PartBass || Instrument == PartDrums || Instrument == PlasticBass) {
+void PlayerGameplayStats::MultiplierUVCalculation() {
+    if (Instrument == PartBass || Instrument == PartVocals || Instrument == PlasticBass) {
         if (Combo < 10) {
             uvOffsetX = 0;
             uvOffsetY = 0 + (Overdrive ? 0.5f : 0);
-            return 1 * od;
         } else if (Combo < 20) {
             uvOffsetX = 0.25f;
             uvOffsetY = 0 + (Overdrive ? 0.5f : 0);
-            return 2 * od;
         } else if (Combo < 30) {
             uvOffsetX = 0.5f;
             uvOffsetY = 0 + (Overdrive ? 0.5f : 0);
-            return 3 * od;
         } else if (Combo < 40) {
             uvOffsetX = 0.75f;
             uvOffsetY = 0 + (Overdrive ? 0.5f : 0);
-            return 4 * od;
         } else if (Combo < 50) {
             uvOffsetX = 0;
             uvOffsetY = 0.25f + (Overdrive ? 0.5f : 0);
-            return 5 * od;
         } else if (Combo >= 50) {
             uvOffsetX = 0.25f;
             uvOffsetY = 0.25f + (Overdrive ? 0.5f : 0);
-            return 6 * od;
-        } else {
-            return 1 * od;
-        };
+        }
     } else {
         if (Combo < 10) {
             uvOffsetX = 0;
             uvOffsetY = 0 + (Overdrive ? 0.5 : 0);
-            return 1 * od;
         } else if (Combo < 20) {
             uvOffsetX = 0.25f;
             uvOffsetY = 0 + (Overdrive ? 0.5 : 0);
-            return 2 * od;
         } else if (Combo < 30) {
             uvOffsetX = 0.5f;
             uvOffsetY = 0 + (Overdrive ? 0.5 : 0);
-            return 3 * od;
         } else if (Combo >= 30) {
             uvOffsetX = 0.75f;
             uvOffsetY = 0 + (Overdrive ? 0.5 : 0);
-            return 4 * od;
-        } else {
-            return 1 * od;
         }
     };
 }
 
-int PlayerGameplayStats::noODmultiplier() {
-    if (Instrument == PartBass || Instrument == PartDrums || Instrument == PlasticBass) {
-        if (Combo < 10) {
-            return 1;
-        } else if (Combo < 20) {
-            return 2;
-        } else if (Combo < 30) {
-            return 3;
-        } else if (Combo < 40) {
-            return 4;
-        } else if (Combo < 50) {
-            return 5;
-        } else if (Combo >= 50) {
-            return 6;
-        } else {
-            return 1;
-        };
+
+int PlayerGameplayStats::multiplier() {
+    int od = Overdrive ? 2 : 1;
+    if (IsBassOrVox()) {
+        if (Combo >= 50)
+            return 6 * od;
+
     } else {
-        if (Combo < 10) {
-            return 1;
-        } else if (Combo < 20) {
-            return 2;
-        } else if (Combo < 30) {
-            return 3;
-        } else if (Combo >= 30) {
-            return 4;
-        } else {
-            return 1;
-        }
+        if (Combo >= 30)
+            return 4 * od;
     };
-    return 4;
+    return (Combo/10)+1 * od;
+
+
+}
+
+int PlayerGameplayStats::noODmultiplier() {
+    if (IsBassOrVox()) {
+        if (Combo >= 50)
+            return 6;
+
+    } else {
+        if (Combo >= 30)
+            return 4;
+    };
+    return (Combo/10)+1;
 }
 
 bool PlayerGameplayStats::IsBassOrVox() {
@@ -256,35 +236,18 @@ float PlayerGameplayStats::comboFillCalc() {
     if (Combo == 0) {
         return 0;
     }
-    if (Instrument == PartDrums || Instrument == PartGuitar || Instrument == PartKeys
-        || Instrument == PlasticDrums || Instrument == PlasticGuitar
-        || Instrument == PlasticKeys) {
-        // For instruments 0 and 2, limit the float value to 0.0 to 0.4
-        if (Combo >= 30) {
-            return 1.0f; // If combo is 30 or more, set float value to 1.0
-        } else {
-            int ComboMod = Combo % 10;
-            if (ComboMod == 0)
-                return 1.0f;
-            else {
-                return (static_cast<float>(ComboMod) / 10.0f); // Float value from 0.0
-                                                               // to 0.9 every 10
-                                                               // notes
-            }
-        }
-    } else {
-        if (Combo >= 50) {
-            return 1.0f; // If combo is 30 or more, set float value to 1.0
-        }
-        // For instruments 1 and 3, limit the float value to 0.0 to 0.6
+    if (IsBassOrVox()) {
         int ComboMod = Combo % 10;
-        if (ComboMod == 0)
+        if (Combo >= 50 || ComboMod == 0) {
             return 1.0f;
-        else {
-            return (static_cast<float>(ComboMod) / 10.0f); // Float value from 0.0 to
-                                                           // 0.9 every 10 notes
         }
+        return (static_cast<float>(ComboMod) / 10.0f);
     }
+    int ComboMod = Combo % 10;
+    if (Combo >= 30 || ComboMod == 0) {
+        return 1.0f; // If combo is 30 or more, set float value to 1.0
+    }
+    return (static_cast<float>(ComboMod) / 10.0f);
 }
 
 Player::Player() {

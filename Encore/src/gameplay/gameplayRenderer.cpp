@@ -750,11 +750,10 @@ void gameplayRenderer::RenderPadNotes(
     StartRenderTexture();
     // glDisable(GL_CULL_FACE);
     for (int lane = 0; lane < (player.Difficulty == 3 ? 5 : 4); lane++) {
-        for (auto i : curChart.notes_perlane[lane])
-            {
-        //for (int i = player.stats->curNoteIdx[lane] - 1;
-        //     i < curChart.notes_perlane[lane].size();
-        //     i++) {
+        for (auto i : curChart.notes_perlane[lane]) {
+            // for (int i = player.stats->curNoteIdx[lane] - 1;
+            //      i < curChart.notes_perlane[lane].size();
+            //      i++) {
             Note &curNote = curChart.notes[i];
 
             if (curNote.time > TheSongTime.GetSongLength())
@@ -775,7 +774,6 @@ void gameplayRenderer::RenderPadNotes(
             //? TRANS[lane]
             //: player.AccentColor;
 
-
             // if (curNote.hit) {
             //	player.stats->totalOffset += curNote.HitOffset;
             // }
@@ -787,8 +785,17 @@ void gameplayRenderer::RenderPadNotes(
                 player.stats->MissNote();
                 player.stats->Combo = 0;
                 curNote.accounted = true;
-                if (player.stats->curNoteIdx[lane] < curChart.notes_perlane[lane].size() - 1)
+                if (player.stats->curNoteIdx[lane]
+                    < curChart.notes_perlane[lane].size() -  1)
                     player.stats->curNoteIdx[lane]++;
+                Encore::EncoreLog(
+                    LOG_INFO,
+                    TextFormat(
+                        "Missed note at %f, note %01i",
+                        curSongTime,
+                        player.stats->curNoteInt
+                    )
+                );
             } else if (player.Bot) {
                 if (!curNote.hit && !curNote.accounted && curNote.time < curSongTime
                     && player.stats->curNoteInt < curChart.notes.size()
@@ -810,7 +817,6 @@ void gameplayRenderer::RenderPadNotes(
                     curNote.hitTime = curSongTime;
                 }
             }
-
 
             double HighwayEnd = length + (smasherPos * 4);
 
@@ -839,12 +845,16 @@ void gameplayRenderer::RenderPadNotes(
             }
             if (NoteEndPositionWorld > HighwayEnd)
                 NoteEndPositionWorld = HighwayEnd;
-            if (NoteEndPositionWorld < -1)
-                continue;
 
-            nDrawPadNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
+            bool SkipShit = false;
+            if (NoteEndPositionWorld < -1)
+                SkipShit = true;
+
+            if (!SkipShit) {
+                nDrawPadNote(curNote, NoteColor, notePosX, NoteStartPositionWorld);
+            }
             PlayerGameplayStats *&stats = player.stats;
-            if ((curNote.len) > 0) {
+            if ((curNote.len) > 0 && !SkipShit) {
                 if (curNote.held) {
                     NoteStartPositionWorld = smasherPos;
                     curNote.heldTime = curSongTime - curNote.time;
@@ -880,10 +890,6 @@ void gameplayRenderer::RenderPadNotes(
 
             nDrawFiveLaneHitEffects(player, curNote, curSongTime, notePosX, lane);
 
-            if (NoteEndPositionWorld < -1
-                && player.stats->curNoteIdx[lane]
-                    < curChart.notes_perlane[lane].size() - 1)
-                player.stats->curNoteIdx[lane] = i + 1;
         }
     }
     EndMode3D();
@@ -962,7 +968,8 @@ void gameplayRenderer::RenderClassicNotes(
 
     double HighwayEnd = length + (smasherPos * 4);
     if (player.BrutalMode) {
-        Vector3 BeatlinePos = Vector3 { 0, 0, HealthToBrutalPosition(stats->Health, HighwayEnd) };
+        Vector3 BeatlinePos =
+            Vector3 { 0, 0, HealthToBrutalPosition(stats->Health, HighwayEnd) };
         DrawModelEx(gprAssets.beatline, BeatlinePos, { 0 }, 0, { 1, 1, 4 }, WHITE);
     }
 
@@ -986,7 +993,6 @@ void gameplayRenderer::RenderClassicNotes(
 
         CheckPlasticNotes(player, curChart, curSongTime, curNote);
 
-
         double NoteStartPositionWorld =
             GetNotePos(curNote.time, curSongTime, player.NoteSpeed, HighwayEnd);
         double NoteEndPositionWorld = GetNotePos(
@@ -1003,13 +1009,11 @@ void gameplayRenderer::RenderClassicNotes(
         if (NoteEndPositionWorld < -1)
             SkipShit = true;
 
-
         bool BrutalSkip = false;
-        if (NoteStartPositionWorld < HealthToBrutalPosition(stats->Health, HighwayEnd) && player.BrutalMode) {
+        if (NoteStartPositionWorld < HealthToBrutalPosition(stats->Health, HighwayEnd)
+            && player.BrutalMode) {
             BrutalSkip = true;
         }
-
-
 
         for (ClassicLane cLane : curNote.pLanes) {
             int lane = cLane.lane;
@@ -1099,7 +1103,8 @@ void gameplayRenderer::RenderClassicNotes(
 
                 if (!SkipShit) {
                     if (BrutalSkip) {
-                        NoteStartPositionWorld = HealthToBrutalPosition(stats->Health, HighwayEnd);
+                        NoteStartPositionWorld =
+                            HealthToBrutalPosition(stats->Health, HighwayEnd);
                     }
                     nDrawSustain(
                         curNote,
@@ -1195,8 +1200,10 @@ void gameplayRenderer::RenderHud(Player &player, float length) {
                              OverdriveColor.b / 255.0f,
                              OverdriveColor.a / 255.0f };
     Vector4 BlueMultiplier;
-    if (player.BrutalMode) BlueMultiplier = { 1, 0, 0, 1 };
-    else BlueMultiplier = { 0.2, 0.6, 1, 1 };
+    if (player.BrutalMode)
+        BlueMultiplier = { 1, 0, 0, 1 };
+    else
+        BlueMultiplier = { 0.2, 0.6, 1, 1 };
 
     if (player.stats->IsBassOrVox()) {
         if (player.stats->noODmultiplier() >= 6) {
@@ -1351,7 +1358,7 @@ void gameplayRenderer::RenderGameplay(Player &player, double curSongTime, Song s
                                         highwayColor.g / 255.0f,
                                         highwayColor.b / 255.0f,
                                         highwayColor.a / 255.0f };
-
+    stats->MultiplierUVCalculation();
     // NoteMultiplierEffect(curSongTime, player);
     SetShaderValue(
         gprAssets.Highway,
