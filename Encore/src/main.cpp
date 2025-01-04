@@ -7,9 +7,11 @@
 #include "menus/sndTestMenu.h"
 #include "menus/cacheLoadingScreen.h"
 #include "menus/resultsMenu.h"
+#include "util/discord.h"
 #include "util/enclog.h"
 #include "gameplay/enctime.h"
 
+#include "util/json-helper.h"
 #include "song/song.h"
 
 #define RAYGUI_IMPLEMENTATION
@@ -50,8 +52,10 @@
 #include "menus/uiUnits.h"
 
 #include "settings-old.h"
+#include "settings.h"
 #include "timingvalues.h"
 #include "gameplay/InputHandler.h"
+#include "gameplay/inputCallbacks.h"
 #include "inih/INIReader.h"
 #include "menus/ChartLoadingMenu.h"
 #include "menus/ReadyUpMenu.h"
@@ -59,7 +63,9 @@
 #include "menus/SongSelectMenu.h"
 
 #include "menus/styles.h"
+
 #include <menus/MenuManager.h>
+#include <nlohmann/json_fwd.hpp>
 
 MenuManager TheMenuManager;
 gameplayRenderer TheGameRenderer;
@@ -67,9 +73,9 @@ SongList TheSongList;
 PlayerManager ThePlayerManager;
 SettingsOld &settingsMain = SettingsOld::getInstance();
 AudioManager &audioManager = AudioManager::getInstance();
+Encore::Settings TheGameSettings;
 
 // OvershellRenderer overshellRenderer;
-InputHandler inputHandler;
 
 Assets &assets = Assets::getInstance();
 
@@ -110,326 +116,10 @@ std::string scoreCommaFormatter(int value) {
 }
 */
 
-// what to check when a key changes states (what was the change? was it pressed? or
-// released? what time? what window? were any modifiers pressed?)
-static void keyCallback(GLFWwindow *wind, int key, int scancode, int action, int mods) {
-    Player &player = ThePlayerManager.GetActivePlayer(0);
-    PlayerGameplayStats *&stats = player.stats;
-    if (!TheGameRenderer.streamsLoaded) {
-        return;
-    }
-    if (action < 2) {
-        // if the key action is NOT repeat (release is 0, press is 1)
-        int lane = -2;
-        if (key == settingsMain.keybindPause && action == GLFW_PRESS) {
-            stats->Paused = !stats->Paused;
-            if (stats->Paused && !ThePlayerManager.BandStats.Multiplayer) {
-                audioManager.pauseStreams();
-                TheSongTime.Pause();
-            } else if (!ThePlayerManager.BandStats.Multiplayer) {
-                audioManager.unpauseStreams();
-                TheSongTime.Resume();
-                for (int i = 0; i < (player.Difficulty == 3 ? 5 : 4); i++) {
-                    inputHandler.handleInputs(player, i, -1);
-                }
-            } // && !player.Bot
-        } else if ((key == settingsMain.keybindOverdrive
-                    || key == settingsMain.keybindOverdriveAlt)) {
-            inputHandler.handleInputs(player, -1, action);
-        } else if (!player.Bot) {
-            if (player.Instrument != PlasticDrums) {
-                if (player.Difficulty == 3 || player.ClassicMode) {
-                    for (int i = 0; i < 5; i++) {
-                        if (key == settingsMain.keybinds5K[i]
-                            && !stats->HeldFretsAlt[i]) {
-                            if (action == GLFW_PRESS) {
-                                stats->HeldFrets[i] = true;
-                            } else if (action == GLFW_RELEASE) {
-                                stats->HeldFrets[i] = false;
-                                stats->OverhitFrets[i] = false;
-                            }
-                            lane = i;
-                        } else if (key == settingsMain.keybinds5KAlt[i] && !stats->HeldFrets[i]) {
-                            if (action == GLFW_PRESS) {
-                                stats->HeldFretsAlt[i] = true;
-                            } else if (action == GLFW_RELEASE) {
-                                stats->HeldFretsAlt[i] = false;
-                                stats->OverhitFrets[i] = false;
-                            }
-                            lane = i;
-                        }
-                    }
-                } else {
-                    for (int i = 0; i < 4; i++) {
-                        if (key == settingsMain.keybinds4K[i]
-                            && !stats->HeldFretsAlt[i]) {
-                            if (action == GLFW_PRESS) {
-                                stats->HeldFrets[i] = true;
-                            } else if (action == GLFW_RELEASE) {
-                                stats->HeldFrets[i] = false;
-                                stats->OverhitFrets[i] = false;
-                            }
-                            lane = i;
-                        } else if (key == settingsMain.keybinds4KAlt[i] && !stats->HeldFrets[i]) {
-                            if (action == GLFW_PRESS) {
-                                stats->HeldFretsAlt[i] = true;
-                            } else if (action == GLFW_RELEASE) {
-                                stats->HeldFretsAlt[i] = false;
-                                stats->OverhitFrets[i] = false;
-                            }
-                            lane = i;
-                        }
-                    }
-                }
-                if (player.ClassicMode) {
-                    if (key == settingsMain.keybindStrumUp) {
-                        if (action == GLFW_PRESS) {
-                            lane = 8008135;
-                            stats->UpStrum = true;
-                        } else if (action == GLFW_RELEASE) {
-                            stats->UpStrum = false;
-                            stats->Overstrum = false;
-                        }
-                    }
-                    if (key == settingsMain.keybindStrumDown) {
-                        if (action == GLFW_PRESS) {
-                            lane = 8008135;
-                            stats->DownStrum = true;
-                        } else if (action == GLFW_RELEASE) {
-                            stats->DownStrum = false;
-                            stats->Overstrum = false;
-                        }
-                    }
-                }
-
-                if (lane != -1 && lane != -2) {
-                    inputHandler.handleInputs(player, lane, action);
-                }
-            }
-        }
-    }
-}
-
-static void gamepadStateCallback(int joypadID, GLFWgamepadstate state) {
-    Encore::EncoreLog(LOG_DEBUG, TextFormat("Attempted input on joystick %01i", joypadID));
-    if (!ThePlayerManager.IsGamepadActive(joypadID))
-        return;
-
-    Player &player = ThePlayerManager.GetPlayerGamepad(joypadID);
-
-
-    if (!IsGamepadAvailable(player.joypadID))
-        return;
-    PlayerGameplayStats *&stats = player.stats;
-    if (!TheGameRenderer.streamsLoaded) {
-        return;
-    }
-
-    double eventTime = TheSongTime.GetSongTime();
-    if (settingsMain.controllerPause >= 0) {
-        if (state.buttons[settingsMain.controllerPause]
-            != stats->buttonValues[settingsMain.controllerPause]) {
-            stats->buttonValues[settingsMain.controllerPause] =
-                state.buttons[settingsMain.controllerPause];
-            if (state.buttons[settingsMain.controllerPause] == 1) {
-                stats->Paused = !stats->Paused;
-                if (stats->Paused && !ThePlayerManager.BandStats.Multiplayer) {
-                    audioManager.pauseStreams();
-                    TheSongTime.Pause();
-                } else if (!ThePlayerManager.BandStats.Multiplayer) {
-                    audioManager.unpauseStreams();
-                    TheSongTime.Resume();
-                    for (int i = 0; i < (player.Difficulty == 3 ? 5 : 4); i++) {
-                        inputHandler.handleInputs(player, i, -1);
-                    }
-                } // && !player.Bot
-            }
-        }
-    } else if (!player.Bot) {
-        if (state.axes[-(settingsMain.controllerPause + 1)]
-            != stats->axesValues[-(settingsMain.controllerPause + 1)]) {
-            stats->axesValues[-(settingsMain.controllerPause + 1)] =
-                state.axes[-(settingsMain.controllerPause + 1)];
-            if (state.axes[-(settingsMain.controllerPause + 1)]
-                == 1.0f * (float)settingsMain.controllerPauseAxisDirection) {
-            }
-        }
-    } //  && !player.Bot
-    if (settingsMain.controllerOverdrive >= 0) {
-        if (state.buttons[settingsMain.controllerOverdrive]
-            != stats->buttonValues[settingsMain.controllerOverdrive]) {
-            stats->buttonValues[settingsMain.controllerOverdrive] =
-                state.buttons[settingsMain.controllerOverdrive];
-            inputHandler.handleInputs(
-                player, -1, state.buttons[settingsMain.controllerOverdrive]
-            );
-        } // // if (!player.Bot)
-    } else {
-        if (state.axes[-(settingsMain.controllerOverdrive + 1)]
-            != stats->axesValues[-(settingsMain.controllerOverdrive + 1)]) {
-            stats->axesValues[-(settingsMain.controllerOverdrive + 1)] =
-                state.axes[-(settingsMain.controllerOverdrive + 1)];
-            if (state.axes[-(settingsMain.controllerOverdrive + 1)]
-                == 1.0f * (float)settingsMain.controllerOverdriveAxisDirection) {
-                inputHandler.handleInputs(player, -1, GLFW_PRESS);
-            } else {
-                inputHandler.handleInputs(player, -1, GLFW_RELEASE);
-            }
-        }
-    }
-    if ((player.Difficulty == 3 || player.ClassicMode) && !player.Bot) {
-        int lane = -2;
-        int action = -2;
-        for (int i = 0; i < 5; i++) {
-            if (settingsMain.controller5K[i] >= 0) {
-                if (state.buttons[settingsMain.controller5K[i]]
-                    != stats->buttonValues[settingsMain.controller5K[i]]) {
-                    if (state.buttons[settingsMain.controller5K[i]] == 1
-                        && !stats->HeldFrets[i])
-                        stats->HeldFrets[i] = true;
-                    else if (stats->HeldFrets[i]) {
-                        stats->HeldFrets[i] = false;
-                        stats->OverhitFrets[i] = false;
-                    }
-                    inputHandler.handleInputs(
-                        player, i, state.buttons[settingsMain.controller5K[i]]
-                    );
-                    stats->buttonValues[settingsMain.controller5K[i]] =
-                        state.buttons[settingsMain.controller5K[i]];
-                    lane = i;
-                }
-            } else {
-                if (state.axes[-(settingsMain.controller5K[i] + 1)]
-                    != stats->axesValues[-(settingsMain.controller5K[i] + 1)]) {
-                    if (state.axes[-(settingsMain.controller5K[i] + 1)]
-                            == 1.0f * (float)settingsMain.controller5KAxisDirection[i]
-                        && !stats->HeldFrets[i]) {
-                        stats->HeldFrets[i] = true;
-                        inputHandler.handleInputs(player, i, GLFW_PRESS);
-                    } else if (stats->HeldFrets[i]) {
-                        stats->HeldFrets[i] = false;
-                        stats->OverhitFrets[i] = false;
-                        inputHandler.handleInputs(player, i, GLFW_RELEASE);
-                    }
-                    stats->axesValues[-(settingsMain.controller5K[i] + 1)] =
-                        state.axes[-(settingsMain.controller5K[i] + 1)];
-                    lane = i;
-                }
-            }
-        }
-
-        if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_PRESS
-            && player.ClassicMode && !stats->UpStrum) {
-            stats->UpStrum = true;
-            stats->Overstrum = false;
-            inputHandler.handleInputs(player, 8008135, GLFW_PRESS);
-        } else if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_RELEASE
-                   && player.ClassicMode
-                   && stats->UpStrum) {
-            stats->UpStrum = false;
-            inputHandler.handleInputs(player, 8008135, GLFW_RELEASE);
-        }
-        if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == GLFW_PRESS
-            && player.ClassicMode && !stats->DownStrum) {
-            stats->DownStrum = true;
-            stats->Overstrum = false;
-            inputHandler.handleInputs(player, 8008135, GLFW_PRESS);
-        } else if (state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == GLFW_RELEASE
-                   && player.ClassicMode
-                   && stats->DownStrum) {
-            stats->DownStrum = false;
-            inputHandler.handleInputs(player, 8008135, GLFW_RELEASE);
-        }
-    } else if (!player.Bot) {
-        for (int i = 0; i < 4; i++) {
-            if (settingsMain.controller4K[i] >= 0) {
-                if (state.buttons[settingsMain.controller4K[i]]
-                    != stats->buttonValues[settingsMain.controller4K[i]]) {
-                    if (state.buttons[settingsMain.controller4K[i]] == 1)
-                        stats->HeldFrets[i] = true;
-                    else {
-                        stats->HeldFrets[i] = false;
-                        stats->OverhitFrets[i] = false;
-                    }
-                    inputHandler.handleInputs(
-                        player, i, state.buttons[settingsMain.controller4K[i]]
-                    );
-                    stats->buttonValues[settingsMain.controller4K[i]] =
-                        state.buttons[settingsMain.controller4K[i]];
-                }
-            } else {
-                if (state.axes[-(settingsMain.controller4K[i] + 1)]
-                    != stats->axesValues[-(settingsMain.controller4K[i] + 1)]) {
-                    if (state.axes[-(settingsMain.controller4K[i] + 1)]
-                        == 1.0f * (float)settingsMain.controller4KAxisDirection[i]) {
-                        stats->HeldFrets[i] = true;
-                        inputHandler.handleInputs(player, i, GLFW_PRESS);
-                    } else {
-                        stats->HeldFrets[i] = false;
-                        stats->OverhitFrets[i] = false;
-                        inputHandler.handleInputs(player, i, GLFW_RELEASE);
-                    }
-                    stats->axesValues[-(settingsMain.controller4K[i] + 1)] =
-                        state.axes[-(settingsMain.controller4K[i] + 1)];
-                }
-            }
-        }
-    }
-}
-/*
-static void gamepadStateCallbackSetControls(int jid, GLFWgamepadstate state) {
-    for (int i = 0; i < 6; i++) {
-        axesValues2[i] = state.axes[i];
-    }
-    if (changingKey || changingOverdrive || changingPause) {
-        for (int i = 0; i < 15; i++) {
-            if (state.buttons[i] == 1) {
-                if (buttonValues[i] == 0) {
-                    controllerID = jid;
-                    pressedGamepadInput = i;
-                    return;
-                } else {
-                    buttonValues[i] = state.buttons[i];
-                }
-            }
-        }
-        for (int i = 0; i < 6; i++) {
-            if (state.axes[i] == 1.0f || (i <= 3 && state.axes[i] == -1.0f)) {
-                axesValues[i] = 0.0f;
-                if (state.axes[i] == 1.0f) axisDirection = 1;
-                else axisDirection = -1;
-                controllerID = jid;
-                pressedGamepadInput = -(1 + i);
-                return;
-            } else {
-                axesValues[i] = 0.0f;
-            }
-        }
-    } else {
-        for (int i = 0; i < 15; i++) {
-            buttonValues[i] = state.buttons[i];
-        }
-        for (int i = 0; i < 6; i++) {
-            axesValues[i] = state.axes[i];
-        }
-        pressedGamepadInput = -999;
-    }
-}
-*/
 int minWidth = 640;
 int minHeight = 480;
 
-
-bool firstInit = true;
-int loadedAssets;
-bool albumArtLoaded = false;
-
 Menu *ActiveMenu = nullptr;
-
-
-bool doRenderThingToLowerHighway = false;
-
-int CurSongInt = 0;
 
 int main(int argc, char *argv[]) {
     SetTraceLogCallback(Encore::EncoreLog);
@@ -499,14 +189,36 @@ int main(int argc, char *argv[]) {
         CFRelease(bundle);
     }
 #endif
+    // todo: move to Encore::SettingsHelper
+    TheGameSettings.SongPaths = { directory / "Songs" };
+    if (exists(directory/"settings.json")
+        && !exists(directory/"settings-old.json")) {
+        rename(directory/"settings.json", directory/"settings-old.json");
+    }
+    // check to see if settings exists
+    // todo: move to own init helper
+    if (exists((directory / "settings.json"))) {
+        nlohmann::json SettingsFile;
+        std::ifstream f(directory / "settings.json");
+        SettingsFile = nlohmann::json::parse(f);
+        f.close();
+        Encore::from_json(SettingsFile, TheGameSettings);
+
+    } else {
+        // void WriteSettingsFile(filesystem::path settingsDir, const Settings&
+        // TheGameSettings)
+        nlohmann::json SettingsFile = TheGameSettings;
+        Encore::WriteJsonFile(directory / "settings.json", SettingsFile);
+    }
+
     settingsMain.setDirectory(directory);
     ThePlayerManager.SetPlayerListSaveFileLocation(directory / "players.json");
     if (std::filesystem::exists(directory / "keybinds.json")) {
         settingsMain.migrateSettings(
-            directory / "keybinds.json", directory / "settings.json"
+            directory / "keybinds.json", directory / "settings-old.json"
         );
     }
-    settingsMain.loadSettings(directory / "settings.json");
+    settingsMain.loadSettings(directory / "settings-old.json");
     ThePlayerManager.LoadPlayerList();
 
     bool removeFPSLimit = 0;
@@ -523,7 +235,7 @@ int main(int argc, char *argv[]) {
     double waitTime = 0.0;
     float deltaTime = 0.0;
 
-    if (!settingsMain.fullscreen) {
+    if (!TheGameSettings.Fullscreen) {
         InitWindow(
             GetMonitorWidth(GetCurrentMonitor()) * 0.75f,
             GetMonitorHeight(GetCurrentMonitor()) * 0.75f,
@@ -538,7 +250,7 @@ int main(int argc, char *argv[]) {
         );
         SET_WINDOW_FULLSCREEN_BORDERLESS();
     }
-
+    Encore::Discord TheGameRPC;
     Encore::EncoreLog(LOG_INFO, TextFormat("Target FPS: %d", targetFPS));
 
     audioManager.Init();
@@ -562,9 +274,9 @@ int main(int argc, char *argv[]) {
     assets.LoadAssets();
     TheMenuManager.currentScreen = CACHE_LOADING_SCREEN;
     Menu::onNewMenu = true;
-    TheSongTime.SetOffset(settingsMain.avOffsetMS / 1000.0);
+    TheSongTime.SetOffset(TheGameSettings.AudioOffset / 1000.0);
 
-    audioManager.loadSample("Assets/highway/clap.mp3", "clap");
+    // audioManager.loadSample("Assets/highway/clap.mp3", "clap");
     while (!WindowShouldClose()) {
         u.calcUnits();
         double curTime = GetTime();
@@ -572,8 +284,8 @@ int main(int argc, char *argv[]) {
         SetShaderValue(assets.bgShader, assets.bgTimeLoc, &bgTime, SHADER_UNIFORM_FLOAT);
         if (IsKeyPressed(KEY_F11)
             || (IsKeyPressed(KEY_LEFT_ALT) && IsKeyPressed(KEY_ENTER))) {
-            settingsMain.fullscreen = !settingsMain.fullscreen;
-            if (!settingsMain.fullscreen) {
+            TheGameSettings.Fullscreen = !TheGameSettings.Fullscreen;
+            if (!TheGameSettings.Fullscreen) {
                 SET_WINDOW_WINDOWED();
             } else {
                 SET_WINDOW_FULLSCREEN_BORDERLESS();
@@ -595,7 +307,6 @@ int main(int argc, char *argv[]) {
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-
         if (TheMenuManager.onNewMenu) {
             TheMenuManager.onNewMenu = false;
             delete ActiveMenu;
@@ -610,26 +321,31 @@ int main(int argc, char *argv[]) {
                 // add its case to the `ActiveMenu->Draw();`
                 // cases.
             case MAIN_MENU: {
+                TheGameRPC.DiscordUpdatePresence("Main menu", "In the menus");
                 ActiveMenu = new MainMenu;
                 ActiveMenu->Load();
                 break;
             }
             case SETTINGS: {
+                TheGameRPC.DiscordUpdatePresence("Configuring", "In the menus");
                 ActiveMenu = new SettingsMenu;
                 ActiveMenu->Load();
                 break;
             }
             case RESULTS: {
+                TheGameRPC.DiscordUpdatePresence("Viewing results", "In the menus");
                 ActiveMenu = new resultsMenu;
                 ActiveMenu->Load();
                 break;
             }
             case SONG_SELECT: {
+                TheGameRPC.DiscordUpdatePresence("Viewing songs", "In the menus");
                 ActiveMenu = new SongSelectMenu;
                 ActiveMenu->Load();
                 break;
             }
             case READY_UP: {
+                TheGameRPC.DiscordUpdatePresence("Readying up", "In the menus");
                 ActiveMenu = new ReadyUpMenu;
                 ActiveMenu->Load();
                 break;
@@ -640,16 +356,23 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case CACHE_LOADING_SCREEN: {
+                TheGameRPC.DiscordUpdatePresence("Loading game", "In the menus");
                 ActiveMenu = new cacheLoadingScreen;
                 ActiveMenu->Load();
                 break;
             }
             case CHART_LOADING_SCREEN: {
+                TheGameRPC.DiscordUpdatePresence("Loading a song", "In the menus");
                 ActiveMenu = new ChartLoadingMenu;
                 ActiveMenu->Load();
                 break;
             }
             case GAMEPLAY: {
+                TheGameRPC.DiscordUpdatePresenceSong(
+                    "Playing a song",
+                    TheSongList.curSong->title + " - " + TheSongList.curSong->artist,
+                    ThePlayerManager.GetActivePlayer(0).Instrument
+                );
                 glfwSetKeyCallback(glfwGetCurrentContext(), keyCallback);
                 glfwSetGamepadStateCallback(gamepadStateCallback);
                 ActiveMenu = new GameplayMenu;
@@ -825,7 +548,6 @@ int main(int argc, char *argv[]) {
             previousTime = currentTime;
         }
     }
-
     CloseWindow();
     return 0;
 }

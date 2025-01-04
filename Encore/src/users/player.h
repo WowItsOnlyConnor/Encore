@@ -12,20 +12,18 @@
 #include "song/scoring.h"
 // #include "libstud-uuid/uuid/uuid.hxx"
 
-
-
 class Band {
-/**
- * @brief Do Not Use. Outdated.
- */
+    /**
+     * @brief Do Not Use. Outdated.
+     */
     std::filesystem::path ScoreFile;
     bool SoloGameplay = true; // to be true until multiple players
 };
 
 class PlayerGameplayStats {
-/**
- * @brief Statistics/statistics manager for individual players during gameplay
- */
+    /**
+     * @brief Statistics/statistics manager for individual players during gameplay
+     */
 public:
     PlayerGameplayStats();
 
@@ -63,11 +61,11 @@ public:
     bool Miss = false;
     int ScoreToDisplay();
 
-    std::vector<float> drumSmasherRotations = {0,0,0,0};
-    std::vector<float> drumSmasherHeights = {0,0,0,0};
+    std::vector<float> drumSmasherRotations = { 0, 0, 0, 0 };
+    std::vector<float> drumSmasherHeights = { 0, 0, 0, 0 };
 
-    std::vector<float> fiveLaneSmasherRotation = {0,0,0,0,0};
-    std::vector<float> fiveLaneSmasherHeights = {0,0,0,0,0};
+    std::vector<float> fiveLaneSmasherRotation = { 0, 0, 0, 0, 0 };
+    std::vector<float> fiveLaneSmasherHeights = { 0, 0, 0, 0, 0 };
 
     std::vector<bool> HeldFrets { false, false, false, false, false };
     std::vector<bool> HeldFretsAlt { false, false, false, false, false };
@@ -110,7 +108,7 @@ public:
 
     std::vector<int> curNoteIdx = { 0, 0, 0, 0, 0 };
 
-    float Health;
+    float Health = 0.75f;
     Chart CurPlayingChart;
     bool Multiplayer = false;
     float overdriveFill;
@@ -122,6 +120,8 @@ public:
     int Difficulty;
     int BaseScore;
 
+    void AddHealth();
+    void LoseHealth();
     PlayerGameplayStats(int difficulty, int instrument);
     void HitNote(bool perfect);
     void HitDrumsNote(bool perfect, bool cymbal);
@@ -134,6 +134,7 @@ public:
     int maxComboForMeter();
 
     int Stars();
+    void MultiplierUVCalculation();
 
     float uvOffsetX = 0;
     float uvOffsetY = 0;
@@ -147,28 +148,29 @@ public:
     float comboFillCalc();
 };
 
-#define PLAYER_JSON_SETTINGS                                    \
-    SETTING_ACTION(int,     Difficulty,         "diff")         \
-    SETTING_ACTION(int,     Instrument,         "inst")         \
-    SETTING_ACTION(float,   InputCalibration,   "inputOffset")  \
-    SETTING_ACTION(float,   NoteSpeed,          "NoteSpeed")    \
-    SETTING_ACTION(bool,    ProDrums,           "proDrums")     \
-    SETTING_ACTION(bool,    Bot,                "bot")          \
-    SETTING_ACTION(float,   HighwayLength,      "length")       \
-    SETTING_ACTION(bool,    ClassicMode,        "classic")      \
-    SETTING_ACTION(bool,    LeftyFlip,          "lefty")
+#define PLAYER_JSON_SETTINGS                                                             \
+    SETTING_ACTION(int, Difficulty, "diff")                                              \
+    SETTING_ACTION(int, Instrument, "inst")                                              \
+    SETTING_ACTION(float, InputCalibration, "inputOffset")                               \
+    SETTING_ACTION(float, NoteSpeed, "NoteSpeed")                                        \
+    SETTING_ACTION(bool, ProDrums, "proDrums")                                           \
+    SETTING_ACTION(bool, Bot, "bot")                                                     \
+    SETTING_ACTION(float, HighwayLength, "length")                                       \
+    SETTING_ACTION(bool, ClassicMode, "classic")                                         \
+    SETTING_ACTION(bool, LeftyFlip, "lefty")                                             \
+    SETTING_ACTION(bool, BrutalMode, "BrutalMode")
 
-#define PLAYER_CONFIG_LIST                          \
-    SETTING_ACTION(int,     Difficulty)             \
-    SETTING_ACTION(int,     Instrument)             \
-    SETTING_ACTION(float,   InputCalibration)       \
-    SETTING_ACTION(float,   NoteSpeed)              \
-    SETTING_ACTION(bool,    ProDrums)               \
-    SETTING_ACTION(bool,    Bot)                    \
-    SETTING_ACTION(float,   HighwayLength)          \
-    SETTING_ACTION(bool,    ClassicMode)            \
-    SETTING_ACTION(bool,    LeftyFlip)
-
+#define PLAYER_CONFIG_LIST                                                               \
+    SETTING_ACTION(int, Difficulty)                                                      \
+    SETTING_ACTION(int, Instrument)                                                      \
+    SETTING_ACTION(float, InputCalibration)                                              \
+    SETTING_ACTION(float, NoteSpeed)                                                     \
+    SETTING_ACTION(bool, ProDrums)                                                       \
+    SETTING_ACTION(bool, Bot)                                                            \
+    SETTING_ACTION(float, HighwayLength)                                                 \
+    SETTING_ACTION(bool, ClassicMode)                                                    \
+    SETTING_ACTION(bool, LeftyFlip)                                                      \
+    SETTING_ACTION(bool, BrutalMode)
 class Player {
     /**
      * @brief Player information. What else could be said?
@@ -190,7 +192,7 @@ public:
     int joypadID;
     bool ReadiedUpBefore;
     bool Online;
-    int ActiveSlot{};
+    int ActiveSlot {};
 
     void ResetGameplayStats();
 
@@ -203,7 +205,6 @@ public:
     // NOTE! this is only for like. local information and
     // not actually shared information. i was thinking of a UUID system for online
 };
-
 
 class BandGameplayStats : public PlayerGameplayStats {
 public:
@@ -243,6 +244,3 @@ public:
 
     void DrumNotePoint(bool perfect, int playerMult, bool cymbal);
 };
-
-
-

@@ -11,7 +11,6 @@
 #include "song/songlist.h"
 #include "raymath.h"
 #include "raygui.h"
-#include "settings-old.h"
 #include "gameplay/enctime.h"
 #include "styles.h"
 #include "easing/easing.h"
@@ -19,6 +18,7 @@
 #include "users/playerManager.h"
 #include "MenuManager.h"
 #include "OvershellHelper.h"
+#include "settings.h"
 
 #include <raylib.h>
 
@@ -176,7 +176,7 @@ void GameplayMenu::Draw() {
     AudioManager &audioManager = AudioManager::getInstance();
     Units &u = Units::getInstance();
     Assets &assets = Assets::getInstance();
-    SettingsOld &settings = SettingsOld::getInstance();
+    // SettingsOld &settings = SettingsOld::getInstance();
 
     //    OvershellRenderer osr;
     double curTime = GetTime();
@@ -217,12 +217,12 @@ void GameplayMenu::Draw() {
                     == stream.instrument) {
                     audioManager.SetAudioStreamVolume(
                         stream.handle,
-                        player.stats->Mute ? settings.MainVolume * settings.MissVolume
-                                           : settings.MainVolume * settings.PlayerVolume
+                        player.stats->Mute ? TheGameSettings.avMainVolume * TheGameSettings.avMuteVolume
+                                           : TheGameSettings.avMainVolume * TheGameSettings.avActiveInstrumentVolume
                     );
                 } else {
                     audioManager.SetAudioStreamVolume(
-                        stream.handle, settings.MainVolume * settings.BandVolume
+                        stream.handle, TheGameSettings.avMainVolume * TheGameSettings.avInactiveInstrumentVolume
                     );
                 }
             }
@@ -281,8 +281,15 @@ void GameplayMenu::Draw() {
                               0
         )
                               .x;
-        Color headerUsernameColor =
-            ThePlayerManager.GetActivePlayer(pnum).Bot ? SKYBLUE : WHITE;
+        Color headerUsernameColor;
+        if (ThePlayerManager.GetActivePlayer(pnum).Bot)
+            headerUsernameColor = SKYBLUE;
+        else {
+            if (ThePlayerManager.GetActivePlayer(pnum).BrutalMode)
+                headerUsernameColor = RED;
+            else
+                headerUsernameColor = WHITE;
+        }
         DrawTextEx(
             assets.rubikBold,
             ThePlayerManager.GetActivePlayer(pnum).Name.c_str(),

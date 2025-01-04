@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <filesystem>
 #include <cmath>
-
+#include <string>
 #include "picosha2.h"
 #include "rapidjson/document.h"
 #include "util/enclog.h"
@@ -405,10 +405,15 @@ public:
                     }
                 }
             }
-            if (item.name == "charters" && item.value.IsObject()) {
-                for (auto &charter : item.value.GetObject()) {
-                    if (charter.value.IsString()) {
-                        charters.push_back(charter.value.GetString());
+            if (item.name == "charters" || item.name == "charter") {
+                if (item.value.IsString()) {
+                    charters.push_back(item.value.GetString());
+                }
+                else if (item.value.IsArray()) {
+                    for (auto &charter : item.value.GetArray()) {
+                        if (charter.IsString()) {
+                            charters.push_back(charter.GetString());
+                        }
                     }
                 }
             }
@@ -590,17 +595,21 @@ public:
                         }
                     }
                 }
-                if (item.name == "charters" && item.value.IsObject()) {
-                    for (auto &charter : item.value.GetObject()) {
-                        if (charter.value.IsString()) {
-                            charters.push_back(charter.value.GetString());
+                if (item.name == "charters" || item.name == "charter") {
+                    if (item.value.IsString()) {
+                        charters.push_back(item.value.GetString());
+                    } else if (item.value.IsArray()) {
+                        for (auto &charter : item.value.GetArray()) {
+                            if (charter.IsString()) {
+                                charters.push_back(charter.GetString());
+                            }
                         }
                     }
                 }
-                if (charters.empty()) {
-                    charters.push_back("Unknown Charter");
-                }
             }
+        }
+        if (charters.empty()) {
+            charters.push_back("Unknown Charter");
         }
         ifs.close();
     }

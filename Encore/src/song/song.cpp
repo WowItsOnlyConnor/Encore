@@ -41,7 +41,7 @@ void Song::LoadInfoINI(std::filesystem::path iniPath) {
     artist = ini.GetString("song", "artist", "Unknown Artist");
 
     // genre = ini.GetValue("song", "genre");
-    charters.push_back(ini.GetString("song", "charter", "Unkown Charter"));
+    charters.push_back(ini.GetString("song", "charter", "Unknown Charter"));
 
     album = ini.GetString("song", "album", "Unknown Album");
 

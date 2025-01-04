@@ -8,3 +8,9 @@ constexpr float goodBackend = 0.075f;
 constexpr float perfectFrontend = 0.025f;
 constexpr float perfectBackend = 0.025f;
 constexpr float fretAfterStrumTime = 0.05f;
+constexpr float liftLeniencyTime = 0.05f;
+
+constexpr float healthLossPerNote = 0.05f;
+constexpr float healthGainPerNote = 0.0125f;
+constexpr float healthLossSustainDrop = 0.01f;
+constexpr float healthOverdriveGainMult = 3.0f;
